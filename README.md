@@ -376,9 +376,6 @@ dotnet build -c Release && dotnet bin/Release/net8.0/RacingTelemetryAnalyzer.dll
 
 ---
 
-## 📝 License
-
-This project is part of your T.Y. BSc-IT curriculum. Respect academic integrity! 🏫
 
 ---
 
