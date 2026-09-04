@@ -1,0 +1,66 @@
+@{
+    ViewData["Title"] = "Add Vehicle";
+}
+
+<div class="container mt-5">
+    <h2 style="color: #ff4500; text-transform: uppercase; letter-spacing: 2px;">Add New Vehicle</h2>
+    <hr style="border-color: #333;" />
+
+    <form action="/Home/AddVehicle" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Vehicle Name</label>
+                <input type="text" name="Name" class="form-control bg-dark text-light border-secondary" placeholder="e.g. ASTON MARTIN VANTAGE GT3" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Manufacturer</label>
+                <input type="text" name="Manufacturer" class="form-control bg-dark text-light border-secondary" placeholder="e.g. Aston Martin" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted">Vehicle Type</label>
+                <select name="VehicleType" class="form-select bg-dark text-light border-secondary">
+                    <option value="Car">Car</option>
+                    <option value="Bike">Bike</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted">Category</label>
+                <select name="VehicleCategory" class="form-select bg-dark text-light border-secondary">
+                    <option value="Race">Race</option>
+                    <option value="Production">Production</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted">Class</label>
+                <input type="text" name="Class" class="form-control bg-dark text-light border-secondary" placeholder="e.g. GT3, Hypercar">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted">Power (HP)</label>
+                <input type="number" name="Power" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 500">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Weight (KG)</label>
+                <input type="number" name="Weight" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 1250">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Top Speed (KM/H)</label>
+                <input type="number" name="TopSpeed" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 290">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label text-muted">Upload Vehicle Image</label>
+            <input type="file" name="ImageFile" accept="image/*" class="form-control bg-dark text-light border-secondary">
+            <small class="text-muted d-block mt-1">Leave blank to use a default image. Image can be at any angle. It is not used for technical diagrams.</small>
+        </div>
+
+        <button type="submit" class="btn btn-lg w-100" style="background-color: #ff4500; color: white; letter-spacing: 2px; font-weight: bold;">SAVE VEHICLE</button>
+    </form>
+</div>
+

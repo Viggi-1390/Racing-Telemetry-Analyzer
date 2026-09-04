@@ -1,0 +1,2272 @@
+@model IEnumerable<RacingTelemetryAnalyzer.Models.Vehicle>
+@{
+    ViewData["Title"] = "Garage - Vehicle Selection";
+}
+
+<div class="garage-workstation-container">
+    <!-- UPPER 52% SECTION: THREE LARGE MAIN PANELS -->
+    <div class="workstation-upper-grid">
+        <!-- 1. LEFT COLUMN: PERFORMANCE PANEL -->
+        <div class="dash-panel panel-performance">
+            <div class="panel-header">
+                <span class="panel-tag">// 01</span>
+                <span class="panel-title">PERFORMANCE</span>
+                <span class="status-indicator"></span>
+            </div>
+
+            <div class="gauge-container">
+                <svg class="radial-gauge-svg" viewBox="0 0 220 220">
+                    <circle cx="110" cy="110" r="90" class="gauge-track-bg" />
+                    <circle cx="110" cy="110" r="90" class="gauge-bar-fill" id="perfGaugeArc" stroke-dasharray="565" stroke-dashoffset="141" />
+                </svg>
+
+                <div class="gauge-center-content">
+                    <div class="gauge-speed-label">SPEED</div>
+                    <div class="gauge-speed-val" id="perfSpeedVal">330</div>
+                    <div class="gauge-speed-unit">KM/H</div>
+                </div>
+            </div>
+
+            <!-- GAUGE SUB-METRICS -->
+            <div class="gauge-submetrics">
+                <div class="submetric-box">
+                    <span class="submetric-label">RPM</span>
+                    <span class="submetric-val text-cyan" id="perfRpmVal">9,220</span>
+                </div>
+                <div class="submetric-box">
+                    <span class="submetric-label">GEAR</span>
+                    <span class="submetric-val text-white" id="perfGearVal">GEAR 7</span>
+                </div>
+                <div class="submetric-box">
+                    <span class="submetric-label" id="perfPowerOrLeanLabel">POWER</span>
+                    <span class="submetric-val text-orange" id="perfPowerOrLeanVal">680 HP</span>
+                </div>
+            </div>
+
+            <!-- TYRE TEMPERATURE SECTION -->
+            <div class="tyre-temp-section">
+                <div class="section-micro-header">
+                    <span>TYRE TEMPERATURE</span>
+                    <span class="text-muted font-monospace" id="tyreStatusText">OPTIMAL RANGE</span>
+                </div>
+
+                <div class="tyre-grid-car" id="tyreGridCar">
+                    <div class="tyre-box">
+                        <span class="tyre-pos">FL</span>
+                        <span class="tyre-val" id="tyreFL">84°C</span>
+                    </div>
+                    <div class="tyre-box">
+                        <span class="tyre-pos">FR</span>
+                        <span class="tyre-val" id="tyreFR">86°C</span>
+                    </div>
+                    <div class="tyre-box">
+                        <span class="tyre-pos">RL</span>
+                        <span class="tyre-val" id="tyreRL">81°C</span>
+                    </div>
+                    <div class="tyre-box">
+                        <span class="tyre-pos">RR</span>
+                        <span class="tyre-val" id="tyreRR">83°C</span>
+                    </div>
+                </div>
+
+                <div class="tyre-grid-bike d-none" id="tyreGridBike">
+                    <div class="tyre-box">
+                        <span class="tyre-pos">FRONT</span>
+                        <span class="tyre-val" id="tyreFront">85°C</span>
+                    </div>
+                    <div class="tyre-box">
+                        <span class="tyre-pos">REAR</span>
+                        <span class="tyre-val" id="tyreRear">89°C</span>
+                    </div>
+                    <div class="tyre-box">
+                        <span class="tyre-pos">LEAN MAX</span>
+                        <span class="tyre-val text-cyan" id="tyreLean">55.0°</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. CENTER COLUMN: LIVE TELEMETRY & HERO VEHICLE DISPLAY -->
+        <div class="dash-panel panel-hero-vehicle">
+            <div class="panel-header justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="panel-tag">// 02</span>
+                    <span class="panel-title">LIVE TELEMETRY</span>
+                </div>
+                <div class="hero-vehicle-badge" id="heroVehicleBadge">Porsche 963 LMDh — Live View</div>
+            </div>
+
+            <!-- HERO VEHICLE IMAGE CONTAINER (PROPORTIONAL 16:9 FOCUSED) -->
+            <div class="hero-image-stage">
+                <div class="stage-crosshair top-left">+</div>
+                <div class="stage-crosshair top-right">+</div>
+                <div class="stage-crosshair bottom-left">+</div>
+                <div class="stage-crosshair bottom-right">+</div>
+
+                <img id="heroVehicleImg" 
+                     src="/images/cars/Porsche963.jpg" 
+                     alt="Selected Vehicle Preview" 
+                     class="hero-vehicle-img"
+                     onerror="handleImageError(this)" />
+
+                <div id="heroFallback" class="hero-fallback d-none">
+                    <div class="fallback-icon">🏎️</div>
+                    <div class="fallback-title">VEHICLE IMAGE NOT AVAILABLE</div>
+                    <div class="fallback-sub">Custom uploaded vehicle is active. Photo can be uploaded via Add Vehicle.</div>
+                </div>
+            </div>
+
+            <!-- LIVE CHANNELS STRIP (THROTTLE, BRAKING, FUEL) -->
+            <div class="telemetry-channels-strip">
+                <div class="channel-metric-card">
+                    <div class="channel-head">
+                        <span class="channel-name">THROTTLE</span>
+                        <span class="channel-val text-cyan" id="liveThrottleVal">95%</span>
+                    </div>
+                    <div class="channel-progress-bg">
+                        <div class="channel-progress-bar bg-cyan" id="barThrottle" style="width: 95%;"></div>
+                    </div>
+                </div>
+
+                <div class="channel-metric-card">
+                    <div class="channel-head">
+                        <span class="channel-name">BRAKING</span>
+                        <span class="channel-val text-red" id="liveBrakingVal">0%</span>
+                    </div>
+                    <div class="channel-progress-bg">
+                        <div class="channel-progress-bar bg-red" id="barBraking" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="channel-metric-card">
+                    <div class="channel-head">
+                        <span class="channel-name">FUEL REMAINING</span>
+                        <span class="channel-val text-orange" id="liveFuelVal">87 L</span>
+                    </div>
+                    <div class="channel-progress-bg">
+                        <div class="channel-progress-bar bg-orange" id="barFuel" style="width: 82%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RIGHT COLUMN: VEHICLE STATS & ANALYZE ACTION -->
+        <div class="dash-panel panel-vehicle-stats">
+            <div class="panel-header">
+                <span class="panel-tag">// 03</span>
+                <span class="panel-title">VEHICLE STATS</span>
+            </div>
+
+            <div class="vehicle-identity-header">
+                <h1 class="stats-name" id="statsVehicleName">PORSCHE 963</h1>
+                <div class="stats-classification">
+                    <span class="badge-class" id="statsClassBadge">LMDh</span>
+                    <span class="badge-manufacturer" id="statsManufacturer">PORSCHE</span>
+                </div>
+            </div>
+
+            <!-- TECHNICAL SPECIFICATION GRID -->
+            <div class="spec-table-list">
+                <div class="spec-row">
+                    <span class="spec-title">POWER</span>
+                    <span class="spec-num text-orange" id="statsPowerVal">680 HP</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-title">WEIGHT</span>
+                    <span class="spec-num" id="statsWeightVal">1030 KG</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-title">TOP SPEED</span>
+                    <span class="spec-num text-cyan" id="statsSpeedVal">330 KM/H</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-title">ENGINE</span>
+                    <span class="spec-num text-truncate" style="max-width: 190px;" id="statsEngineVal">Hybrid V8</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-title">PWR-TO-WEIGHT</span>
+                    <span class="spec-num" id="statsPtwVal">0.66 HP/KG</span>
+                </div>
+                <div class="spec-row">
+                    <span class="spec-title" id="statsExtraLabel">DRIVETRAIN</span>
+                    <span class="spec-num text-truncate" style="max-width: 190px;" id="statsExtraVal">RWD Hybrid</span>
+                </div>
+            </div>
+
+            <!-- ANALYZE VEHICLE ACTION BUTTON -->
+            <div class="analyze-btn-container">
+                <a href="/Track?vehicleId=1" class="btn-analyze-primary" id="btnAnalyzeVehicle">
+                    <span class="btn-caption">ANALYZE VEHICLE</span>
+                    <span class="btn-icon">➔</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MIDDLE BAR: CATEGORY / FILTER NAVIGATION -->
+    <div class="workstation-filter-bar">
+        <!-- 1. CAR / BIKE FILTER -->
+        <div class="filter-group">
+            <span class="filter-group-label">TYPE:</span>
+            <div class="segmented-btn-group">
+                <button type="button" class="btn-seg active" id="btnCars">🏎️ CARS</button>
+                <button type="button" class="btn-seg" id="btnBikes">🏍️ BIKES</button>
+            </div>
+        </div>
+
+        <!-- 2. ADD VEHICLE BUTTON -->
+        <div class="filter-center-action">
+            <button type="button" class="btn-add-vehicle-nav" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                <span class="plus-sign">+</span>
+                <span>ADD VEHICLE</span>
+            </button>
+        </div>
+
+        <!-- 3. RACE / PRODUCTION FILTER -->
+        <div class="filter-group">
+            <span class="filter-group-label">CATEGORY:</span>
+            <div class="segmented-btn-group">
+                <button type="button" class="btn-seg active" id="btnRace">🏁 RACE</button>
+                <button type="button" class="btn-seg" id="btnProd">🚗 PRODUCTION</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOWER ~39% SECTION: ENLARGED VEHICLE CARD CAROUSEL -->
+    <div class="workstation-carousel-container">
+        <button class="carousel-arrow-btn prev-btn" id="carouselPrevBtn" title="Previous Vehicles">
+            <span>‹</span>
+        </button>
+
+        <div class="carousel-viewport-track" id="vehicleCarouselTrack">
+            @foreach (var v in Model)
+            {
+                var vType = v.VehicleType.ToString().ToLower();
+                var vCat = v.VehicleCategory.ToString().ToLower();
+                var cardClass = (v.Name.ToUpper().Contains("PORSCHE 963")) ? "vehicle-card active" : "vehicle-card";
+
+                <div class="@cardClass" 
+                     data-id="@v.VehicleId"
+                     data-type="@vType" 
+                     data-category="@vCat"
+                     data-name="@v.Name"
+                     data-manufacturer="@v.Manufacturer"
+                     data-class="@(v.Class ?? "Racing")"
+                     data-engine="@(v.Engine ?? "Race Engine")"
+                     data-power="@v.Power"
+                     data-weight="@v.Weight"
+                     data-speed="@v.TopSpeed"
+                     data-img="@v.ImagePath"
+                     onclick="onVehicleCardClicked(this)">
+                     
+                     <div class="card-image-box">
+                         <img src="@v.ImagePath" alt="@v.Name" class="card-thumb" onerror="handleThumbError(this)" />
+                         <div class="card-gradient-overlay"></div>
+                         <div class="card-top-tags">
+                             <span class="badge-mini-class">@(v.Class ?? "LMDh")</span>
+                             <span class="badge-mini-spec">@v.Power HP</span>
+                         </div>
+                     </div>
+
+                     <div class="card-info-box">
+                         <div class="card-vehicle-title" title="@v.Name">@v.Name</div>
+                         <div class="card-vehicle-sub">
+                             <span class="card-mfg-badge">@v.Manufacturer</span>
+                             <span class="card-speed-badge">@v.TopSpeed KM/H</span>
+                         </div>
+                     </div>
+                </div>
+            }
+
+            <!-- "+ ADD VEHICLE" CARD AT END OF CAROUSEL -->
+            <div class="vehicle-card add-card" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                <div class="add-card-content">
+                    <div class="add-plus-icon">+</div>
+                    <div class="add-card-text">ADD VEHICLE</div>
+                    <div class="add-card-sub">Upload Custom Car / Bike</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="carousel-arrow-btn next-btn" id="carouselNextBtn" title="Next Vehicles">
+            <span>›</span>
+        </button>
+    </div>
+</div>
+
+<!-- MODAL: ADD VEHICLE WITH IMAGE UPLOAD -->
+<div class="modal fade" id="addVehicleModal" tabindex="-1" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-motorsport">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="addVehicleModalLabel">
+                    <span class="text-orange">🏁</span> CREATE NEW VEHICLE SPECIFICATION
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/Home/AddVehicle" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label micro-label">VEHICLE NAME</label>
+                            <input type="text" name="Name" class="form-control form-control-dark" placeholder="e.g. FERRARI 499P" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label micro-label">MANUFACTURER</label>
+                            <input type="text" name="Manufacturer" class="form-control form-control-dark" placeholder="e.g. Ferrari" required>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label micro-label">TYPE</label>
+                            <select name="VehicleType" class="form-select form-control-dark">
+                                <option value="Car">Car</option>
+                                <option value="Bike">Bike</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label micro-label">CATEGORY</label>
+                            <select name="VehicleCategory" class="form-select form-control-dark">
+                                <option value="Race">Race</option>
+                                <option value="Production">Production</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label micro-label">CLASS</label>
+                            <input type="text" name="Class" class="form-control form-control-dark" placeholder="e.g. Hypercar, GT3">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label micro-label">ENGINE</label>
+                            <input type="text" name="Engine" class="form-control form-control-dark" placeholder="e.g. Twin-Turbo V6">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label micro-label">POWER (HP)</label>
+                            <input type="number" name="Power" class="form-control form-control-dark" placeholder="680" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label micro-label">WEIGHT (KG)</label>
+                            <input type="number" name="Weight" class="form-control form-control-dark" placeholder="1030" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label micro-label">TOP SPEED (KM/H)</label>
+                            <input type="number" name="TopSpeed" class="form-control form-control-dark" placeholder="330" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label micro-label">VEHICLE IMAGE UPLOAD</label>
+                            <input type="file" name="ImageFile" accept="image/*" class="form-control form-control-dark">
+                            <small class="text-muted d-block mt-1">Uploaded image will be preserved and used in the central hero display and carousel cards.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-orange-primary px-4">SAVE & REGISTER VEHICLE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CONTEXT MENU: RIGHT-CLICK ON VEHICLE CARD -->
+<div id="vehicleContextMenu" class="vehicle-context-menu d-none">
+    <div class="context-menu-header">
+        <span class="context-vehicle-name" id="ctxVehicleTitle">VEHICLE</span>
+        <span class="context-pill">// ACTIONS</span>
+    </div>
+    <div class="context-menu-items">
+        <button type="button" class="context-menu-item" id="ctxBtnEdit" onclick="onContextEditClicked()">
+            <span class="ctx-icon">✏️</span>
+            <span class="ctx-label">Edit Vehicle Stats</span>
+        </button>
+        <div class="context-menu-divider"></div>
+        <button type="button" class="context-menu-item item-danger" id="ctxBtnDelete" onclick="onContextDeleteClicked()">
+            <span class="ctx-icon">🗑️</span>
+            <span class="ctx-label">Delete Vehicle</span>
+        </button>
+    </div>
+</div>
+
+<!-- MODAL: EDIT VEHICLE STATS -->
+<div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-motorsport">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="editVehicleModalLabel">
+                    <span class="text-orange">✏️</span> EDIT VEHICLE SPECIFICATIONS
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editVehicleForm" onsubmit="submitEditVehicle(event)">
+                <input type="hidden" id="editVehicleId" name="VehicleId" value="" />
+                <div class="modal-body p-4">
+                    <div id="editAlertError" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
+
+                    <!-- SECTION 1: VEHICLE IDENTITY -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 01 VEHICLE IDENTITY</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">MANUFACTURER</label>
+                                <input type="text" id="editManufacturer" name="Manufacturer" class="form-control form-control-dark" required placeholder="e.g. Ferrari">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">VEHICLE NAME</label>
+                                <input type="text" id="editName" name="Name" class="form-control form-control-dark" required placeholder="e.g. 499P">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label micro-label">VEHICLE TYPE</label>
+                                <select id="editVehicleType" name="VehicleType" class="form-select form-control-dark">
+                                    <option value="Car">Car</option>
+                                    <option value="Bike">Bike</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label micro-label">CATEGORY</label>
+                                <select id="editVehicleCategory" name="VehicleCategory" class="form-select form-control-dark">
+                                    <option value="Race">Race</option>
+                                    <option value="Production">Production</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label micro-label">CLASS / DIVISION</label>
+                                <input type="text" id="editClass" name="Class" class="form-control form-control-dark" placeholder="e.g. Hypercar, Superbike">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label micro-label">ENGINE / MOTOR</label>
+                                <input type="text" id="editEngine" name="Engine" class="form-control form-control-dark" placeholder="e.g. 3.0L Twin-Turbo V6">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: PERFORMANCE METRICS -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 02 PERFORMANCE METRICS</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label micro-label">HORSEPOWER (HP)</label>
+                                <input type="number" id="editPower" name="Power" class="form-control form-control-dark" min="1" max="3000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label micro-label">WEIGHT (KG)</label>
+                                <input type="number" id="editWeight" name="Weight" class="form-control form-control-dark" min="1" max="10000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label micro-label">TOP SPEED (KM/H)</label>
+                                <input type="number" id="editTopSpeed" name="TopSpeed" class="form-control form-control-dark" min="1" max="600" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: VEHICLE IMAGE -->
+                    <div class="modal-section-box">
+                        <div class="modal-section-title">// 03 VEHICLE IMAGE</div>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <div class="edit-img-preview-box">
+                                    <img id="editImagePreview" src="/images/placeholder_car.png" alt="Vehicle Preview" onerror="this.onerror=null; this.src='/images/placeholder_car.png';" />
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="form-label micro-label">CHANGE / UPLOAD IMAGE</label>
+                                <input type="file" id="editImageFile" name="ImageFile" accept="image/*" class="form-control form-control-dark" onchange="previewEditImage(this)">
+                                <small class="text-muted d-block mt-1">Leave empty to keep current image. Supports JPG, PNG, WEBP.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-orange-primary px-4" id="btnSaveVehicle">
+                        <span id="btnSaveVehicleText">SAVE CHANGES</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DELETE VEHICLE CONFIRMATION -->
+<div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-labelledby="deleteVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-motorsport border-danger">
+            <div class="modal-header border-danger-subtle">
+                <h5 class="modal-title d-flex align-items-center gap-2 text-danger" id="deleteVehicleModalLabel">
+                    <span>⚠️</span> DELETE VEHICLE?
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-2 text-secondary">Are you sure you want to delete:</p>
+                <h4 class="text-white fw-bold mb-3" id="deleteVehicleName">VEHICLE NAME</h4>
+                <div class="alert alert-warning py-2 px-3 small border-0" style="background: rgba(234, 179, 8, 0.15); color: #facc15;">
+                    This action cannot be undone. All telemetry sessions for this vehicle will also be removed.
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center gap-3">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnConfirmDelete" onclick="confirmDeleteVehicle()">
+                    <span id="btnDeleteText">DELETE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    /* ==========================================================================
+       16:9 DESKTOP MOTORSPORT WORKSTATION RESIZED PROPORTIONS (1920x1080 OPTIMIZED)
+       ========================================================================== */
+    :root {
+        --c-bg: #090a0f;
+        --c-panel: rgba(16, 18, 26, 0.90);
+        --c-panel-border: rgba(255, 255, 255, 0.08);
+        --c-orange: #ff5a1f;
+        --c-orange-glow: rgba(255, 90, 31, 0.4);
+        --c-cyan: #00d2ff;
+        --c-cyan-glow: rgba(0, 210, 255, 0.4);
+        --c-red: #ff3344;
+        --c-green: #00ff41;
+        --c-text: #ffffff;
+        --c-muted: #8e95a5;
+        --font-mono: 'Consolas', 'Roboto Mono', 'SF Mono', monospace;
+    }
+
+    body {
+        background-color: var(--c-bg);
+        overflow: hidden;
+    }
+
+    .garage-workstation-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 48px);
+        background-image: 
+            radial-gradient(rgba(255, 90, 31, 0.04) 1px, transparent 1px),
+            linear-gradient(180deg, #0d0e17 0%, #08090e 100%);
+        background-size: 28px 28px, 100% 100%;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    /* --------------------------------------------------------------------------
+       UPPER ZONE: DRIVER VISIBILITY ZONE (PERFORMANCE, TELEMETRY, STATS)
+       -------------------------------------------------------------------------- */
+    .workstation-upper-grid {
+        height: calc(71% - 52px);
+        flex: 0 0 calc(71% - 52px);
+        min-height: 480px;
+        display: grid;
+        grid-template-columns: 27.5% 45% 27.5%;
+        gap: 16px;
+        padding: 12px 20px 6px 20px;
+    }
+
+    .dash-panel {
+        background: var(--c-panel);
+        border: 1px solid var(--c-panel-border);
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        padding: 16px 20px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 8px;
+    }
+
+    .panel-tag {
+        font-family: var(--font-mono);
+        color: var(--c-orange);
+        font-size: 0.82rem;
+        font-weight: bold;
+    }
+
+    .panel-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 1.8px;
+        color: #ffffff;
+    }
+
+    .status-indicator {
+        margin-left: auto;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--c-cyan);
+        box-shadow: 0 0 8px var(--c-cyan);
+    }
+
+    /* --------------------------------------------------------------------------
+       LEFT: PERFORMANCE CIRCULAR GAUGE & TYRE TEMPERATURES
+       -------------------------------------------------------------------------- */
+    .panel-performance {
+        border-top: 3px solid var(--c-orange);
+        justify-content: space-between;
+    }
+
+    .gauge-container {
+        position: relative;
+        width: clamp(210px, 23vh, 250px);
+        height: clamp(210px, 23vh, 250px);
+        margin: 2px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .radial-gauge-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(135deg);
+    }
+
+    .gauge-track-bg {
+        fill: none;
+        stroke: #181b28;
+        stroke-width: 12;
+        stroke-dasharray: 565;
+        stroke-dashoffset: 141;
+    }
+
+    .gauge-bar-fill {
+        fill: none;
+        stroke: var(--c-cyan);
+        stroke-width: 12;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.6s cubic-bezier(0.2, 1, 0.3, 1), stroke 0.6s ease;
+        filter: drop-shadow(0 0 8px var(--c-cyan-glow));
+    }
+
+    .gauge-center-content {
+        position: absolute;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .gauge-speed-label {
+        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 2.5px;
+        font-weight: 700;
+    }
+
+    .gauge-speed-val {
+        font-size: clamp(3.8rem, 4.8vh, 4.6rem);
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 0.95;
+        letter-spacing: -2px;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .gauge-speed-unit {
+        font-size: 1rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+        color: var(--c-cyan);
+        letter-spacing: 1.5px;
+        margin-top: 2px;
+    }
+
+    .gauge-submetrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin: 6px 0;
+    }
+
+    .submetric-box {
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    .submetric-label {
+        display: block;
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 1.2px;
+        margin-bottom: 2px;
+    }
+
+    .submetric-val {
+        font-size: 1.15rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+    }
+
+    .tyre-temp-section {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 10px 14px;
+    }
+
+    .section-micro-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: #e2e8f0;
+        margin-bottom: 8px;
+    }
+
+    .tyre-grid-car {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .tyre-grid-bike {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.2fr;
+        gap: 8px;
+    }
+
+    .tyre-box {
+        background: #111422;
+        border-left: 3px solid var(--c-green);
+        padding: 6px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 4px;
+    }
+
+    .tyre-pos {
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        font-weight: 700;
+    }
+
+    .tyre-val {
+        font-size: 0.92rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+        color: #ffffff;
+    }
+
+    /* --------------------------------------------------------------------------
+       CENTER: HERO VEHICLE DISPLAY & LIVE TELEMETRY STRIP
+       -------------------------------------------------------------------------- */
+    .panel-hero-vehicle {
+        border-top: 3px solid var(--c-cyan);
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .hero-vehicle-badge {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 700;
+        background: rgba(0, 210, 255, 0.12);
+        color: var(--c-cyan);
+        border: 1px solid rgba(0, 210, 255, 0.35);
+        padding: 4px 14px;
+        border-radius: 4px;
+    }
+
+    .hero-image-stage {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .stage-crosshair {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.25);
+        font-family: var(--font-mono);
+        font-size: 1.1rem;
+        pointer-events: none;
+    }
+    .stage-crosshair.top-left { top: 8px; left: 10px; }
+    .stage-crosshair.top-right { top: 8px; right: 10px; }
+    .stage-crosshair.bottom-left { bottom: 8px; left: 10px; }
+    .stage-crosshair.bottom-right { bottom: 8px; right: 10px; }
+
+    .hero-vehicle-img {
+        max-width: 96%;
+        max-height: clamp(340px, 42vh, 450px);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.9));
+        transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .hero-fallback {
+        text-align: center;
+        padding: 30px;
+    }
+
+    .fallback-icon {
+        font-size: 3.5rem;
+        margin-bottom: 10px;
+    }
+
+    .fallback-title {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.15rem;
+        letter-spacing: 2px;
+        color: #f1f5f9;
+        margin-bottom: 6px;
+    }
+
+    .fallback-sub {
+        font-size: 0.85rem;
+        color: var(--c-muted);
+        max-width: 360px;
+        margin: 0 auto;
+    }
+
+    /* TELEMETRY CHANNELS STRIP */
+    .telemetry-channels-strip {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .channel-metric-card {
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+
+    .channel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .channel-name {
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 1.2px;
+        font-weight: 700;
+    }
+
+    .channel-val {
+        font-size: 0.98rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+    }
+
+    .channel-progress-bg {
+        width: 100%;
+        height: 7px;
+        background: #181c2a;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .channel-progress-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.4s ease;
+    }
+
+    .bg-cyan { background-color: var(--c-cyan); box-shadow: 0 0 8px var(--c-cyan); }
+    .bg-red { background-color: var(--c-red); box-shadow: 0 0 8px var(--c-red); }
+    .bg-orange { background-color: var(--c-orange); box-shadow: 0 0 8px var(--c-orange); }
+
+    /* --------------------------------------------------------------------------
+       RIGHT: VEHICLE SPECIFICATIONS & ANALYZE ACTION
+       -------------------------------------------------------------------------- */
+    .panel-vehicle-stats {
+        border-top: 3px solid var(--c-orange);
+        justify-content: space-between;
+    }
+
+    .vehicle-identity-header {
+        margin-bottom: 8px;
+    }
+
+    .stats-name {
+        font-size: clamp(1.6rem, 2.3vh, 2.1rem);
+        font-weight: 900;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        color: #ffffff;
+        margin: 0 0 6px 0;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stats-classification {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .badge-class {
+        background: rgba(255, 90, 31, 0.18);
+        color: var(--c-orange);
+        border: 1px solid rgba(255, 90, 31, 0.35);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 800;
+        padding: 3px 10px;
+        border-radius: 4px;
+    }
+
+    .badge-manufacturer {
+        color: #cbd5e1;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+    }
+
+    .spec-table-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 12px;
+    }
+
+    .spec-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 4px;
+        border-left: 3px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .spec-title {
+        font-size: 0.78rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 1.2px;
+        font-weight: 700;
+    }
+
+    .spec-num {
+        font-size: 1.08rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+        color: #f8fafc;
+    }
+
+    .analyze-btn-container {
+        margin-top: auto;
+        padding-top: 6px;
+    }
+
+    .btn-analyze-primary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        width: 100%;
+        padding: 15px 22px;
+        background: linear-gradient(135deg, #ff5a1f 0%, #e04810 100%);
+        color: #ffffff !important;
+        font-weight: 900;
+        font-size: 1.02rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        border-radius: 6px;
+        text-decoration: none;
+        border: none;
+        box-shadow: 0 6px 22px rgba(255, 90, 31, 0.5);
+        transition: all 0.22s ease;
+    }
+
+    .btn-analyze-primary:hover {
+        background: linear-gradient(135deg, #ff7138 0%, #ff5a1f 100%);
+        box-shadow: 0 8px 28px rgba(255, 90, 31, 0.75);
+        transform: translateY(-2px);
+    }
+
+    .btn-icon {
+        font-size: 1.2rem;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-analyze-primary:hover .btn-icon {
+        transform: translateX(5px);
+    }
+
+    /* --------------------------------------------------------------------------
+       ZONE DIVIDER: CATEGORY / FILTER NAVIGATION BAR (ENLARGED BUTTONS)
+       -------------------------------------------------------------------------- */
+    .workstation-filter-bar {
+        height: 52px;
+        flex: 0 0 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        background: #0d0f18;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .filter-group-label {
+        font-size: 0.84rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 2px;
+        font-weight: 800;
+    }
+
+    .segmented-btn-group {
+        display: flex;
+        background: #151824;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .btn-seg {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        padding: 8px 24px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-seg.active {
+        background: var(--c-orange);
+        color: #ffffff;
+        box-shadow: 0 0 16px var(--c-orange-glow);
+    }
+
+    .btn-seg:hover:not(.active) {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-add-vehicle-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 90, 31, 0.14);
+        border: 1.5px dashed var(--c-orange);
+        color: var(--c-orange);
+        font-size: 0.95rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        padding: 8px 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-vehicle-nav:hover {
+        background: var(--c-orange);
+        color: #ffffff;
+        box-shadow: 0 0 20px var(--c-orange-glow);
+        border-style: solid;
+    }
+
+    .plus-sign {
+        font-size: 1.25rem;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    /* --------------------------------------------------------------------------
+       LOWER SECTION: OCCUPY ALL AREA IN LOWER PART (ENLARGED CARDS)
+       -------------------------------------------------------------------------- */
+    .workstation-carousel-container {
+        height: 29%;
+        flex: 0 0 29%;
+        min-height: 0;
+        padding: 6px 20px 8px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #08090f;
+        position: relative;
+    }
+
+    .carousel-arrow-btn {
+        width: 38px;
+        height: clamp(140px, 18vh, 190px);
+        background: rgba(18, 20, 30, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #cbd5e1;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 5;
+    }
+
+    .carousel-arrow-btn:hover {
+        background: var(--c-orange);
+        color: #ffffff;
+        border-color: var(--c-orange);
+        box-shadow: 0 0 16px var(--c-orange-glow);
+    }
+
+    .carousel-viewport-track {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: 4px 4px;
+        scrollbar-width: thin;
+        scrollbar-color: #24293d transparent;
+    }
+
+    .carousel-viewport-track::-webkit-scrollbar {
+        height: 5px;
+    }
+    .carousel-viewport-track::-webkit-scrollbar-thumb {
+        background: #24293d;
+        border-radius: 3px;
+    }
+
+    /* FULL-HEIGHT VEHICLE CARD */
+    .vehicle-card {
+        flex: 0 0 clamp(255px, 15.5vw, 295px);
+        width: clamp(255px, 15.5vw, 295px);
+        height: clamp(180px, 23vh, 225px);
+        background: #111420;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.24s cubic-bezier(0.25, 1, 0.5, 1);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+    }
+
+    .vehicle-card:hover {
+        border-color: rgba(255, 90, 31, 0.7);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.85);
+    }
+
+    .vehicle-card.active {
+        border: 2px solid var(--c-orange);
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 0 24px var(--c-orange-glow), 0 12px 28px rgba(0,0,0,0.9);
+    }
+
+    .card-image-box {
+        height: clamp(112px, 14vh, 145px);
+        width: 100%;
+        position: relative;
+        background: #090a12;
+        overflow: hidden;
+    }
+
+    .card-thumb {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+
+    .vehicle-card:hover .card-thumb {
+        transform: scale(1.08);
+    }
+
+    .card-gradient-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(9,10,18,0.92) 100%);
+    }
+
+    .card-top-tags {
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        right: 8px;
+        display: flex;
+        justify-content: space-between;
+        z-index: 2;
+    }
+
+    .badge-mini-class {
+        font-size: 0.7rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+        background: rgba(0, 0, 0, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--c-cyan);
+        padding: 2px 7px;
+        border-radius: 4px;
+    }
+
+    .badge-mini-spec {
+        font-size: 0.7rem;
+        font-family: var(--font-mono);
+        font-weight: 800;
+        background: rgba(0, 0, 0, 0.8);
+        color: var(--c-orange);
+        padding: 2px 7px;
+        border-radius: 4px;
+    }
+
+    .card-info-box {
+        flex: 1;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: #111420;
+    }
+
+    .card-vehicle-title {
+        font-size: 0.98rem;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 0.8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+    }
+
+    .card-vehicle-sub {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.78rem;
+        color: var(--c-muted);
+    }
+
+    .card-mfg-badge {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .card-speed-badge {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        color: var(--c-cyan);
+    }
+
+    /* FULL-HEIGHT "+ ADD VEHICLE" CARD IN CAROUSEL */
+    .vehicle-card.add-card {
+        border: 2px dashed rgba(255, 255, 255, 0.25);
+        background: rgba(18, 20, 32, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .vehicle-card.add-card:hover {
+        border-color: var(--c-orange);
+        background: rgba(255, 90, 31, 0.1);
+    }
+
+    .add-card-content {
+        text-align: center;
+        padding: 12px;
+    }
+
+    .add-plus-icon {
+        font-size: 2.6rem;
+        color: var(--c-orange);
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+
+    .add-card-text {
+        font-size: 0.92rem;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: #ffffff;
+    }
+
+    .add-card-sub {
+        font-size: 0.72rem;
+        color: var(--c-muted);
+    }
+
+    /* --------------------------------------------------------------------------
+       MODAL STYLING
+       -------------------------------------------------------------------------- */
+    .modal-motorsport {
+        background: #111420;
+        border: 1px solid var(--c-orange);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--c-orange-glow);
+        color: #ffffff;
+    }
+
+    .modal-motorsport .modal-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 14px 20px;
+    }
+
+    .modal-motorsport .modal-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 20px;
+    }
+
+    .micro-label {
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 1.2px;
+        margin-bottom: 4px;
+    }
+
+    .form-control-dark {
+        background: #181c2c;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-size: 0.88rem;
+        border-radius: 4px;
+    }
+
+    .form-control-dark:focus {
+        background: #1e2337;
+        border-color: var(--c-cyan);
+        box-shadow: 0 0 10px var(--c-cyan-glow);
+        color: #ffffff;
+    }
+
+    .btn-orange-primary {
+        background: var(--c-orange);
+        border: none;
+        color: #ffffff;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+    }
+
+    .btn-orange-primary:hover {
+        background: #ff7138;
+        box-shadow: 0 0 15px var(--c-orange-glow);
+        color: #ffffff;
+    }
+
+    /* CUSTOM VEHICLE CONTEXT MENU */
+    .vehicle-context-menu {
+        position: fixed;
+        z-index: 1060;
+        min-width: 215px;
+        background: rgba(14, 17, 26, 0.98);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--c-orange);
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px var(--c-orange-glow);
+        padding: 6px;
+        user-select: none;
+        animation: ctxMenuFadeIn 0.12s ease-out;
+    }
+
+    @@keyframes ctxMenuFadeIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .context-menu-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 4px;
+    }
+
+    .context-vehicle-name {
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        color: #fff;
+        max-width: 125px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .context-pill {
+        font-size: 0.6rem;
+        font-family: var(--font-mono);
+        color: var(--c-orange);
+        letter-spacing: 0.8px;
+    }
+
+    .context-menu-items {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .context-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 12px;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #d1d5db;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .context-menu-item .ctx-icon {
+        font-size: 0.95rem;
+    }
+
+    .context-menu-item:hover {
+        background: rgba(255, 90, 31, 0.15);
+        border-color: rgba(255, 90, 31, 0.4);
+        color: #fff;
+        transform: translateX(2px);
+    }
+
+    .context-menu-item.item-danger:hover {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+    }
+
+    .context-menu-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 2px 0;
+    }
+
+    /* EDIT MODAL SECTION BOXES & PREVIEW */
+    .modal-section-box {
+        background: rgba(24, 28, 44, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 14px 16px;
+    }
+
+    .modal-section-title {
+        font-size: 0.68rem;
+        font-family: var(--font-mono);
+        color: var(--c-orange);
+        letter-spacing: 1px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .edit-img-preview-box {
+        width: 120px;
+        height: 75px;
+        background: #0d0f18;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .edit-img-preview-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* --------------------------------------------------------------------------
+       RESPONSIVE SMART COLLAPSE (TABLETS & MOBILE)
+       -------------------------------------------------------------------------- */
+    @@media (max-width: 1024px) {
+        body {
+            overflow: auto !important;
+        }
+
+        .garage-workstation-container {
+            height: auto !important;
+            min-height: calc(100vh - 48px);
+            overflow-y: auto !important;
+        }
+
+        .workstation-upper-grid {
+            height: auto !important;
+            flex: none !important;
+            grid-template-columns: 1fr !important;
+            gap: 14px;
+            padding: 12px;
+        }
+
+        .dash-panel {
+            min-height: 280px;
+        }
+
+        .hero-vehicle-img {
+            max-height: 280px;
+        }
+
+        .workstation-filter-bar {
+            height: auto !important;
+            flex: none !important;
+            flex-wrap: wrap;
+            padding: 10px;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .workstation-carousel-container {
+            height: auto !important;
+            flex: none !important;
+            padding: 12px 16px;
+        }
+
+        .vehicle-card {
+            flex: 0 0 215px !important;
+            width: 215px !important;
+            height: 140px !important;
+        }
+    }
+</style>
+
+<script>
+    // ==========================================================================
+    // VEHICLE WORKSTATION ENGINE & DYNAMIC SPECIFICATION STATE
+    // ==========================================================================
+    let currentType = 'car';
+    let currentCat = 'race';
+    let selectedVehicleId = 1;
+
+    // In-memory data store serialized from backend
+    const vehiclesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(v => new {
+        id = v.VehicleId,
+        name = v.Name,
+        manufacturer = v.Manufacturer,
+        type = v.VehicleType.ToString().ToLower(),
+        category = v.VehicleCategory.ToString().ToLower(),
+        vClass = v.Class ?? (v.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Car ? "Race Car" : "Superbike"),
+        engine = v.Engine ?? (v.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Car ? "Hybrid V8" : "Inline-4"),
+        power = v.Power,
+        weight = v.Weight,
+        topSpeed = v.TopSpeed,
+        imagePath = v.ImagePath
+    })));
+
+    function onVehicleCardClicked(cardEl) {
+        if (!cardEl) return;
+        const id = parseInt(cardEl.getAttribute('data-id'));
+        selectVehicleById(id);
+    }
+
+    function selectVehicleById(id) {
+        const vehicle = vehiclesData.find(v => v.id === id);
+        if (!vehicle) return;
+
+        selectedVehicleId = vehicle.id;
+
+        // 1. Highlight Active Card in Carousel
+        document.querySelectorAll('.vehicle-card').forEach(c => {
+            if (parseInt(c.getAttribute('data-id')) === id) {
+                c.classList.add('active');
+            } else {
+                c.classList.remove('active');
+            }
+        });
+
+        // 2. Update Left Performance Gauge & Sub-metrics
+        const speedNum = vehicle.topSpeed || 300;
+        const powerNum = vehicle.power || 500;
+        const isBike = vehicle.type === 'bike';
+
+        // Calculate dynamic RPM & Gear based on engine / vehicle physics
+        let rpm = isBike ? 13200 + Math.floor((powerNum % 40) * 80) : 8400 + Math.floor((powerNum % 80) * 20);
+        if (rpm > 16500) rpm = 16500;
+        const gear = isBike ? 6 : (speedNum >= 325 ? 7 : 6);
+
+        document.getElementById('perfSpeedVal').innerText = speedNum;
+        document.getElementById('perfRpmVal').innerText = rpm.toLocaleString();
+        document.getElementById('perfGearVal').innerText = 'GEAR ' + gear;
+
+        const powerOrLeanLabel = document.getElementById('perfPowerOrLeanLabel');
+        const powerOrLeanVal = document.getElementById('perfPowerOrLeanVal');
+
+        if (isBike) {
+            powerOrLeanLabel.innerText = 'LEAN';
+            powerOrLeanVal.innerText = '55.0°';
+            powerOrLeanVal.className = 'submetric-val text-cyan';
+            document.getElementById('tyreGridCar').classList.add('d-none');
+            document.getElementById('tyreGridBike').classList.remove('d-none');
+
+            // Dynamic Bike Tyre calculation from vehicle physics
+            const bikeFTemp = Math.round(28 + 46 + (powerNum / 250) * 8 + (speedNum / 300) * 5);
+            const bikeRTemp = Math.round(28 + 52 + (powerNum / 200) * 10 + (speedNum / 300) * 6);
+            const bikeLean = (50 + (powerNum % 8) * 0.8).toFixed(1);
+            if (document.getElementById('tyreFront')) document.getElementById('tyreFront').innerText = bikeFTemp + '°C';
+            if (document.getElementById('tyreRear')) document.getElementById('tyreRear').innerText = bikeRTemp + '°C';
+            if (document.getElementById('tyreLean')) document.getElementById('tyreLean').innerText = bikeLean + '°';
+        } else {
+            powerOrLeanLabel.innerText = 'POWER';
+            powerOrLeanVal.innerText = powerNum + ' HP';
+            powerOrLeanVal.className = 'submetric-val text-orange';
+            document.getElementById('tyreGridCar').classList.remove('d-none');
+            document.getElementById('tyreGridBike').classList.add('d-none');
+
+            // Dynamic Car Tyre calculation from vehicle physics
+            const pScale = (powerNum / 800) * 10;
+            const sScale = (speedNum / 200) * 5;
+            const fl = Math.round(28 + 49 + pScale + sScale);
+            const fr = Math.round(28 + 51 + pScale + sScale);
+            const rl = Math.round(28 + 47 + pScale * 0.9 + sScale);
+            const rr = Math.round(28 + 49 + pScale * 0.9 + sScale);
+            if (document.getElementById('tyreFL')) document.getElementById('tyreFL').innerText = fl + '°C';
+            if (document.getElementById('tyreFR')) document.getElementById('tyreFR').innerText = fr + '°C';
+            if (document.getElementById('tyreRL')) document.getElementById('tyreRL').innerText = rl + '°C';
+            if (document.getElementById('tyreRR')) document.getElementById('tyreRR').innerText = rr + '°C';
+        }
+
+        // Dynamic Gauge Arc Calculation (sweep of ~270 degrees, circumference = 565)
+        const arc = document.getElementById('perfGaugeArc');
+        if (arc) {
+            const maxGaugeSpeed = isBike ? 340 : 380;
+            const ratio = Math.min(speedNum / maxGaugeSpeed, 1.0);
+            const totalDash = 565;
+            const fullOffset = 141; 
+            const offset = totalDash - (ratio * (totalDash - fullOffset));
+            arc.style.strokeDashoffset = offset;
+
+            if (speedNum >= 335) {
+                arc.style.stroke = '#ff5a1f';
+                arc.style.filter = 'drop-shadow(0 0 10px rgba(255, 90, 31, 0.6))';
+            } else if (speedNum >= 310) {
+                arc.style.stroke = '#ffd700';
+                arc.style.filter = 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))';
+            } else {
+                arc.style.stroke = '#00d2ff';
+                arc.style.filter = 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))';
+            }
+        }
+
+        // 3. Update Center Hero Vehicle Image & Telemetry Channels
+        const heroImg = document.getElementById('heroVehicleImg');
+        const fallbackEl = document.getElementById('heroFallback');
+        const heroBadge = document.getElementById('heroVehicleBadge');
+
+        if (heroBadge) {
+            heroBadge.innerText = `${vehicle.name} ${vehicle.vClass} — Live View`;
+        }
+
+        if (heroImg) {
+            heroImg.classList.add('fade-out');
+            setTimeout(() => {
+                if (vehicle.imagePath) {
+                    heroImg.src = vehicle.imagePath;
+                    heroImg.classList.remove('d-none');
+                    if (fallbackEl) fallbackEl.classList.add('d-none');
+                } else {
+                    heroImg.classList.add('d-none');
+                    if (fallbackEl) fallbackEl.classList.remove('d-none');
+                }
+                heroImg.classList.remove('fade-out');
+            }, 180);
+        }
+
+        // Calibrate Live Channels (Throttle, Braking, Fuel)
+        const throttleVal = isBike ? 92 : 95;
+        const fuelRemaining = isBike ? 17 : (vehicle.category === 'race' ? 87 : 64);
+        const fuelUnit = isBike ? ' L' : ' L';
+
+        const liveThrottle = document.getElementById('liveThrottleVal');
+        const barThrottle = document.getElementById('barThrottle');
+        if (liveThrottle) liveThrottle.innerText = throttleVal + '%';
+        if (barThrottle) barThrottle.style.width = throttleVal + '%';
+
+        const liveFuel = document.getElementById('liveFuelVal');
+        const barFuel = document.getElementById('barFuel');
+        if (liveFuel) liveFuel.innerText = fuelRemaining + fuelUnit;
+        if (barFuel) barFuel.style.width = (fuelRemaining / (isBike ? 20 : 100) * 100) + '%';
+
+        // 4. Update Right Vehicle Stats Panel
+        const statsName = document.getElementById('statsVehicleName');
+        const statsClass = document.getElementById('statsClassBadge');
+        const statsMfg = document.getElementById('statsManufacturer');
+        const statsPower = document.getElementById('statsPowerVal');
+        const statsWeight = document.getElementById('statsWeightVal');
+        const statsSpeed = document.getElementById('statsSpeedVal');
+        const statsEngine = document.getElementById('statsEngineVal');
+        const statsPtw = document.getElementById('statsPtwVal');
+        const statsExtraLabel = document.getElementById('statsExtraLabel');
+        const statsExtraVal = document.getElementById('statsExtraVal');
+        const btnAnalyze = document.getElementById('btnAnalyzeVehicle');
+
+        if (statsName) statsName.innerText = vehicle.name;
+        if (statsClass) statsClass.innerText = vehicle.vClass;
+        if (statsMfg) statsMfg.innerText = vehicle.manufacturer.toUpperCase();
+        if (statsPower) statsPower.innerText = vehicle.power + ' HP';
+        if (statsWeight) statsWeight.innerText = vehicle.weight + ' KG';
+        if (statsSpeed) statsSpeed.innerText = vehicle.topSpeed + ' KM/H';
+        if (statsEngine) statsEngine.innerText = vehicle.engine;
+
+        if (statsPtw && vehicle.weight > 0) {
+            const ptw = (vehicle.power / vehicle.weight).toFixed(2);
+            statsPtw.innerText = `${ptw} HP/KG`;
+        }
+
+        if (statsExtraLabel && statsExtraVal) {
+            if (isBike) {
+                statsExtraLabel.innerText = 'DISPLACEMENT';
+                statsExtraVal.innerText = vehicle.engine.includes('998') ? '998 cc' : (vehicle.engine.includes('999') ? '999 cc' : '1000 cc');
+            } else if (vehicle.category === 'race') {
+                statsExtraLabel.innerText = 'DRIVETRAIN';
+                statsExtraVal.innerText = vehicle.name.includes('FERRARI F1') ? 'RWD Hybrid' : 'AWD Hybrid';
+            } else {
+                statsExtraLabel.innerText = 'DRIVETRAIN';
+                statsExtraVal.innerText = vehicle.name.includes('BMW M4') || vehicle.name.includes('PORSCHE 911') ? 'RWD' : 'AWD';
+            }
+        }
+
+        // 5. Connect "ANALYZE VEHICLE" button directly to the selected vehicle
+        if (btnAnalyze) {
+            btnAnalyze.href = '/Track?vehicleId=' + vehicle.id;
+        }
+    }
+
+    function handleImageError(img) {
+        if (!img) return;
+        img.onerror = null;
+        img.classList.add('d-none');
+        const fallback = document.getElementById('heroFallback');
+        if (fallback) fallback.classList.remove('d-none');
+    }
+
+    function handleThumbError(img) {
+        if (!img) return;
+        img.onerror = null;
+        img.src = '/images/placeholder_car.png';
+    }
+
+    function filterVehicles() {
+        let firstCard = null;
+        const track = document.getElementById('vehicleCarouselTrack');
+
+        document.querySelectorAll('.vehicle-card:not(.add-card)').forEach(card => {
+            const cardType = card.getAttribute('data-type');
+            const cardCat = card.getAttribute('data-category');
+
+            if (cardType === currentType && cardCat === currentCat) {
+                card.classList.remove('d-none');
+                if (!firstCard) {
+                    firstCard = card;
+                }
+            } else {
+                card.classList.add('d-none');
+                card.classList.remove('active');
+            }
+        });
+
+        // Auto select first matching vehicle
+        if (firstCard) {
+            firstCard.click();
+            if (track) track.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    }
+
+    // Filter Buttons Wiring
+    document.getElementById('btnCars').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('btnBikes').classList.remove('active');
+        currentType = 'car';
+        filterVehicles();
+    });
+
+    document.getElementById('btnBikes').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('btnCars').classList.remove('active');
+        currentType = 'bike';
+        filterVehicles();
+    });
+
+    document.getElementById('btnRace').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('btnProd').classList.remove('active');
+        currentCat = 'race';
+        filterVehicles();
+    });
+
+    document.getElementById('btnProd').addEventListener('click', function() {
+        this.classList.add('active');
+        document.getElementById('btnRace').classList.remove('active');
+        currentCat = 'production';
+        filterVehicles();
+    });
+
+    // Carousel Scrolling Navigation
+    const track = document.getElementById('vehicleCarouselTrack');
+    document.getElementById('carouselPrevBtn').addEventListener('click', function() {
+        if (track) track.scrollBy({ left: -580, behavior: 'smooth' });
+    });
+
+    document.getElementById('carouselNextBtn').addEventListener('click', function() {
+        if (track) track.scrollBy({ left: 580, behavior: 'smooth' });
+    });
+
+    // ==========================================================================
+    // VEHICLE MANAGEMENT: RIGHT-CLICK CONTEXT MENU, EDIT STATS & DELETE
+    // ==========================================================================
+    let contextVehicleId = null;
+
+    function initVehicleContextMenu() {
+        const menu = document.getElementById('vehicleContextMenu');
+
+        // Prevent native context menu on vehicle cards and show custom motorsport menu
+        document.addEventListener('contextmenu', (e) => {
+            const card = e.target.closest('.vehicle-card:not(.add-card)');
+            if (card) {
+                e.preventDefault();
+                const id = parseInt(card.getAttribute('data-id'));
+                const vehicle = vehiclesData.find(v => v.id === id);
+                if (!vehicle) return;
+
+                contextVehicleId = id;
+                const titleEl = document.getElementById('ctxVehicleTitle');
+                if (titleEl) titleEl.innerText = vehicle.name;
+
+                // Show menu to measure its real dimensions
+                menu.classList.remove('d-none');
+                const menuWidth = menu.offsetWidth || 215;
+                const menuHeight = menu.offsetHeight || 110;
+
+                // Position near cursor and guarantee it stays within viewport
+                let left = e.clientX + 4;
+                let top = e.clientY + 4;
+
+                if (left + menuWidth > window.innerWidth - 10) {
+                    left = Math.max(10, e.clientX - menuWidth - 4);
+                }
+                if (top + menuHeight > window.innerHeight - 10) {
+                    top = Math.max(10, e.clientY - menuHeight - 4);
+                }
+
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+            } else {
+                // Clicked outside vehicle cards: hide custom menu, default behavior preserved
+                hideContextMenu();
+            }
+        });
+
+        // Close when clicking anywhere outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#vehicleContextMenu')) {
+                hideContextMenu();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideContextMenu();
+            }
+        });
+
+        // Close on window resize or scroll
+        window.addEventListener('resize', hideContextMenu);
+        window.addEventListener('scroll', hideContextMenu, true);
+    }
+
+    function hideContextMenu() {
+        const menu = document.getElementById('vehicleContextMenu');
+        if (menu) menu.classList.add('d-none');
+    }
+
+    // --- EDIT VEHICLE MODAL ---
+    function populateEditForm(vehicle) {
+        document.getElementById('editVehicleId').value = vehicle.id;
+        document.getElementById('editManufacturer').value = vehicle.manufacturer || '';
+        document.getElementById('editName').value = vehicle.name || '';
+        document.getElementById('editVehicleType').value = (vehicle.type === 'bike' || vehicle.vehicleType === 'Bike') ? 'Bike' : 'Car';
+        document.getElementById('editVehicleCategory').value = (vehicle.category === 'production' || vehicle.vehicleCategory === 'Production') ? 'Production' : 'Race';
+        document.getElementById('editClass').value = vehicle.vClass || vehicle.class || '';
+        document.getElementById('editEngine').value = vehicle.engine || '';
+        document.getElementById('editPower').value = vehicle.power || '';
+        document.getElementById('editWeight').value = vehicle.weight || '';
+        document.getElementById('editTopSpeed').value = vehicle.topSpeed || '';
+
+        const previewImg = document.getElementById('editImagePreview');
+        if (previewImg) {
+            const fallbackPath = (vehicle.type === 'bike' || vehicle.vehicleType === 'Bike') ? '/images/placeholder_bike.png' : '/images/placeholder_car.png';
+            previewImg.onerror = function() {
+                this.onerror = null;
+                this.src = fallbackPath;
+            };
+            previewImg.src = vehicle.imagePath || fallbackPath;
+        }
+
+        const fileInput = document.getElementById('editImageFile');
+        if (fileInput) fileInput.value = '';
+    }
+
+    async function onContextEditClicked() {
+        hideContextMenu();
+        if (!contextVehicleId) return;
+
+        const alertError = document.getElementById('editAlertError');
+        if (alertError) {
+            alertError.classList.add('d-none');
+            alertError.innerText = '';
+        }
+
+        const targetId = contextVehicleId;
+
+        // 1. Immediately pre-fill from cached data
+        const cached = vehiclesData.find(v => v.id === targetId);
+        if (cached) {
+            populateEditForm(cached);
+        }
+
+        // 2. Open modal smoothly
+        const editModalEl = document.getElementById('editVehicleModal');
+        const editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+        editModal.show();
+
+        // 3. Authoritative fetch from database API
+        try {
+            const response = await fetch(`/Home/GetVehicle?id=${targetId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.vehicle) {
+                    populateEditForm(data.vehicle);
+                    // Update cache as well
+                    const idx = vehiclesData.findIndex(v => v.id === data.vehicle.id);
+                    if (idx !== -1) {
+                        vehiclesData[idx] = data.vehicle;
+                    }
+                }
+            } else if (!cached) {
+                throw new Error(`Server returned HTTP ${response.status}`);
+            }
+        } catch (err) {
+            if (!cached && alertError) {
+                alertError.innerText = 'Unable to load vehicle details: ' + err.message;
+                alertError.classList.remove('d-none');
+            }
+        }
+    }
+
+    function previewEditImage(input) {
+        if (input.files && input.files[0]) {
+            const previewImg = document.getElementById('editImagePreview');
+            if (previewImg) {
+                previewImg.src = URL.createObjectURL(input.files[0]);
+            }
+        }
+    }
+
+    async function submitEditVehicle(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        const form = document.getElementById('editVehicleForm');
+        const btnSave = document.getElementById('btnSaveVehicle');
+        const btnSaveText = document.getElementById('btnSaveVehicleText');
+        const alertError = document.getElementById('editAlertError');
+
+        if (alertError) {
+            alertError.classList.add('d-none');
+            alertError.innerText = '';
+        }
+
+        // Form validation
+        const vName = document.getElementById('editName').value.trim();
+        const vMfg = document.getElementById('editManufacturer').value.trim();
+        const vPower = parseInt(document.getElementById('editPower').value);
+        const vWeight = parseInt(document.getElementById('editWeight').value);
+        const vSpeed = parseInt(document.getElementById('editTopSpeed').value);
+
+        if (!vName || !vMfg) {
+            if (alertError) {
+                alertError.innerText = 'Vehicle Name and Manufacturer are required.';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (isNaN(vPower) || vPower <= 0 || isNaN(vWeight) || vWeight <= 0 || isNaN(vSpeed) || vSpeed <= 0) {
+            if (alertError) {
+                alertError.innerText = 'Power, Weight, and Top Speed must be positive values.';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (btnSave) btnSave.disabled = true;
+        if (btnSaveText) btnSaveText.innerText = 'SAVING...';
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/Home/EditVehicle', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Server error (HTTP ${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (_) {}
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to update vehicle.');
+            }
+
+            // 1. Update In-Memory vehiclesData store
+            const updated = result.vehicle;
+            const idx = vehiclesData.findIndex(v => v.id === updated.id);
+            if (idx !== -1) {
+                vehiclesData[idx] = updated;
+            } else {
+                vehiclesData.push(updated);
+            }
+
+            // 2. Update the DOM Card in the Carousel
+            const card = document.querySelector(`.vehicle-card[data-id="${updated.id}"]`);
+            if (card) {
+                card.setAttribute('data-name', updated.name);
+                card.setAttribute('data-manufacturer', updated.manufacturer);
+                card.setAttribute('data-type', updated.type);
+                card.setAttribute('data-category', updated.category);
+                card.setAttribute('data-class', updated.vClass);
+                card.setAttribute('data-engine', updated.engine);
+                card.setAttribute('data-power', updated.power);
+                card.setAttribute('data-weight', updated.weight);
+                card.setAttribute('data-speed', updated.topSpeed);
+                card.setAttribute('data-img', updated.imagePath);
+
+                const titleEl = card.querySelector('.card-vehicle-title');
+                if (titleEl) { titleEl.innerText = updated.name; titleEl.title = updated.name; }
+                const mfgEl = card.querySelector('.card-mfg-badge');
+                if (mfgEl) mfgEl.innerText = updated.manufacturer;
+                const speedEl = card.querySelector('.card-speed-badge');
+                if (speedEl) speedEl.innerText = updated.topSpeed + ' KM/H';
+                const classEl = card.querySelector('.badge-mini-class');
+                if (classEl) classEl.innerText = updated.vClass;
+                const powerEl = card.querySelector('.badge-mini-spec');
+                if (powerEl) powerEl.innerText = updated.power + ' HP';
+                const thumbEl = card.querySelector('.card-thumb');
+                if (thumbEl && updated.imagePath) thumbEl.src = updated.imagePath;
+            }
+
+            // 3. Update Hero Section & Technical Specs if this is the currently active vehicle
+            if (selectedVehicleId === updated.id) {
+                selectVehicleById(updated.id);
+            }
+
+            // 4. Close Modal
+            const modalEl = document.getElementById('editVehicleModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            // 5. Update card visibility based on active category/type filter
+            if (card) {
+                const cardType = card.getAttribute('data-type');
+                const cardCat = card.getAttribute('data-category');
+                if (cardType === currentType && cardCat === currentCat) {
+                    card.classList.remove('d-none');
+                } else {
+                    card.classList.add('d-none');
+                    if (selectedVehicleId === updated.id) {
+                        const remaining = Array.from(document.querySelectorAll('.vehicle-card:not(.add-card)'));
+                        const nextVisible = remaining.find(c => !c.classList.contains('d-none'));
+                        if (nextVisible) {
+                            selectVehicleById(parseInt(nextVisible.getAttribute('data-id')));
+                        }
+                    }
+                }
+            }
+
+            // 6. Reset form state cleanly
+            form.reset();
+            const fileInput = document.getElementById('editImageFile');
+            if (fileInput) fileInput.value = '';
+            if (alertError) {
+                alertError.classList.add('d-none');
+                alertError.innerText = '';
+            }
+        } catch (err) {
+            if (alertError) {
+                alertError.innerText = 'Save failed: ' + err.message;
+                alertError.classList.remove('d-none');
+            }
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (btnSaveText) btnSaveText.innerText = 'SAVE CHANGES';
+        }
+    }
+
+    // --- DELETE VEHICLE MODAL ---
+    function onContextDeleteClicked() {
+        hideContextMenu();
+        if (!contextVehicleId) return;
+        const vehicle = vehiclesData.find(v => v.id === contextVehicleId);
+        if (!vehicle) return;
+
+        const nameEl = document.getElementById('deleteVehicleName');
+        if (nameEl) nameEl.innerText = `"${vehicle.name}"`;
+
+        const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteVehicleModal'));
+        deleteModal.show();
+    }
+
+    async function confirmDeleteVehicle() {
+        if (!contextVehicleId) return;
+        const btnDelete = document.getElementById('btnConfirmDelete');
+        const textDelete = document.getElementById('btnDeleteText');
+        if (btnDelete) btnDelete.disabled = true;
+        if (textDelete) textDelete.innerText = 'DELETING...';
+
+        try {
+            const response = await fetch('/Home/DeleteVehicle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'id=' + contextVehicleId
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Server error (HTTP ${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (_) {}
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to delete vehicle.');
+            }
+
+            const deletedId = contextVehicleId;
+
+            // 1. Remove from in-memory vehiclesData
+            const idx = vehiclesData.findIndex(v => v.id === deletedId);
+            if (idx !== -1) {
+                vehiclesData.splice(idx, 1);
+            }
+
+            // 2. Remove card from DOM
+            const card = document.querySelector(`.vehicle-card[data-id="${deletedId}"]`);
+            if (card) card.remove();
+
+            // 3. Close Modal
+            const modalEl = document.getElementById('deleteVehicleModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            // 4. If deleted vehicle was selected, automatically select another available vehicle
+            if (selectedVehicleId === deletedId) {
+                const remainingCards = Array.from(document.querySelectorAll('.vehicle-card:not(.add-card)'));
+                const visibleCard = remainingCards.find(c => !c.classList.contains('d-none')) || remainingCards[0];
+
+                if (visibleCard) {
+                    const newId = parseInt(visibleCard.getAttribute('data-id'));
+                    selectVehicleById(newId);
+                } else if (vehiclesData.length > 0) {
+                    selectVehicleById(vehiclesData[0].id);
+                } else {
+                    selectedVehicleId = null;
+                    const statsName = document.getElementById('statsVehicleName');
+                    if (statsName) statsName.innerText = 'NO VEHICLES IN GARAGE';
+                    const heroImg = document.getElementById('heroVehicleImg');
+                    if (heroImg) heroImg.classList.add('d-none');
+                    const fallback = document.getElementById('heroFallback');
+                    if (fallback) fallback.classList.remove('d-none');
+                }
+            }
+        } catch (err) {
+            alert('Failed to delete vehicle: ' + err.message);
+        } finally {
+            if (btnDelete) btnDelete.disabled = false;
+            if (textDelete) textDelete.innerText = 'DELETE';
+            contextVehicleId = null;
+        }
+    }
+
+    // Modal Cleanup Listeners to guarantee clean state
+    const editModalEl = document.getElementById('editVehicleModal');
+    if (editModalEl) {
+        editModalEl.addEventListener('hidden.bs.modal', function () {
+            const alertError = document.getElementById('editAlertError');
+            if (alertError) {
+                alertError.classList.add('d-none');
+                alertError.innerText = '';
+            }
+            const btnSave = document.getElementById('btnSaveVehicle');
+            const btnSaveText = document.getElementById('btnSaveVehicleText');
+            if (btnSave) btnSave.disabled = false;
+            if (btnSaveText) btnSaveText.innerText = 'SAVE CHANGES';
+            const form = document.getElementById('editVehicleForm');
+            if (form) form.reset();
+            const fileInput = document.getElementById('editImageFile');
+            if (fileInput) fileInput.value = '';
+        });
+    }
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', () => {
+        filterVehicles();
+        initVehicleContextMenu();
+    });
+</script>

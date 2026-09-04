@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RacingTelemetryAnalyzer.Tests/RacingTelemetryAnalyzer.Tests.csproj" />
+  <Project Path="RacingTelemetryAnalyzer/RacingTelemetryAnalyzer.csproj" />
+</Solution>

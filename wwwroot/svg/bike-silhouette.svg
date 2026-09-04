@@ -1,0 +1,159 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="100%">
+  <defs>
+    <filter id="cyan-glow-bike" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <style>
+    .silhouette-svg {
+      background: transparent;
+      overflow: visible;
+    }
+    .silhouette-path {
+      fill: none;
+      stroke: #00d4ff;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: drawSilhouette 3s ease-in-out forwards;
+      filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.45));
+    }
+    .silhouette-path.thin {
+      stroke-width: 1.4;
+      opacity: 0.75;
+    }
+    .silhouette-path.ground {
+      stroke-width: 1.2;
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      opacity: 0.4;
+    }
+    .silhouette-path.accent {
+      stroke-width: 2.5;
+    }
+    @keyframes drawSilhouette {
+      0% {
+        stroke-dashoffset: 1200;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+
+  <!-- Technical Axis / Ground Grid -->
+  <line x1="20" y1="168" x2="380" y2="168" class="silhouette-path ground" />
+  <line x1="15" y1="172" x2="385" y2="172" class="silhouette-path ground" style="stroke-dasharray: 8 6;" />
+
+  <!-- Front Wheel & Disc Brake -->
+  <circle cx="305" cy="144" r="24" class="silhouette-path accent" />
+  <circle cx="305" cy="144" r="16" class="silhouette-path thin" />
+  <circle cx="305" cy="144" r="9" class="silhouette-path thin" style="stroke-dasharray: 4 3;" />
+  <circle cx="305" cy="144" r="4" class="silhouette-path" />
+  <!-- Front Wheel Spokes -->
+  <line x1="305" y1="128" x2="305" y2="160" class="silhouette-path thin" />
+  <line x1="289" y1="144" x2="321" y2="144" class="silhouette-path thin" />
+  <line x1="294" y1="133" x2="316" y2="155" class="silhouette-path thin" />
+  <line x1="294" y1="155" x2="316" y2="133" class="silhouette-path thin" />
+
+  <!-- Rear Wheel, Sprocket & Brake -->
+  <circle cx="95" cy="144" r="24" class="silhouette-path accent" />
+  <circle cx="95" cy="144" r="16" class="silhouette-path thin" />
+  <circle cx="95" cy="144" r="11" class="silhouette-path thin" style="stroke-dasharray: 4 3;" />
+  <circle cx="95" cy="144" r="4" class="silhouette-path" />
+  <!-- Rear Wheel Spokes -->
+  <line x1="95" y1="128" x2="95" y2="160" class="silhouette-path thin" />
+  <line x1="79" y1="144" x2="111" y2="144" class="silhouette-path thin" />
+  <line x1="84" y1="133" x2="106" y2="155" class="silhouette-path thin" />
+  <line x1="84" y1="155" x2="106" y2="133" class="silhouette-path thin" />
+
+  <!-- Front Mudguard / Tire Hugger -->
+  <path d="M 326 132 C 326 116, 292 112, 282 128" class="silhouette-path thin" />
+
+  <!-- Inverted Front Forks & Triple Clamp -->
+  <path d="M 305 144 L 268 64" class="silhouette-path accent" />
+  <path d="M 299 144 L 263 66" class="silhouette-path thin" />
+  <path d="M 260 62 L 274 65" class="silhouette-path" />
+
+  <!-- Clip-on Handlebars & Lever -->
+  <path d="M 264 63 L 252 58 L 246 62" class="silhouette-path accent" />
+  <path d="M 252 58 L 244 55" class="silhouette-path thin" />
+
+  <!-- Front Nose Fairing & Aerodynamic Windscreen -->
+  <path d="M 318 84 
+           L 326 92 
+           L 302 98 
+           L 282 82 
+           L 268 56 
+           C 264 42, 252 38, 240 44 
+           L 248 58" class="silhouette-path accent" />
+
+  <!-- Fairing Winglet / Aero Element -->
+  <path d="M 314 90 L 328 92 L 320 98 L 306 96" class="silhouette-path" />
+
+  <!-- Muscular Fuel Tank & Airbox Cover -->
+  <path d="M 248 58 
+           C 238 52, 222 52, 206 60 
+           C 194 66, 185 78, 178 86" class="silhouette-path accent" />
+  <path d="M 226 56 C 218 64, 212 74, 208 84" class="silhouette-path thin" />
+
+  <!-- Twin-Spar Aluminum Perimeter Frame -->
+  <path d="M 264 68 L 220 88 L 182 112 L 174 134" class="silhouette-path accent" />
+  <path d="M 220 88 L 210 114 L 182 112" class="silhouette-path thin" />
+
+  <!-- Aggressive Racing Seat & Upswept Aerodynamic Tail Cowl -->
+  <path d="M 178 86 
+           C 168 96, 154 98, 142 96 
+           L 96 66 
+           L 72 58 
+           L 78 70 
+           L 114 96 
+           L 142 104" class="silhouette-path accent" />
+  <path d="M 142 96 L 140 104" class="silhouette-path thin" />
+  <path d="M 96 66 L 118 86" class="silhouette-path thin" />
+
+  <!-- Racing Belly Pan & Side Fairing -->
+  <path d="M 302 98 
+           L 286 122 
+           L 262 144 
+           L 218 154 
+           L 172 152 
+           L 174 134 
+           L 204 126 
+           L 246 116 
+           L 282 82" class="silhouette-path" />
+  <!-- Side Fairing Air Extractor Vents -->
+  <path d="M 272 108 L 254 122" class="silhouette-path thin" />
+  <path d="M 262 118 L 248 130" class="silhouette-path thin" />
+
+  <!-- Rear Swingarm (Gull-wing / TracTive style) -->
+  <path d="M 174 134 L 140 126 L 95 144" class="silhouette-path accent" />
+  <path d="M 174 134 L 135 142 L 95 144" class="silhouette-path thin" />
+  <circle cx="174" cy="134" r="3" class="silhouette-path" />
+
+  <!-- Rear Monoshock Suspension -->
+  <path d="M 168 108 L 160 130" class="silhouette-path thin" />
+  <path d="M 163 114 L 167 124" class="silhouette-path thin" style="stroke-dasharray: 2 2;" />
+
+  <!-- High-Mount Akrapovič-Style Titanium Exhaust & Link Pipe -->
+  <path d="M 202 152 
+           C 180 156, 160 154, 145 146 
+           L 118 128 
+           L 76 98 
+           L 70 105 
+           L 112 136 
+           L 136 148" class="silhouette-path" />
+  <!-- Exhaust Endcap & Carbon Band -->
+  <path d="M 76 98 L 70 105 L 68 103 L 74 96 Z" class="silhouette-path accent" />
+  <line x1="92" y1="110" x2="88" y2="116" class="silhouette-path thin" />
+
+  <!-- Technical Telemetry Reticle Marks -->
+  <path d="M 388 50 L 395 50 L 395 57" class="silhouette-path thin" />
+  <path d="M 12 50 L 5 50 L 5 57" class="silhouette-path thin" />
+</svg>

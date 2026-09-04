@@ -1,0 +1,2110 @@
+@model RacingTelemetryAnalyzer.Models.Lap
+@{
+    ViewData["Title"] = "Motorsport Telemetry Workstation";
+    var telemetry = ViewBag.Telemetry as IEnumerable<RacingTelemetryAnalyzer.Models.TelemetryPoint>;
+    var results = ViewBag.AnalysisResults as IEnumerable<RacingTelemetryAnalyzer.Models.AnalysisResult>;
+    var vehicle = ViewBag.Vehicle as RacingTelemetryAnalyzer.Models.Vehicle;
+    var track = ViewBag.Track as RacingTelemetryAnalyzer.Models.Track;
+    var session = ViewBag.Session as RacingTelemetryAnalyzer.Models.Session;
+    var allLaps = ViewBag.AllLaps as IEnumerable<RacingTelemetryAnalyzer.Models.Lap> ?? new List<RacingTelemetryAnalyzer.Models.Lap>();
+    var selectedLap = ViewBag.SelectedLap as RacingTelemetryAnalyzer.Models.Lap ?? Model;
+    var bestLap = ViewBag.BestLap as RacingTelemetryAnalyzer.Models.Lap;
+    var allVehicles = ViewBag.AllVehicles as IEnumerable<RacingTelemetryAnalyzer.Models.Vehicle> ?? new List<RacingTelemetryAnalyzer.Models.Vehicle>();
+    var tyreStatus = ViewBag.TyreStatus as RacingTelemetryAnalyzer.Models.VehicleTyreStatus;
+    var isBike = vehicle != null && vehicle.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Bike;
+
+    double s1Delta = ViewBag.S1Delta != null ? (double)ViewBag.S1Delta : 0.0;
+    double s2Delta = ViewBag.S2Delta != null ? (double)ViewBag.S2Delta : 0.0;
+    double s3Delta = ViewBag.S3Delta != null ? (double)ViewBag.S3Delta : 0.0;
+    string trackName = (track?.Name ?? "").ToLower();
+}
+
+<div class="telemetry-workstation">
+
+    @if (ViewBag.NoData == true)
+    {
+        <div class="no-data-panel text-center mt-5 p-5">
+            <h2 class="text-orange mb-3" style="letter-spacing: 3px;">NO TELEMETRY DATA AVAILABLE</h2>
+            <p class="text-muted mb-4">There are currently no telemetry sessions recorded for this vehicle and track combination.</p>
+            
+            <div class="d-flex justify-content-center gap-4 mt-3">
+                <form method="post" action="/Telemetry/GenerateData">
+                    <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
+                    <input type="hidden" name="trackId" value="@(track?.TrackId)" />
+                    <button type="submit" class="btn btn-primary px-4 py-2" style="background:#ff5a1f;color:#fff;border:none;font-weight:bold;letter-spacing:1px;">
+                        GENERATE DEMO TELEMETRY
+                    </button>
+                </form>
+
+                <div style="border-left: 2px solid #333;"></div>
+
+                <form method="post" action="/Telemetry/ImportCsv" enctype="multipart/form-data" class="d-flex gap-2">
+                    <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
+                    <input type="hidden" name="trackId" value="@(track?.TrackId)" />
+                    <input type="file" name="csvFile" accept=".csv" class="form-control" style="background: #14141d; color: #fff; border-color: #333;" required />
+                    <button type="submit" class="btn btn-outline-light px-4 py-2" style="font-weight:bold;letter-spacing:1px;">
+                        UPLOAD CSV
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- MAIN DASHBOARD THREE-COLUMN GRID -->
+        <div class="dashboard-grid">
+            
+            <!-- ========================================== -->
+            <!-- 1. LEFT SIDEBAR COLUMN                    -->
+            <!-- ========================================== -->
+            <div class="col-sidebar-left d-flex flex-column gap-2">
+                
+                <!-- VEHICLE CARD -->
+                <div class="dash-card vehicle-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="card-section-title mb-0" style="font-size: 0.68rem; color: #ff5a1f;">ACTIVE VEHICLE</span>
+                        @if (allVehicles != null && allVehicles.Any())
+                        {
+                            <select class="form-select form-select-sm vehicle-quick-select" 
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value;">
+                                @foreach (var v in allVehicles)
+                                {
+                                    if (v.VehicleId == vehicle?.VehicleId)
+                                    {
+                                        <option value="@v.VehicleId" selected>@v.Name (@(v.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Bike ? "Bike" : "Car"))</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@v.VehicleId">@v.Name (@(v.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Bike ? "Bike" : "Car"))</option>
+                                    }
+                                }
+                            </select>
+                        }
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="vehicle-thumb-container">
+                            <img src="@(string.IsNullOrEmpty(vehicle?.ImagePath) ? (isBike ? "/images/placeholder_bike.png" : "/images/placeholder_car.png") : vehicle.ImagePath)" 
+                                 alt="@(vehicle?.Name)" 
+                                 class="vehicle-thumb" 
+                                 onerror="this.onerror=null; this.src='@(isBike ? "/images/placeholder_bike.png" : "/images/placeholder_car.png")';" />
+                        </div>
+                        <div class="vehicle-meta">
+                            <h3 class="vehicle-name">@(vehicle?.Name?.ToUpper() ?? "FERRARI 499P")</h3>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="vehicle-class-badge">@(vehicle?.Class?.ToUpper() ?? "HYPERCAR")</span>
+                                <span class="badge @(isBike ? "bg-info" : "bg-warning") text-dark fw-bold" style="font-size: 0.65rem;">@(isBike ? "BIKE" : "CAR")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SESSION INFO -->
+                <div class="dash-card session-card">
+                    <div class="card-section-title">SESSION INFO</div>
+                    <div class="info-rows">
+                        <div class="info-row">
+                            <span class="info-label">Track</span>
+                            <span class="info-val">@(track?.Name ?? "Le Mans")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Session</span>
+                            <span class="info-val">@(session?.Name ?? "Free Practice 1")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date</span>
+                            <span class="info-val">@(session?.Date.ToString("dd MMM yyyy") ?? "24 May 2024")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Time</span>
+                            <span class="info-val">@(session?.Date.ToString("HH:mm:ss") ?? "10:24:15")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Driver</span>
+                            <span class="info-val">A. Driver</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Best Lap</span>
+                            <span class="info-val text-purple fw-bold">@ViewBag.BestLapTime</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LAP LIST (ALL LAPS - SCROLLABLE & CLICKABLE) -->
+                <div class="dash-card lap-list-card flex-grow-1 d-flex flex-column">
+                    <div class="card-section-title d-flex justify-content-between align-items-center">
+                        <span>LAP LIST</span>
+                        <span class="small text-muted">@allLaps.Count() LAPS</span>
+                    </div>
+                    <div class="lap-scroll-container">
+                        @foreach (var l in allLaps.OrderBy(l => l.LapNumber))
+                        {
+                            bool isCurrent = l.LapId == selectedLap?.LapId;
+                            bool isFastest = bestLap != null && l.LapId == bestLap.LapId;
+                            string itemClass = isCurrent ? "lap-item active" : (isFastest ? "lap-item fastest" : "lap-item");
+
+                            <a href="javascript:void(0)" 
+                               class="@itemClass lap-item-num-@l.LapNumber" 
+                               data-lap="@l.LapNumber"
+                               onclick="jumpToLap(@l.LapNumber, @l.LapId, this)"
+                               title="Inspect Lap @l.LapNumber on Graph">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="lap-num">Lap @l.LapNumber</span>
+                                    @if (isFastest)
+                                    {
+                                        <span class="fastest-indicator" title="Fastest Lap in Session">★</span>
+                                    }
+                                </div>
+                                <span class="lap-time @(isFastest ? "text-purple" : "text-white")">@l.LapTime.ToString(@"m\:ss\.fff")</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- TRACK MAP (DYNAMICALLY MAPPED TO SELECTED TRACK) -->
+                <div class="dash-card track-map-card">
+                    <div class="card-section-title d-flex justify-content-between align-items-center">
+                        <span>TRACK MAP</span>
+                        <span class="small text-orange fw-bold">@(track?.Length.ToString("F1") ?? "5.0") KM</span>
+                    </div>
+                    <div class="circuit-visual-wrapper position-relative">
+                        @if (trackName.Contains("interlagos") || trackName.Contains("pace"))
+                        {
+                            <!-- INTERLAGOS / AUTODROMO JOSE CARLOS PACE -->
+                            <svg class="circuit-svg" viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 175 105 L 80 105 C 55 105, 30 95, 32 75 C 34 58, 55 58, 68 70 L 82 85" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 82 85 C 95 98, 120 92, 140 70 C 160 50, 180 42, 168 22 C 156 8, 125 12, 105 28 L 75 52" stroke="#ff5a1f" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 75 52 C 58 64, 42 52, 52 32 C 64 12, 125 12, 155 32 C 180 48, 190 85, 175 105" stroke="#00ff41" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <text x="36" y="82" fill="#00d4ff" font-size="7.5" font-family="monospace" font-weight="bold">S1</text>
+                                <text x="145" y="58" fill="#ff5a1f" font-size="7.5" font-family="monospace" font-weight="bold">S2</text>
+                                <text x="82" y="38" fill="#00ff41" font-size="7.5" font-family="monospace" font-weight="bold">S3</text>
+                                <circle cx="175" cy="105" r="4" fill="#00ff41" stroke="#fff" stroke-width="1"/>
+                            </svg>
+                        }
+                        else if (trackName.Contains("le mans") || trackName.Contains("sarthe"))
+                        {
+                            <!-- LE MANS / CIRCUIT DE LA SARTHE -->
+                            <svg class="circuit-svg" viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 45 110 L 30 85 C 28 65, 45 50, 60 52 L 180 52" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 180 52 L 180 115 L 140 115 L 115 100" stroke="#ff5a1f" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 115 100 C 95 90, 75 120, 45 110" stroke="#00ff41" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <text x="35" y="65" fill="#00d4ff" font-size="7.5" font-family="monospace" font-weight="bold">S1</text>
+                                <text x="160" y="85" fill="#ff5a1f" font-size="7.5" font-family="monospace" font-weight="bold">S2</text>
+                                <text x="80" y="115" fill="#00ff41" font-size="7.5" font-family="monospace" font-weight="bold">S3</text>
+                                <circle cx="45" cy="110" r="4" fill="#00ff41" stroke="#fff" stroke-width="1"/>
+                            </svg>
+                        }
+                        else if (trackName.Contains("spa") || trackName.Contains("francorchamps"))
+                        {
+                            <!-- SPA-FRANCORCHAMPS -->
+                            <svg class="circuit-svg" viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 30 95 L 30 110 L 45 110 C 60 90, 80 85, 110 50 L 165 25" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 165 25 C 185 30, 185 60, 160 75 C 135 90, 110 70, 95 85 L 120 110" stroke="#ff5a1f" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 120 110 C 145 115, 175 120, 150 95 L 80 95 L 30 95" stroke="#00ff41" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <text x="55" y="75" fill="#00d4ff" font-size="7.5" font-family="monospace" font-weight="bold">S1</text>
+                                <text x="145" y="65" fill="#ff5a1f" font-size="7.5" font-family="monospace" font-weight="bold">S2</text>
+                                <text x="95" y="105" fill="#00ff41" font-size="7.5" font-family="monospace" font-weight="bold">S3</text>
+                                <circle cx="30" cy="95" r="4" fill="#00ff41" stroke="#fff" stroke-width="1"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <!-- GENERIC DYNAMIC CIRCUIT -->
+                            <svg class="circuit-svg" viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M 35 110 C 15 90, 15 40, 45 25 C 75 10, 115 15, 135 25" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 135 25 C 155 35, 185 55, 175 80 C 165 105, 150 115, 130 110" stroke="#ff5a1f" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <path d="M 130 110 C 110 105, 80 120, 60 115 C 45 110, 40 115, 35 110" stroke="#00ff41" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                <text x="35" y="45" fill="#00d4ff" font-size="7.5" font-family="monospace" font-weight="bold">S1</text>
+                                <text x="160" y="55" fill="#ff5a1f" font-size="7.5" font-family="monospace" font-weight="bold">S2</text>
+                                <text x="85" y="118" fill="#00ff41" font-size="7.5" font-family="monospace" font-weight="bold">S3</text>
+                                <circle cx="35" cy="110" r="4" fill="#00ff41" stroke="#fff" stroke-width="1"/>
+                            </svg>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 2. CENTER MAIN TELEMETRY GRAPH COLUMN     -->
+            <!-- ========================================== -->
+            <div class="col-main-center d-flex flex-column gap-2">
+                
+                <!-- MAIN TELEMETRY GRAPH PANEL (THE CENTERPIECE) -->
+                <div class="dash-card graph-main-card d-flex flex-column flex-grow-1">
+                    
+                    <!-- Graph Header Bar with Color-Coded Toggles & Mode Switch -->
+                    <div class="graph-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="graph-title">TELEMETRY GRAPHS</span>
+                            
+                            <!-- Channel Toggles Matching Requested Color Scheme with Live Sync Values -->
+                            <div class="channel-toggles d-flex align-items-center gap-1">
+                                <button type="button" class="ch-btn ch-speed active" data-channel="speed" onclick="toggleRollingChannel('speed', this)" title="Toggle Speed curve (0-400 km/h)">
+                                    <span class="ch-dot" style="background:#00ff41"></span> SPEED <span id="tbSpeedVal" class="ms-1 font-monospace fw-bold"></span>
+                                </button>
+                                <button type="button" class="ch-btn ch-rpm active" data-channel="rpm" onclick="toggleRollingChannel('rpm', this)" title="Toggle RPM curve (0-15000 RPM)">
+                                    <span class="ch-dot" style="background:#a200ff"></span> RPM <span id="tbRpmVal" class="ms-1 font-monospace fw-bold"></span>
+                                </button>
+                                <button type="button" class="ch-btn ch-throttle active" data-channel="throttle" onclick="toggleRollingChannel('throttle', this)" title="Toggle Throttle curve (0-100%)">
+                                    <span class="ch-dot" style="background:#00d2ff"></span> THROTTLE <span id="tbThrVal" class="ms-1 font-monospace fw-bold"></span>
+                                </button>
+                                <button type="button" class="ch-btn ch-brake active" data-channel="brake" onclick="toggleRollingChannel('brake', this)" title="Toggle Brake curve (0-100%)">
+                                    <span class="ch-dot" style="background:#ff0000"></span> BRAKE <span id="tbBrkVal" class="ms-1 font-monospace fw-bold"></span>
+                                </button>
+                                <button type="button" class="ch-btn ch-steering active" data-channel="steering" onclick="toggleRollingChannel('steering', this)" title="Toggle Steering curve (±50°)">
+                                    <span class="ch-dot" style="background:#ff00ff"></span> STEERING <span id="tbStrVal" class="ms-1 font-monospace fw-bold"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mode Switch & Window Distance Selector -->
+                        <div class="d-flex align-items-center gap-2">
+                            <button id="btnViewMode" class="btn-mode-toggle active" onclick="toggleViewMode()" title="Toggle between Rolling Viewport and Full Overview">
+                                <i class="fas fa-satellite-dish me-1"></i> <span id="modeText">ROLLING VIEWPORT</span>
+                            </button>
+                            <select id="windowSizeSelect" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 105px; font-size: 0.72rem; padding: 2px 6px;" onchange="changeWindowSize(this.value)">
+                                <option value="500">500 m</option>
+                                <option value="1000" selected>1.0 km</option>
+                                <option value="1500">1.5 km</option>
+                                <option value="2500">2.5 km</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Progressive-Reveal Canvas Viewport Container -->
+                    <div class="graph-viewport-wrapper position-relative flex-grow-1" id="telemetry-wrapper">
+                        <!-- High Performance 60 FPS Rolling Canvas -->
+                        <canvas id="telemetryCanvas" class="w-100 h-100"></canvas>
+                        
+                        <!-- Pinned Scrubber Header Live HUD -->
+                        <div id="liveScrubberHud" class="live-scrubber-hud">
+                            <span class="badge-tag">REPLAY HUD</span>
+                            <span id="hudSpeedReadout" class="hud-val text-green ms-1">0 km/h</span>
+                        </div>
+
+                        <!-- Interactive Telemetry Hover HUD Tooltip -->
+                        <div id="cursor-tooltip" class="telemetry-hover-hud d-none">
+                            <!-- Header: Lap, Distance, Lap Time -->
+                            <div class="th-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="th-badge-lap">LAP <span id="thLap">1</span></span>
+                                    <span class="th-dist" id="thDist">0.000 km</span>
+                                </div>
+                                <div class="th-time font-monospace" id="thTime">00:00.000</div>
+                            </div>
+
+                            <!-- Live Telemetry Channels Grid -->
+                            <div class="th-grid">
+                                <!-- Speed -->
+                                <div class="th-item" id="thRowSpeed">
+                                    <div class="th-meta">
+                                        <span class="th-dot" style="background:#00ff41;"></span>
+                                        <span class="th-label">SPEED</span>
+                                    </div>
+                                    <span class="th-val font-monospace" style="color:#00ff41;" id="thSpeed">0 km/h</span>
+                                </div>
+                                <!-- RPM -->
+                                <div class="th-item" id="thRowRpm">
+                                    <div class="th-meta">
+                                        <span class="th-dot" style="background:#a200ff;"></span>
+                                        <span class="th-label">RPM</span>
+                                    </div>
+                                    <span class="th-val font-monospace" style="color:#c084fc;" id="thRpm">0</span>
+                                </div>
+                                <!-- Throttle -->
+                                <div class="th-item" id="thRowThr">
+                                    <div class="th-meta">
+                                        <span class="th-dot" style="background:#00d2ff;"></span>
+                                        <span class="th-label">THROTTLE</span>
+                                        <div class="th-bar-track"><div class="th-bar-fill" style="background:#00d2ff;" id="thThrBar"></div></div>
+                                    </div>
+                                    <span class="th-val font-monospace" style="color:#00d2ff;" id="thThr">0%</span>
+                                </div>
+                                <!-- Brake -->
+                                <div class="th-item" id="thRowBrk">
+                                    <div class="th-meta">
+                                        <span class="th-dot" style="background:#ff0000;"></span>
+                                        <span class="th-label">BRAKE</span>
+                                        <div class="th-bar-track"><div class="th-bar-fill" style="background:#ff0000;" id="thBrkBar"></div></div>
+                                    </div>
+                                    <span class="th-val font-monospace" style="color:#ff4444;" id="thBrk">0%</span>
+                                </div>
+                                <!-- Steering -->
+                                <div class="th-item" id="thRowSteer">
+                                    <div class="th-meta">
+                                        <span class="th-dot" style="background:#ff00ff;"></span>
+                                        <span class="th-label">STEERING</span>
+                                    </div>
+                                    <span class="th-val font-monospace" style="color:#ff66ff;" id="thSteer">0.0°</span>
+                                </div>
+                            </div>
+
+                            <!-- Mini Footer Hint -->
+                            <div class="th-hint">Click to jump replay here</div>
+                        </div>
+                    </div>
+
+                    <!-- Replay Timeline Control Bar with Rolling Window Controls -->
+                    <div class="replay-control-bar d-flex align-items-center gap-3">
+                        <div class="playback-buttons d-flex align-items-center gap-2">
+                            <button id="btnPlay" class="btn-replay play-btn" type="button" onclick="startPlayback()" title="Start Telemetry Playback">
+                                <span class="btn-icon">▶</span> <span class="btn-text">PLAY</span>
+                            </button>
+                            <button id="btnPause" class="btn-replay pause-btn" type="button" onclick="pausePlayback()" title="Pause Telemetry Playback">
+                                <span class="btn-icon">❚❚</span> <span class="btn-text">PAUSE</span>
+                            </button>
+                            <button id="btnReset" class="btn-replay reset-btn" type="button" onclick="resetPlayback()" title="Reset to Beginning">
+                                <span class="btn-icon">↺</span> <span class="btn-text">RESET</span>
+                            </button>
+                        </div>
+                        
+                        <div class="slider-wrapper flex-grow-1 position-relative d-flex align-items-center">
+                            <input type="range" id="replaySlider" min="0" max="100" value="0" class="timeline-slider w-100" oninput="seekToSlider(this.value)">
+                        </div>
+
+                        <!-- Speed Multipliers -->
+                        <div class="speed-multiplier-group d-flex align-items-center gap-1">
+                            <button class="btn-speed-mult active" onclick="setSpeedMultiplier(1, this)">1x</button>
+                            <button class="btn-speed-mult" onclick="setSpeedMultiplier(2, this)">2x</button>
+                            <button class="btn-speed-mult" onclick="setSpeedMultiplier(4, this)">4x</button>
+                        </div>
+
+                        <div class="replay-metrics d-flex align-items-center gap-3">
+                            <span id="replayTimeDisplay" class="hud-time font-monospace text-muted">00:00.000 / @ViewBag.CurrentLapTime</span>
+                            <span class="hud-lap-badge">Lap <strong id="replayLap" class="text-warning">@(selectedLap?.LapNumber ?? 1)</strong></span>
+                            <span class="hud-stat"><span id="replayDistance" class="fw-bold text-white">0 m</span></span>
+                            <span class="hud-stat"><span id="replaySpeed" class="fw-bold text-green">0 KM/H</span></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 3. RIGHT SIDEBAR COLUMN                   -->
+            <!-- ========================================== -->
+            <div class="col-sidebar-right d-flex flex-column gap-2">
+                
+                <!-- TYRE STATUS -->
+                <div class="dash-card tyre-card" id="tyreStatusCard">
+                    @if (isBike)
+                    {
+                        <!-- BIKE TYRE STATUS (FRONT & REAR ONLY) -->
+                        <div class="card-section-title d-flex justify-content-between align-items-center">
+                            <span>TYRE STATUS // MOTORCYCLE</span>
+                            @if (tyreStatus?.MaxLeanAngle > 0)
+                            {
+                                <span class="badge text-cyan border border-secondary" style="background: #141420; font-size: 0.68rem; font-family: monospace;">LEAN @(tyreStatus.MaxLeanAngle)°</span>
+                            }
+                        </div>
+                        <div class="tyre-visual-container-bike d-flex justify-content-between align-items-center py-2 px-2">
+                            <!-- Front Tyre Column -->
+                            <div class="tyre-node text-start">
+                                <div class="tyre-pos" style="color: #00d2ff; letter-spacing: 0.5px; font-weight: 800;">FRONT TYRE</div>
+                                <div class="tyre-temp text-white" id="tyre-front-temp" style="font-size: 1.05rem;">@(tyreStatus?.FrontTyre?.Temperature ?? 81.2)°C</div>
+                                <div class="tyre-press text-muted">@(tyreStatus?.FrontTyre?.Pressure ?? 2.15) bar</div>
+                                <div class="tyre-grip text-green fw-bold">@(tyreStatus?.FrontTyre?.WearPercentage ?? 98)% COND</div>
+                            </div>
+
+                            <!-- Bike Silhouette (Front & Rear Wheels) -->
+                            <div class="bike-chassis-silhouette position-relative">
+                                <div class="bike-wheel-block bike-wheel-front"></div>
+                                <div class="bike-body-center">
+                                    <div class="bike-bars"></div>
+                                    <div class="bike-core"></div>
+                                </div>
+                                <div class="bike-wheel-block bike-wheel-rear"></div>
+                            </div>
+
+                            <!-- Rear Tyre Column -->
+                            <div class="tyre-node text-end">
+                                <div class="tyre-pos" style="color: #ff5a1f; letter-spacing: 0.5px; font-weight: 800;">REAR TYRE</div>
+                                <div class="tyre-temp text-white" id="tyre-rear-temp" style="font-size: 1.05rem;">@(tyreStatus?.RearTyre?.Temperature ?? 87.5)°C</div>
+                                <div class="tyre-press text-muted">@(tyreStatus?.RearTyre?.Pressure ?? 1.65) bar</div>
+                                <div class="tyre-grip text-green fw-bold">@(tyreStatus?.RearTyre?.WearPercentage ?? 96)% COND</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- CAR TYRE STATUS (4 CORNERS: FL, FR, RL, RR) -->
+                        <div class="card-section-title">TYRE STATUS</div>
+                        <div class="tyre-visual-container d-flex justify-content-between align-items-center">
+                            <!-- Left Tyres (FL / RL) -->
+                            <div class="tyre-column d-flex flex-column justify-content-between h-100">
+                                <div class="tyre-node">
+                                    <div class="tyre-pos">FL</div>
+                                    <div class="tyre-temp text-white" id="tyre-fl-temp">@(tyreStatus?.FL?.Temperature ?? 79.0)°C</div>
+                                    <div class="tyre-press text-muted">@(tyreStatus?.FL?.Pressure ?? 1.72) bar</div>
+                                    <div class="tyre-grip text-green">@(tyreStatus?.FL?.WearPercentage ?? 98)%</div>
+                                </div>
+                                <div class="tyre-node mt-3">
+                                    <div class="tyre-pos">RL</div>
+                                    <div class="tyre-temp text-white" id="tyre-rl-temp">@(tyreStatus?.RL?.Temperature ?? 78.0)°C</div>
+                                    <div class="tyre-press text-muted">@(tyreStatus?.RL?.Pressure ?? 1.71) bar</div>
+                                    <div class="tyre-grip text-green">@(tyreStatus?.RL?.WearPercentage ?? 98)%</div>
+                                </div>
+                            </div>
+
+                            <!-- Top-down Chassis Silhouette -->
+                            <div class="chassis-silhouette position-relative">
+                                <div class="tyre-block tyre-block-fl"></div>
+                                <div class="tyre-block tyre-block-fr"></div>
+                                <div class="car-chassis-body"></div>
+                                <div class="tyre-block tyre-block-rl"></div>
+                                <div class="tyre-block tyre-block-rr"></div>
+                            </div>
+
+                            <!-- Right Tyres (FR / RR) -->
+                            <div class="tyre-column d-flex flex-column justify-content-between h-100 text-end">
+                                <div class="tyre-node">
+                                    <div class="tyre-pos">FR</div>
+                                    <div class="tyre-temp text-white" id="tyre-fr-temp">@(tyreStatus?.FR?.Temperature ?? 81.0)°C</div>
+                                    <div class="tyre-press text-muted">@(tyreStatus?.FR?.Pressure ?? 1.73) bar</div>
+                                    <div class="tyre-grip text-green">@(tyreStatus?.FR?.WearPercentage ?? 97)%</div>
+                                </div>
+                                <div class="tyre-node mt-3">
+                                    <div class="tyre-pos">RR</div>
+                                    <div class="tyre-temp text-white" id="tyre-rr-temp">@(tyreStatus?.RR?.Temperature ?? 80.0)°C</div>
+                                    <div class="tyre-press text-muted">@(tyreStatus?.RR?.Pressure ?? 1.72) bar</div>
+                                    <div class="tyre-grip text-green">@(tyreStatus?.RR?.WearPercentage ?? 97)%</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- ENGINE STATUS -->
+                <div class="dash-card engine-card">
+                    <div class="card-section-title">ENGINE STATUS</div>
+                    <div class="engine-rows d-flex flex-column gap-2">
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">Engine Temp</span><span class="text-white font-monospace">92 °C</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: 76%; background: #ff5a1f;"></div></div>
+                        </div>
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">Oil Temp</span><span class="text-white font-monospace">98 °C</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: 82%; background: #ff5a1f;"></div></div>
+                        </div>
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">Oil Pressure</span><span class="text-white font-monospace">5.6 bar</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: 70%; background: #00d4ff;"></div></div>
+                        </div>
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">Water Temp</span><span class="text-white font-monospace">88 °C</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: 72%; background: #ff5a1f;"></div></div>
+                        </div>
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">Fuel Level</span><span class="text-white font-monospace">42.3 L</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: 65%; background: #00ff41;"></div></div>
+                        </div>
+                        <div class="eng-row">
+                            <div class="d-flex justify-content-between small"><span class="text-muted">ERS Deployment</span><span class="text-white font-monospace">@(isBike ? "N/A" : "76%")</span></div>
+                            <div class="eng-bar"><div class="eng-bar-fill" style="width: @(isBike ? "0%" : "76%"); background: #a200ff;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- G-FORCE RADAR & DYNAMIC NUMERICAL READOUTS -->
+                <div class="dash-card gforce-card">
+                    <div class="card-section-title">G-FORCE</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="gforce-radar position-relative">
+                            <div class="radar-circle circle-1"></div>
+                            <div class="radar-circle circle-2"></div>
+                            <div class="radar-circle circle-3"></div>
+                            <div class="radar-cross-h"></div>
+                            <div class="radar-cross-v"></div>
+                            <div id="gforce-dot" class="radar-dot" style="top: 50%; left: 50%;"></div>
+                        </div>
+                        <div class="gforce-readouts d-flex flex-column gap-1 text-end">
+                            <div class="g-stat"><span class="text-muted small">Lat G</span> <strong class="text-white font-monospace ms-2" id="gforce-lat">0.00 G</strong></div>
+                            <div class="g-stat"><span class="text-muted small">Long G</span> <strong class="text-white font-monospace ms-2" id="gforce-long">0.00 G</strong></div>
+                            <div class="g-stat"><span class="text-muted small">Vert G</span> <strong class="text-white font-monospace ms-2" id="gforce-vert">0.22 G</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WEATHER (PERFECTLY ALIGNED TWO-COLUMN SPECIFICATION TABLE) -->
+                <div class="dash-card weather-card">
+                    <div class="card-section-title d-flex justify-content-between align-items-center">
+                        <span>WEATHER</span>
+                        <span class="text-warning small">DRY</span>
+                    </div>
+                    <div class="weather-table d-flex flex-column gap-1">
+                        <div class="weather-row d-flex justify-content-between align-items-center">
+                            <span class="w-label">Track</span>
+                            <span class="w-val">32.1 °C</span>
+                        </div>
+                        <div class="weather-row d-flex justify-content-between align-items-center">
+                            <span class="w-label">Air</span>
+                            <span class="w-val">24.8 °C</span>
+                        </div>
+                        <div class="weather-row d-flex justify-content-between align-items-center">
+                            <span class="w-label">Humidity</span>
+                            <span class="w-val">45 %</span>
+                        </div>
+                        <div class="weather-row d-flex justify-content-between align-items-center">
+                            <span class="w-label">Wind</span>
+                            <span class="w-val">12 km/h</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 4. BOTTOM DETAILED ENGINEERING PANELS     -->
+        <!-- ========================================== -->
+        <div class="bottom-analysis-grid mt-2" id="analysis-section">
+            
+            <!-- LAP ANALYSIS TABLE -->
+            <div class="dash-card">
+                <div class="card-section-title d-flex justify-content-between align-items-center">
+                    <span>LAP ANALYSIS</span>
+                    <span class="small text-muted">FULL SESSION TELEMETRY</span>
+                </div>
+                <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                    <table class="table table-dark table-sm table-hover lap-table mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>LAP</th>
+                                <th>TIME</th>
+                                <th>S1</th>
+                                <th>S2</th>
+                                <th>S3</th>
+                                <th>DELTA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var l in allLaps)
+                            {
+                                bool isCurrent = l.LapId == selectedLap?.LapId;
+                                bool isFastest = bestLap != null && l.LapId == bestLap.LapId;
+                                double deltaSec = bestLap != null ? (l.LapTime - bestLap.LapTime).TotalSeconds : 0.0;
+                                string rowClass = isCurrent ? "table-active text-warning" : (isFastest ? "text-purple" : "text-white");
+
+                                <tr class="@rowClass lap-table-row" style="cursor: pointer;" onclick="jumpToLap(@l.LapNumber, @l.LapId, this)" title="Click to view Lap @l.LapNumber in graph">
+                                    <td class="fw-bold">Lap @l.LapNumber</td>
+                                    <td class="font-monospace">@l.LapTime.ToString(@"m\:ss\.fff")</td>
+                                    <td class="font-monospace text-muted">@l.Sector1Time.ToString("0.000")</td>
+                                    <td class="font-monospace text-muted">@l.Sector2Time.ToString("0.000")</td>
+                                    <td class="font-monospace text-muted">@l.Sector3Time.ToString("0.000")</td>
+                                    <td class="font-monospace @(isFastest ? "text-purple fw-bold" : (deltaSec <= 0 ? "text-green" : "text-red"))">
+                                        @(isFastest ? "BEST" : (deltaSec > 0 ? "+" + deltaSec.ToString("0.000") : deltaSec.ToString("0.000")))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- BRAKING & THROTTLE METRICS -->
+            <div class="dash-card">
+                <div class="card-section-title">BRAKING & THROTTLE</div>
+                <div class="d-flex flex-column justify-content-around h-100 gap-2 py-1">
+                    @{
+                        var brakeResult = results?.FirstOrDefault(r => r.RecommendationType == "Braking");
+                        var throttleResult = results?.FirstOrDefault(r => r.RecommendationType == "Throttle");
+                    }
+                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                        <span class="text-muted small">BRAKING PEAK</span>
+                        <span class="text-red font-monospace fw-bold">@(brakeResult != null ? Math.Round(brakeResult.BrakingPercentage) + "%" : "85%")</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                        <span class="text-muted small">APEX MIN SPEED</span>
+                        <span class="text-white font-monospace fw-bold">@(brakeResult != null ? Math.Round(brakeResult.MinimumSpeed) + " KM/H" : "60 KM/H")</span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                        <span class="text-muted small">THROTTLE LATENCY</span>
+                        <span class="text-green font-monospace fw-bold">@(throttleResult != null ? Math.Round(throttleResult.ThrottleResponseTime * 1000) + " ms" : "250 ms")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">CORNER EXIT SPEED</span>
+                        <span class="text-cyan font-monospace fw-bold">@(throttleResult != null ? Math.Round(throttleResult.ExitSpeed) + " KM/H" : "253 KM/H")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUSPENSION TELEMETRY -->
+            <div class="dash-card">
+                <div class="card-section-title">SUSPENSION TELEMETRY</div>
+                <div class="suspension-container d-flex flex-column justify-content-around h-100 py-1">
+                    @{
+                        var tData = ViewBag.Telemetry as IEnumerable<RacingTelemetryAnalyzer.Models.TelemetryPoint>;
+                        bool hasSuspension = tData != null && tData.Any(t => t.SuspensionFL.HasValue);
+                        bool hasLean = tData != null && tData.Any(t => t.LeanAngle.HasValue);
+                        
+                        double maxLean = hasLean ? Math.Round(tData.Max(t => t.LeanAngle.Value)) : 0;
+                        double avgFL = hasSuspension ? Math.Round(tData.Average(t => t.SuspensionFL.Value)) : 45;
+                        double avgFR = hasSuspension && tData.Any(t => t.SuspensionFR.HasValue) ? Math.Round(tData.Average(t => t.SuspensionFR.Value)) : 46;
+                        double avgRL = hasSuspension && tData.Any(t => t.SuspensionRL.HasValue) ? Math.Round(tData.Average(t => t.SuspensionRL.Value)) : 52;
+                        double avgRR = hasSuspension && tData.Any(t => t.SuspensionRR.HasValue) ? Math.Round(tData.Average(t => t.SuspensionRR.Value)) : 52;
+                    }
+
+                    @if (isBike)
+                    {
+                        <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                            <span class="text-muted small">MAX LEAN ANGLE</span>
+                            <span class="text-orange font-monospace fw-bold">@(hasLean ? maxLean + "°" : "54°")</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                            <span class="text-muted small">FRONT FORK TRAVEL</span>
+                            <span class="text-warning font-monospace fw-bold">@avgFL mm</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">REAR SHOCK TRAVEL</span>
+                            <span class="text-cyan font-monospace fw-bold">@avgRL mm</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                            <span class="text-muted small">FL / FR TRAVEL</span>
+                            <span class="text-warning font-monospace fw-bold">@avgFL mm / @avgFR mm</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-dark pb-1">
+                            <span class="text-muted small">RL / RR TRAVEL</span>
+                            <span class="text-cyan font-monospace fw-bold">@avgRL mm / @avgRR mm</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">PITCH & ROLL STABILITY</span>
+                            <span class="text-green font-monospace fw-bold">OPTIMAL</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ANALYSIS & RECOMMENDATIONS -->
+            <div class="dash-card">
+                <div class="card-section-title">ANALYSIS & RECOMMENDATIONS</div>
+                <div class="rec-scroll-container" style="max-height: 200px; overflow-y: auto;">
+                    @if (results != null && results.Any())
+                    {
+                        <ul class="rec-list mb-0 ps-3">
+                            @foreach (var result in results)
+                            {
+                                <li class="mb-2 small">
+                                    <span class="rec-type text-orange fw-bold">[@result.RecommendationType]</span> 
+                                    <span class="text-light">@result.Recommendation</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-2 text-muted small">
+                            <i class="fas fa-check-circle text-success me-1"></i> Consistent telemetry profile. Minimal loss detected on sector transitions.
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    }
+</div>
+
+<style>
+    /* MOTORSPORT TELEMETRY DASHBOARD THEME STYLES */
+    body {
+        background-color: #07070a !important;
+        color: #d1d5db;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .telemetry-workstation {
+        max-width: 1820px;
+        margin: 0 auto;
+        padding: 10px 18px 24px 18px;
+    }
+
+    /* THREE-COLUMN GRID */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr 270px;
+        gap: 10px;
+        min-height: 580px;
+    }
+
+    .dash-card {
+        background: #0e0e14;
+        border: 1px solid #1a1a24;
+        border-radius: 4px;
+        padding: 10px 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .card-section-title {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #9ca3af;
+        letter-spacing: 1.2px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #1a1a24;
+        padding-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    /* VEHICLE CARD */
+    .vehicle-thumb-container {
+        width: 65px;
+        height: 44px;
+        border-radius: 3px;
+        background: #15151e;
+        border: 1px solid #2a2a38;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .vehicle-thumb { width: 100%; height: 100%; object-fit: cover; }
+    .vehicle-name { font-size: 0.88rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: 0.8px; line-height: 1.2; }
+    .vehicle-class-badge { font-size: 0.65rem; color: #ff5a1f; font-weight: 700; letter-spacing: 0.8px; }
+
+    /* SESSION INFO */
+    .info-rows .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 0.76rem;
+        border-bottom: 1px solid #13131b;
+    }
+    .info-rows .info-row:last-child { border-bottom: none; }
+    .info-label { color: #6b7280; }
+    .info-val { color: #e5e7eb; font-weight: 500; }
+
+    /* LAP LIST */
+    .lap-scroll-container {
+        max-height: 180px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .lap-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 8px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        background: #13131b;
+        color: #9ca3af;
+        text-decoration: none;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+    }
+    .lap-item:hover { background: #1c1c28; color: #fff; }
+    .lap-item.active { background: rgba(162, 0, 255, 0.18); border-left: 2px solid #a200ff; color: #fff; }
+    .lap-item.fastest { border-left: 2px solid #a200ff; }
+    .fastest-indicator { color: #a200ff; font-size: 0.8rem; }
+
+    /* TRACK MAP */
+    .circuit-visual-wrapper {
+        height: 95px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .circuit-svg { width: 100%; height: 100%; max-height: 95px; }
+
+    /* CENTER TELEMETRY GRAPH */
+    .graph-main-card { padding: 12px 16px; }
+    .graph-header { margin-bottom: 8px; }
+    .graph-title { font-size: 0.82rem; font-weight: 800; letter-spacing: 1.2px; color: #f3f4f6; }
+
+    /* CHANNEL BUTTON TOGGLES */
+    .channel-toggles .ch-btn {
+        background: #15151e;
+        border: 1px solid #282838;
+        color: #9ca3af;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+    }
+    .channel-toggles .ch-btn:hover { background: #1f1f2e; border-color: #3e3e52; color: #fff; }
+    .channel-toggles .ch-btn.active.ch-speed { border-color: #00ff41; color: #00ff41; background: rgba(0,255,65,0.08); }
+    .channel-toggles .ch-btn.active.ch-rpm { border-color: #a200ff; color: #a200ff; background: rgba(162,0,255,0.08); }
+    .channel-toggles .ch-btn.active.ch-throttle { border-color: #00d2ff; color: #00d2ff; background: rgba(0,210,255,0.08); }
+    .channel-toggles .ch-btn.active.ch-brake { border-color: #ff0000; color: #ff0000; background: rgba(255,0,0,0.08); }
+    .channel-toggles .ch-btn.active.ch-steering { border-color: #ff00ff; color: #ff00ff; background: rgba(255,0,255,0.08); }
+    .channel-toggles .ch-btn.disabled-ch { opacity: 0.35; text-decoration: line-through; background: #0f0f14; border-color: #1a1a24; }
+    .ch-dot { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+
+    .btn-mode-toggle {
+        background: #15151e;
+        border: 1px solid #ff5a1f;
+        color: #ff5a1f;
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 3px 9px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-mode-toggle.active { background: #ff5a1f; color: #fff; box-shadow: 0 0 8px rgba(255, 90, 31, 0.4); }
+
+    .graph-viewport-wrapper {
+        min-height: 350px;
+        height: 350px;
+        cursor: crosshair;
+        user-select: none;
+        background: #08080d;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid #161622;
+    }
+
+    .live-scrubber-hud {
+        position: absolute;
+        top: 6px;
+        left: 80%;
+        transform: translateX(-50%);
+        background: #ff5a1f;
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        font-family: monospace;
+        pointer-events: none;
+        z-index: 15;
+        box-shadow: 0 0 10px rgba(255, 90, 31, 0.6);
+        display: none;
+    }
+    .live-scrubber-hud .badge-tag { font-size: 0.65rem; opacity: 0.85; }
+
+    /* =================================================== */
+    /* INTERACTIVE TELEMETRY HOVER HUD TOOLTIP            */
+    /* =================================================== */
+    .telemetry-hover-hud {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 320px;
+        background: rgba(10, 12, 18, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 229, 255, 0.42);
+        border-top: 2px solid #00e5ff;
+        border-radius: 8px;
+        padding: 12px 15px;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.88), 0 0 24px rgba(0, 229, 255, 0.22);
+        pointer-events: none;
+        z-index: 100;
+        user-select: none;
+        transition: opacity 0.12s ease;
+        will-change: transform;
+    }
+
+    .th-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .th-badge-lap {
+        background: #ff5a1f;
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    .th-dist {
+        font-size: 0.92rem;
+        color: #00e5ff;
+        font-weight: 700;
+        font-family: monospace;
+    }
+
+    .th-time {
+        font-size: 0.92rem;
+        color: #f3f4f6;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .th-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .th-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        padding: 3px 7px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .th-item.disabled-ch {
+        opacity: 0.35;
+    }
+
+    .th-meta {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .th-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .th-label {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .th-val {
+        font-size: 0.94rem;
+        font-weight: 700;
+    }
+
+    .th-bar-track {
+        width: 44px;
+        height: 5px;
+        background: #1a1a24;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-left: 4px;
+    }
+
+    .th-bar-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.05s linear;
+    }
+
+    .th-hint {
+        font-size: 0.7rem;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.08);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    /* REPLAY CONTROL BAR */
+    .replay-control-bar {
+        background: #111118;
+        border: 1px solid #1e1e28;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin-top: 8px;
+    }
+    .btn-replay {
+        background: #1c1c28;
+        border: 1px solid #323246;
+        color: #e5e7eb;
+        border-radius: 4px;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+    }
+    .btn-replay:hover { background: #28283a; border-color: #ff5a1f; color: #fff; }
+    .btn-replay.active { background: #ff5a1f !important; border-color: #ff5a1f !important; color: #fff !important; box-shadow: 0 0 10px rgba(255, 90, 31, 0.6); }
+
+    .btn-speed-mult {
+        background: #15151e;
+        border: 1px solid #282838;
+        color: #9ca3af;
+        font-size: 0.68rem;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .btn-speed-mult.active { background: #ff5a1f; border-color: #ff5a1f; color: #fff; }
+
+    .timeline-slider {
+        accent-color: #ff5a1f;
+        cursor: pointer;
+        height: 4px;
+        background: #252535;
+        border-radius: 2px;
+        outline: none;
+    }
+    .hud-lap-badge {
+        font-size: 0.84rem;
+        font-weight: 800;
+        background: #181826;
+        border: 1px solid #a200ff;
+        padding: 3px 8px;
+        border-radius: 4px;
+        color: #e5e7eb;
+        box-shadow: 0 0 8px rgba(162, 0, 255, 0.25);
+    }
+    .hud-stat { font-size: 0.78rem; font-family: monospace; }
+
+    /* RIGHT SIDEBAR TYRES & STATUS */
+    .tyre-visual-container { padding: 6px 0; }
+    .tyre-node { font-size: 0.68rem; line-height: 1.25; }
+    .tyre-pos { font-weight: 800; color: #9ca3af; }
+    .tyre-temp { font-weight: 700; }
+    
+    .chassis-silhouette {
+        width: 64px;
+        height: 85px;
+        background: #14141d;
+        border: 1px solid #232330;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .car-chassis-body { width: 32px; height: 60px; background: #1c1c28; border-radius: 8px; border: 1px solid #333346; }
+    .tyre-block {
+        position: absolute;
+        width: 9px;
+        height: 16px;
+        background: #00ff41;
+        border-radius: 2px;
+        box-shadow: 0 0 6px rgba(0,255,65,0.4);
+    }
+    .tyre-block-fl { top: 6px; left: -5px; }
+    .tyre-block-fr { top: 6px; right: -5px; }
+    .tyre-block-rl { bottom: 6px; left: -5px; }
+    .tyre-block-rr { bottom: 6px; right: -5px; }
+
+    /* BIKE TYRE STATUS & SILHOUETTE */
+    .tyre-visual-container-bike { padding: 8px 6px; }
+    .bike-chassis-silhouette {
+        width: 48px;
+        height: 85px;
+        background: #14141d;
+        border: 1px solid #232330;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .bike-body-center {
+        width: 14px;
+        height: 48px;
+        background: #1a1a26;
+        border: 1px solid #333348;
+        border-radius: 6px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .bike-bars {
+        position: absolute;
+        top: 6px;
+        width: 26px;
+        height: 2px;
+        background: #6b7280;
+        border-radius: 1px;
+    }
+    .bike-core {
+        position: absolute;
+        top: 13px;
+        width: 10px;
+        height: 18px;
+        background: rgba(255, 90, 31, 0.4);
+        border-radius: 3px;
+    }
+    .bike-wheel-block {
+        position: absolute;
+        width: 10px;
+        height: 20px;
+        background: #00ff41;
+        border-radius: 3px;
+        box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+    }
+    .bike-wheel-front { top: -6px; left: 19px; }
+    .bike-wheel-rear { bottom: -6px; left: 19px; }
+
+    .vehicle-quick-select {
+        width: auto;
+        max-width: 175px;
+        background: #12121c;
+        border: 1px solid #2a2a3c;
+        color: #e5e7eb;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .vehicle-quick-select:focus {
+        background: #181826;
+        border-color: #ff5a1f;
+        box-shadow: 0 0 6px rgba(255, 90, 31, 0.4);
+        color: #fff;
+    }
+
+    .eng-bar { height: 4px; background: #181824; border-radius: 2px; overflow: hidden; margin-top: 2px; }
+    .eng-bar-fill { height: 100%; border-radius: 2px; }
+
+    /* G-FORCE RADAR */
+    .gforce-radar {
+        width: 68px;
+        height: 68px;
+        background: #111118;
+        border: 1px solid #222230;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .radar-circle { position: absolute; border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; }
+    .circle-1 { width: 22px; height: 22px; }
+    .circle-2 { width: 44px; height: 44px; }
+    .circle-3 { width: 64px; height: 64px; }
+    .radar-cross-h { position: absolute; width: 100%; height: 1px; background: rgba(255,255,255,0.1); }
+    .radar-cross-v { position: absolute; height: 100%; width: 1px; background: rgba(255,255,255,0.1); }
+    .radar-dot {
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        background: #ff5a1f;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px #ff5a1f;
+        transition: top 0.05s ease, left 0.05s ease;
+    }
+
+    /* WEATHER TABLE */
+    .weather-table .weather-row { padding: 3px 0; border-bottom: 1px solid #14141c; font-size: 0.76rem; }
+    .weather-table .weather-row:last-child { border-bottom: none; }
+    .w-label { color: #6b7280; font-weight: 500; text-align: left; }
+    .w-val { color: #f3f4f6; font-family: monospace; font-weight: 700; text-align: right; }
+
+    /* BOTTOM GRID */
+    .bottom-analysis-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr; gap: 10px; }
+
+    /* Tooltip */
+    .custom-tooltip {
+        position: absolute;
+        width: 215px;
+        background: rgba(14, 14, 20, 0.96);
+        border: 1px solid #2a2a36;
+        border-radius: 4px;
+        padding: 6px 10px;
+        color: #fff;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.88);
+        font-size: 0.78rem;
+        z-index: 25;
+        border-top: 2px solid #00d2ff;
+        transition: opacity 0.1s;
+    }
+    .custom-tooltip.opacity-0 { opacity: 0; }
+    .custom-tooltip .tt-header { border-bottom: 1px solid #252532; padding-bottom: 3px; margin-bottom: 3px; display: flex; justify-content: space-between; }
+    .custom-tooltip .tt-row { display: flex; align-items: center; justify-content: space-between; padding: 1px 0; }
+    .custom-tooltip .tt-val { font-size: 0.78rem; font-weight: bold; font-family: monospace; }
+
+    /* Colors */
+    .text-purple { color: #a200ff !important; }
+    .text-cyan { color: #00d2ff !important; }
+    .text-orange { color: #ff5a1f !important; }
+    .text-green { color: #00ff41 !important; }
+    .text-red { color: #ff0000 !important; }
+    .text-magenta { color: #ff00ff !important; }
+</style>
+
+@section Scripts {
+    @{
+        var allRawPoints = (telemetry ?? new List<TelemetryPoint>()).ToList();
+    }
+    <script>
+        const isBike = @isBike.ToString().ToLower();
+
+        // 1. RAW TELEMETRY DATASET (CACHED UPFRONT IN MEMORY)
+        const rawTelemetry = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allRawPoints.Select(t => {
+            var lap = allLaps.FirstOrDefault(l => l.LapId == t.LapId);
+            return new {
+                lap = lap?.LapNumber ?? 1,
+                lapId = t.LapId,
+                lapDist = t.Distance,
+                speed = t.Speed,
+                rpm = t.RPM,
+                thr = t.Throttle,
+                brk = t.Brake,
+                steer = t.Steering ?? (t.LeanAngle ?? 0.0),
+                t = t.Timestamp.TotalSeconds
+            };
+        })));
+
+        // 1.1 ORDERED LIST OF LAPS FROM IMPORTED TELEMETRY DATA (CHRONOLOGICAL LAP 1 -> FINAL)
+        const availableLaps = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allLaps.OrderBy(l => l.LapNumber).Select(l => new {
+            lap = l.LapNumber,
+            lapId = l.LapId,
+            lapTime = l.LapTime.ToString(@"mm\:ss\.fff")
+        })));
+        const availableLapNumbers = availableLaps.map(l => l.lap);
+
+        // 2. COMPUTE CONTINUOUS CUMULATIVE DISTANCE ACROSS LAPS
+        let cumDist = 0;
+        let prevLapId = null;
+        let lapStartCumDist = 0;
+        let maxLapDistSeen = 0;
+        const lapBoundaries = [];
+
+        for (let i = 0; i < rawTelemetry.length; i++) {
+            const pt = rawTelemetry[i];
+            if (prevLapId !== null && pt.lapId !== prevLapId) {
+                cumDist += maxLapDistSeen > 0 ? maxLapDistSeen : 4309;
+                lapBoundaries.push({ lapNumber: pt.lap, dist: cumDist });
+                lapStartCumDist = cumDist;
+                maxLapDistSeen = 0;
+            }
+            prevLapId = pt.lapId;
+            if (pt.lapDist > maxLapDistSeen) maxLapDistSeen = pt.lapDist;
+            pt.cumDist = lapStartCumDist + pt.lapDist;
+        }
+
+        // 3. TELEMETRY DATA & VIEWPORT ENGINE
+        const canvas = document.getElementById('telemetryCanvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        const slider = document.getElementById('replaySlider');
+        const distEl = document.getElementById('replayDistance');
+        const speedEl = document.getElementById('replaySpeed');
+        const btnPlay = document.getElementById('btnPlay');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const lapEl = document.getElementById('replayLap');
+        const timeDisplayEl = document.getElementById('replayTimeDisplay');
+        const scrubberHud = document.getElementById('liveScrubberHud');
+        const hudSpeedReadout = document.getElementById('hudSpeedReadout');
+
+        // G-FORCE ELEMENTS
+        const latGEl = document.getElementById('gforce-lat');
+        const longGEl = document.getElementById('gforce-long');
+        const vertGEl = document.getElementById('gforce-vert');
+        const gforceDot = document.getElementById('gforce-dot');
+
+        let currentSelectedLap = (availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1);
+        let activeLapPoints = [];
+        let lapTotalDistance = 2802;
+
+        const telemetryData = rawTelemetry;
+        let currentTelemetryIndex = 0;
+        let playbackFractionalIndex = 0;
+
+        let isRollingActive = false; // Rolling window ONLY engages during active playback
+        let isRollingModeSetting = true;
+        let windowDistance = 1000.0; // 1.0 km rolling window
+        const SCRUBBER_X_RATIO = 0.80; // Scrubber pinned at 80% during rolling playback
+
+        let isPlaying = false;
+        let playbackRate = 1;
+        let animFrameId = null;
+        let lastFrameTime = 0;
+
+        // Current visible window distance bounds (used by hover engine)
+        let currentWindowStartDist = 0;
+        let currentWindowEndDist = 2802;
+
+        // Interactive Oscilloscope Hover Engine State
+        let isHovering = false;
+        let hoverCanvasX = null;
+        let hoverPoint = null;
+
+        // Channel visibility state
+        const channelVisibility = {
+            speed: true,
+            rpm: true,
+            throttle: true,
+            brake: true,
+            steering: true
+        };
+
+        function initLapData(lapNum, lapId) {
+            currentSelectedLap = lapNum || (availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1);
+            // Filter complete dataset for the selected lap
+            activeLapPoints = telemetryData.filter(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
+            if (activeLapPoints.length === 0) {
+                activeLapPoints = telemetryData;
+            }
+
+            // Compute exact lap distance span
+            const maxD = (activeLapPoints.length > 0) ? activeLapPoints[activeLapPoints.length - 1].lapDist : 0;
+            lapTotalDistance = maxD > 0 ? maxD : 2802;
+
+            const startIdx = telemetryData.findIndex(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
+            currentTelemetryIndex = startIdx !== -1 ? startIdx : 0;
+            playbackFractionalIndex = currentTelemetryIndex;
+            isRollingActive = false; // Full lap fit on load/selection
+
+            if (slider) {
+                slider.min = 0;
+                slider.max = Math.max(1, telemetryData.length - 1);
+                slider.value = currentTelemetryIndex;
+            }
+
+            const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
+            if (timeDisplayEl && lapMeta) {
+                timeDisplayEl.textContent = '00:00.000 / ' + lapMeta.lapTime;
+            }
+            if (lapEl) {
+                lapEl.textContent = currentSelectedLap;
+            }
+        }
+
+        // Initialize active lap strictly with Lap 1 (start of session)
+        const initialLapNum = availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1;
+        const initialLapId = availableLaps.length > 0 ? availableLaps[0].lapId : 0;
+        initLapData(initialLapNum, initialLapId);
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            if (ctx) ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            renderCanvas();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function binarySearchLower(dataset, targetDist) {
+            let low = 0, high = dataset.length - 1, ans = 0;
+            while (low <= high) {
+                const mid = (low + high) >> 1;
+                if (dataset[mid].lapDist >= targetDist) {
+                    ans = mid;
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+            return ans;
+        }
+
+        function binarySearchUpper(dataset, targetDist) {
+            let low = 0, high = dataset.length - 1, ans = dataset.length - 1;
+            while (low <= high) {
+                const mid = (low + high) >> 1;
+                if (dataset[mid].lapDist <= targetDist) {
+                    ans = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return ans;
+        }
+
+        function updateGForce(pt) {
+            if (!pt) return;
+            const steerVal = Number(pt.steer || 0);
+            const speedMs = Number(pt.speed || 0) / 3.6;
+            const throttleVal = Number(pt.thr || 0);
+            const brakeVal = Number(pt.brk || 0);
+
+            let latG = (speedMs > 4 && Math.abs(steerVal) > 0.3)
+                ? (speedMs * speedMs * Math.sin(Math.abs(steerVal) * Math.PI / 180.0)) / (9.81 * 75.0)
+                : 0;
+            latG = Math.min(4.5, Math.max(0, latG));
+            if (steerVal < 0) latG = -latG;
+
+            let longG = (throttleVal / 100.0 * 1.35) - (brakeVal / 100.0 * 2.85);
+            let vertG = 0.20 + (speedMs / 100.0 * 0.12);
+
+            if (latGEl) latGEl.textContent = (latG >= 0 ? '+' : '') + latG.toFixed(2) + ' G';
+            if (longGEl) longGEl.textContent = (longG >= 0 ? '+' : '') + longG.toFixed(2) + ' G';
+            if (vertGEl) vertGEl.textContent = vertG.toFixed(2) + ' G';
+
+            if (gforceDot) {
+                let topPct = 50 - (longG * 18);
+                let leftPct = 50 + (latG * 18);
+                gforceDot.style.top = Math.max(10, Math.min(90, topPct)) + '%';
+                gforceDot.style.left = Math.max(10, Math.min(90, leftPct)) + '%';
+            }
+        }
+
+        function formatSeconds(sec) {
+            const mins = Math.floor(sec / 60);
+            const remainderSec = (sec % 60).toFixed(3);
+            return (mins < 10 ? '0' : '') + mins + ':' + (remainderSec < 10 ? '0' : '') + remainderSec;
+        }
+
+        // MAIN CANVAS RENDER FUNCTION (60 FPS HARDWARE ACCELERATED)
+        function renderCanvas() {
+            if (!canvas || !ctx || activeLapPoints.length === 0) return;
+
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+
+            ctx.fillStyle = '#08080d';
+            ctx.fillRect(0, 0, width, height);
+
+            const pt = telemetryData[currentTelemetryIndex] || activeLapPoints[0] || { speed: 0, rpm: 0, thr: 0, brk: 0, steer: 0, lapDist: 0, t: 0 };
+            const currentDist = pt.lapDist;
+
+            let windowStartDist, windowEndDist;
+
+            if (isRollingActive && isRollingModeSetting) {
+                // Rolling Window Viewport during Playback: Scrubber pinned at 80%
+                windowStartDist = currentDist - (windowDistance * SCRUBBER_X_RATIO);
+                windowEndDist = windowStartDist + windowDistance;
+            } else {
+                // Initial Load / Lap Selection: FIT COMPLETE LAP DATA (0m to lapTotalDistance)
+                windowStartDist = 0;
+                windowEndDist = lapTotalDistance;
+            }
+
+            // Record bounds for hover engine
+            currentWindowStartDist = windowStartDist;
+            currentWindowEndDist = windowEndDist;
+
+            // Draw Background Grid & Dynamic X-Axis
+            drawGrid(width, height, windowStartDist, windowEndDist, pt);
+
+            // Viewport Culling: Retrieve only visible slice for this lap
+            const startIdx = binarySearchLower(activeLapPoints, windowStartDist);
+            const endIdx = binarySearchUpper(activeLapPoints, windowEndDist);
+
+            if (startIdx <= endIdx && startIdx < activeLapPoints.length) {
+                const slice = activeLapPoints.slice(startIdx, endIdx + 1);
+                const getX = (dist) => ((dist - windowStartDist) / (windowEndDist - windowStartDist)) * width;
+
+                // Channel 1: Speed (Green: #00ff41, 0-400 km/h) -> Top 45% of height
+                if (channelVisibility.speed) {
+                    drawCurve(slice, getX, (p) => (height * 0.44) * (1.0 - (p.speed / 400.0)) + 4, '#00ff41', 2.0);
+                }
+
+                // Channel 2: RPM (Purple: #a200ff, 0-15000 RPM) -> Top 45% height overlay
+                if (channelVisibility.rpm) {
+                    drawCurve(slice, getX, (p) => (height * 0.44) * (1.0 - (p.rpm / 15000.0)) + 4, '#a200ff', 1.5);
+                }
+
+                // Channel 3: Throttle (Cyan: #00d2ff, 0-100%) -> Bottom 48% of height
+                if (channelVisibility.throttle) {
+                    drawCurve(slice, getX, (p) => (height * 0.52) + (height * 0.42) * (1.0 - (p.thr / 100.0)), '#00d2ff', 1.5);
+                }
+
+                // Channel 4: Brake (Red: #ff0000, 0-100%) -> Bottom 48% height
+                if (channelVisibility.brake) {
+                    drawCurve(slice, getX, (p) => (height * 0.52) + (height * 0.42) * (1.0 - (p.brk / 100.0)), '#ff0000', 1.8);
+                }
+
+                // Channel 5: Steering (Magenta: #ff00ff, ±50°)
+                if (channelVisibility.steering) {
+                    drawCurve(slice, getX, (p) => (height * 0.52) + (height * 0.42) * (0.5 - (p.steer / 100.0)), '#ff00ff', 1.5);
+                }
+            }
+
+            // Draw Scrubber Indicator & HUD (only when playing, scrolling, or scrubbed)
+            const showScrubber = isPlaying || isRollingActive || currentTelemetryIndex > 0;
+            let scrubberX = (isRollingActive && isRollingModeSetting)
+                ? (SCRUBBER_X_RATIO * width)
+                : (((currentDist - windowStartDist) / (windowEndDist - windowStartDist)) * width);
+
+            if (showScrubber) {
+                ctx.strokeStyle = '#ff5a1f';
+                ctx.lineWidth = 2.0;
+                ctx.shadowColor = '#ff5a1f';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.moveTo(scrubberX, 0);
+                ctx.lineTo(scrubberX, height);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                if (scrubberHud) {
+                    scrubberHud.style.display = 'block';
+                    scrubberHud.style.left = scrubberX + 'px';
+                    if (hudSpeedReadout) hudSpeedReadout.textContent = Math.round(pt.speed) + ' km/h';
+                }
+            } else {
+                if (scrubberHud) {
+                    scrubberHud.style.display = 'none';
+                }
+            }
+
+            // Draw Interactive Oscilloscope Hover Guide Line & Curve Target Dots
+            if (isHovering && hoverCanvasX !== null && hoverPoint) {
+                const hX = hoverCanvasX;
+                ctx.save();
+
+                // 1. Vertical Guide Line (Electric Cyan)
+                ctx.strokeStyle = 'rgba(0, 229, 255, 0.85)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 3]);
+                ctx.beginPath();
+                ctx.moveTo(hX, 0);
+                ctx.lineTo(hX, height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 2. Glowing Intersection Target Dots on Active Curves
+                if (channelVisibility.speed) {
+                    const ySpeed = (height * 0.44) * (1.0 - (hoverPoint.speed / 400.0)) + 4;
+                    drawHoverTargetDot(hX, ySpeed, '#00ff41');
+                }
+                if (channelVisibility.rpm) {
+                    const yRpm = (height * 0.44) * (1.0 - (hoverPoint.rpm / 15000.0)) + 4;
+                    drawHoverTargetDot(hX, yRpm, '#a200ff');
+                }
+                if (channelVisibility.throttle) {
+                    const yThr = (height * 0.52) + (height * 0.42) * (1.0 - (hoverPoint.thr / 100.0));
+                    drawHoverTargetDot(hX, yThr, '#00d2ff');
+                }
+                if (channelVisibility.brake) {
+                    const yBrk = (height * 0.52) + (height * 0.42) * (1.0 - (hoverPoint.brk / 100.0));
+                    drawHoverTargetDot(hX, yBrk, '#ff0000');
+                }
+                if (channelVisibility.steering) {
+                    const yStr = (height * 0.52) + (height * 0.42) * (0.5 - (hoverPoint.steer / 100.0));
+                    drawHoverTargetDot(hX, yStr, '#ff00ff');
+                }
+
+                // 3. Top Crosshair Distance Badge
+                const distStr = hoverPoint.lapDist >= 1000 
+                    ? (hoverPoint.lapDist / 1000.0).toFixed(2) + ' km' 
+                    : Math.round(hoverPoint.lapDist) + ' m';
+                const badgeWidth = 66;
+                const badgeX = Math.max(2, Math.min(width - badgeWidth - 2, hX - badgeWidth / 2));
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillRect(badgeX, 2, badgeWidth, 16);
+                ctx.fillStyle = '#0a0c12';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(distStr, badgeX + badgeWidth / 2, 14);
+
+                ctx.restore();
+            }
+
+            // Sync Top Channel Toolbar Spans (reflects hovered point if user is hovering)
+            const readoutPt = (isHovering && hoverPoint) ? hoverPoint : pt;
+            const tbSpeed = document.getElementById('tbSpeedVal');
+            const tbRpm = document.getElementById('tbRpmVal');
+            const tbThr = document.getElementById('tbThrVal');
+            const tbBrk = document.getElementById('tbBrkVal');
+            const tbStr = document.getElementById('tbStrVal');
+
+            if (tbSpeed) tbSpeed.textContent = Math.round(readoutPt.speed) + ' km/h';
+            if (tbRpm) tbRpm.textContent = Math.round(readoutPt.rpm).toLocaleString();
+            if (tbThr) tbThr.textContent = Math.round(readoutPt.thr) + '%';
+            if (tbBrk) tbBrk.textContent = Math.round(readoutPt.brk) + '%';
+            if (tbStr) tbStr.textContent = (readoutPt.steer >= 0 ? '+' : '') + Number(readoutPt.steer).toFixed(1) + '°';
+
+            // Sync HUD & Sidebar
+            if (slider) slider.value = currentTelemetryIndex;
+            if (lapEl) lapEl.textContent = currentSelectedLap;
+            if (distEl) distEl.textContent = Math.round(pt.lapDist).toLocaleString() + ' m / ' + Math.round(lapTotalDistance).toLocaleString() + ' m';
+            if (speedEl) speedEl.textContent = Math.round(pt.speed) + ' KM/H';
+            if (timeDisplayEl && pt.t != null) {
+                const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
+                const lapDuration = lapMeta ? lapMeta.lapTime : '@ViewBag.CurrentLapTime';
+                timeDisplayEl.textContent = formatSeconds(pt.t) + ' / ' + lapDuration;
+            }
+
+            updateGForce(pt);
+        }
+
+        function drawCurve(slice, getX, getY, color, lineWidth) {
+            if (slice.length < 2) return;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            for (let i = 0; i < slice.length; i++) {
+                const x = getX(slice[i].lapDist);
+                const y = getY(slice[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function drawGrid(width, height, startDist, endDist, pt) {
+            ctx.strokeStyle = '#14141e';
+            ctx.lineWidth = 1;
+
+            // Horizontal Grid Lines
+            const hLines = [0.15, 0.30, 0.44, 0.52, 0.73, 0.94];
+            hLines.forEach(ratio => {
+                const y = height * ratio;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            });
+
+            // Mid Category Separator Line
+            ctx.strokeStyle = '#222234';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, height * 0.48);
+            ctx.lineTo(width, height * 0.48);
+            ctx.stroke();
+
+            // Dynamic X-Axis Distance & Lap Ticks (Complete Lap Scaled to Viewport)
+            const span = endDist - startDist;
+            const step = span <= 1200 ? 200 : (span <= 3500 ? 500 : 1000);
+            const firstTick = Math.ceil(startDist / step) * step;
+
+            ctx.font = 'bold 12px "Segoe UI", Roboto, monospace';
+            ctx.textAlign = 'center';
+
+            for (let d = firstTick; d <= endDist; d += step) {
+                const x = ((d - startDist) / span) * width;
+                ctx.strokeStyle = '#181826';
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+
+                // Display Clean Distance in Kilometers / Meters
+                const distLabel = d >= 1000 ? (d / 1000.0).toFixed(1) + ' km' : d + ' m';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.fillText(`LAP ${currentSelectedLap} • ${distLabel}`, x, height - 7);
+            }
+
+            // Lap End Boundary Marker
+            if (lapTotalDistance >= startDist && lapTotalDistance <= endDist) {
+                const endX = ((lapTotalDistance - startDist) / span) * width;
+                ctx.save();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#00ff41';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(endX, 0);
+                ctx.lineTo(endX, height);
+                ctx.stroke();
+                ctx.restore();
+
+                // Finish Line Flag
+                ctx.fillStyle = '#00ff41';
+                ctx.fillRect(Math.max(40, endX - 50), height - 24, 95, 18);
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`LAP ${currentSelectedLap} FINISH`, Math.max(40, endX - 50) + 47, height - 11);
+            }
+        }
+
+        // PLAYBACK ANIMATION LOOP
+        // PLAYBACK ANIMATION LOOP — CONTINUOUS CHRONOLOGICAL REPLAY
+        function animLoop(now) {
+            if (!isPlaying) return;
+            if (!now) now = performance.now();
+            const dt = Math.min(0.1, (now - lastFrameTime) / 1000.0);
+            lastFrameTime = now;
+
+            // Natural 1x playback pace: ~20 telemetry samples per second * playbackRate
+            const deltaPoints = dt * playbackRate * 20.0;
+            playbackFractionalIndex += deltaPoints;
+            currentTelemetryIndex = Math.floor(playbackFractionalIndex);
+
+            // STOP ONLY when session reaches the final telemetry point of the final lap
+            if (currentTelemetryIndex >= telemetryData.length - 1) {
+                currentTelemetryIndex = telemetryData.length - 1;
+                playbackFractionalIndex = currentTelemetryIndex;
+                pausePlayback();
+                renderCanvas();
+                return;
+            }
+
+            // Continuous playback: Check for lap transition (Lap 1 -> Lap 2 -> ... -> Lap N)
+            const pt = telemetryData[currentTelemetryIndex];
+            if (pt && pt.lap !== currentSelectedLap) {
+                currentSelectedLap = pt.lap;
+                activeLapPoints = telemetryData.filter(p => p.lap === currentSelectedLap);
+                const maxD = (activeLapPoints.length > 0) ? activeLapPoints[activeLapPoints.length - 1].lapDist : 0;
+                lapTotalDistance = maxD > 0 ? maxD : 2802;
+
+                if (lapEl) lapEl.textContent = currentSelectedLap;
+
+                // Sync active styling on sidebar items and table rows without pause or reset
+                document.querySelectorAll('.lap-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-lap') == currentSelectedLap);
+                });
+                document.querySelectorAll('.lap-table-row').forEach(row => {
+                    row.classList.toggle('table-active', row.getAttribute('data-lap-num') == currentSelectedLap);
+                    row.classList.toggle('text-warning', row.getAttribute('data-lap-num') == currentSelectedLap);
+                });
+            }
+
+            renderCanvas();
+            animFrameId = requestAnimationFrame(animLoop);
+        }
+
+        window.startPlayback = function() {
+            isPlaying = true;
+            isRollingActive = true; // Engage rolling window during playback
+            if (btnPlay) btnPlay.classList.add('active');
+            if (btnPause) btnPause.classList.remove('active');
+            if (btnReset) btnReset.classList.remove('active');
+
+            // If user was at the final telemetry point of the final lap, loop back to Lap 1
+            if (currentTelemetryIndex >= telemetryData.length - 1) {
+                const firstLapNum = availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1;
+                jumpToLap(firstLapNum, null, null, false);
+                currentTelemetryIndex = 0;
+                playbackFractionalIndex = 0;
+            } else {
+                playbackFractionalIndex = currentTelemetryIndex;
+            }
+
+            lastFrameTime = performance.now();
+            if (!animFrameId) animLoop(lastFrameTime);
+        };
+
+        window.pausePlayback = function() {
+            isPlaying = false;
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            if (btnPlay) btnPlay.classList.remove('active');
+            if (btnPause) btnPause.classList.add('active');
+            renderCanvas();
+        };
+
+        window.resetPlayback = function() {
+            pausePlayback();
+            // Requirement 12: Reset returns to the beginning of Lap 1
+            const firstLapNum = availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1;
+            const firstLapMeta = availableLaps.find(l => l.lap === firstLapNum);
+            jumpToLap(firstLapNum, firstLapMeta ? firstLapMeta.lapId : null, null, true);
+            currentTelemetryIndex = 0;
+            playbackFractionalIndex = 0;
+            isRollingActive = false; // Full lap fit view
+            if (slider) slider.value = 0;
+            if (btnReset) btnReset.classList.add('active');
+            if (btnPause) btnPause.classList.remove('active');
+            renderCanvas();
+            setTimeout(() => { if (btnReset) btnReset.classList.remove('active'); }, 300);
+        };
+
+        window.seekToSlider = function(val) {
+            pausePlayback();
+            currentTelemetryIndex = Math.max(0, Math.min(telemetryData.length - 1, parseInt(val)));
+            playbackFractionalIndex = currentTelemetryIndex;
+            const pt = telemetryData[currentTelemetryIndex];
+            if (pt && pt.lap !== currentSelectedLap) {
+                currentSelectedLap = pt.lap;
+                activeLapPoints = telemetryData.filter(p => p.lap === currentSelectedLap);
+                const maxD = (activeLapPoints.length > 0) ? activeLapPoints[activeLapPoints.length - 1].lapDist : 0;
+                lapTotalDistance = maxD > 0 ? maxD : 2802;
+                if (lapEl) lapEl.textContent = currentSelectedLap;
+                document.querySelectorAll('.lap-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-lap') == currentSelectedLap);
+                });
+                document.querySelectorAll('.lap-table-row').forEach(row => {
+                    row.classList.toggle('table-active', row.getAttribute('data-lap-num') == currentSelectedLap);
+                    row.classList.toggle('text-warning', row.getAttribute('data-lap-num') == currentSelectedLap);
+                });
+            }
+            isRollingActive = false;
+            renderCanvas();
+        };
+
+        window.setSpeedMultiplier = function(mult, btn) {
+            playbackRate = mult;
+            document.querySelectorAll('.btn-speed-mult').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+        };
+
+        window.toggleRollingChannel = function(channel, btn) {
+            if (channelVisibility[channel] !== undefined) {
+                channelVisibility[channel] = !channelVisibility[channel];
+                btn.classList.toggle('active', channelVisibility[channel]);
+                btn.classList.toggle('disabled-ch', !channelVisibility[channel]);
+                renderCanvas();
+            }
+        };
+
+        window.toggleViewMode = function() {
+            isRollingModeSetting = !isRollingModeSetting;
+            const modeBtn = document.getElementById('btnViewMode');
+            const modeText = document.getElementById('modeText');
+            if (modeText) modeText.textContent = isRollingModeSetting ? 'ROLLING VIEWPORT' : 'FULL LAP';
+            if (modeBtn) modeBtn.classList.toggle('active', isRollingModeSetting);
+            renderCanvas();
+        };
+
+        window.changeWindowSize = function(val) {
+            windowDistance = parseFloat(val);
+            renderCanvas();
+        };
+
+        // ON LAP SELECTION: LOAD COMPLETE DATASET & FIT ENTIRE LAP TO VIEWPORT
+        window.jumpToLap = function(lapNumber, lapId, el, shouldPause = true) {
+            if (shouldPause) {
+                pausePlayback();
+            }
+            const targetLap = lapNumber || (availableLapNumbers.length > 0 ? availableLapNumbers[0] : 1);
+            currentSelectedLap = targetLap;
+            activeLapPoints = telemetryData.filter(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
+            if (activeLapPoints.length === 0) activeLapPoints = telemetryData;
+
+            const maxD = (activeLapPoints.length > 0) ? activeLapPoints[activeLapPoints.length - 1].lapDist : 0;
+            lapTotalDistance = maxD > 0 ? maxD : 2802;
+
+            const startIdx = telemetryData.findIndex(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
+            currentTelemetryIndex = startIdx !== -1 ? startIdx : 0;
+            playbackFractionalIndex = currentTelemetryIndex;
+            if (shouldPause) isRollingActive = false;
+
+            if (slider) slider.value = currentTelemetryIndex;
+            if (lapEl) lapEl.textContent = currentSelectedLap;
+
+            const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
+            if (timeDisplayEl && lapMeta) {
+                timeDisplayEl.textContent = '00:00.000 / ' + lapMeta.lapTime;
+            }
+
+            // Highlight active items
+            document.querySelectorAll('.lap-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-lap') == currentSelectedLap);
+            });
+            document.querySelectorAll('.lap-table-row').forEach(row => {
+                row.classList.toggle('table-active', row.getAttribute('data-lap-num') == currentSelectedLap);
+                row.classList.toggle('text-warning', row.getAttribute('data-lap-num') == currentSelectedLap);
+            });
+
+            const targetItem = el || document.querySelector(`.lap-item[data-lap="${lapNumber}"]`) || document.querySelector(`.lap-item-num-${lapNumber}`);
+            if (targetItem) {
+                if (targetItem.classList.contains('lap-item')) {
+                    targetItem.classList.add('active');
+                } else if (targetItem.classList.contains('lap-table-row')) {
+                    targetItem.classList.add('table-active', 'text-warning');
+                }
+            }
+
+            // Scroll view smoothly up to centerpiece graph only on manual click
+            if (shouldPause) {
+                const graphWrapper = document.getElementById('telemetry-wrapper');
+                if (graphWrapper && window.scrollY > 320) {
+                    graphWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            renderCanvas();
+        };
+
+        function drawHoverTargetDot(x, y, color) {
+            ctx.save();
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Exact Telemetry Point Interpolation for High Precision Oscilloscope Cursor
+        function getInterpolatedPointAtDist(dist) {
+            if (!activeLapPoints || activeLapPoints.length === 0) return null;
+            if (dist <= activeLapPoints[0].lapDist) return activeLapPoints[0];
+            if (dist >= activeLapPoints[activeLapPoints.length - 1].lapDist) return activeLapPoints[activeLapPoints.length - 1];
+
+            let low = 0, high = activeLapPoints.length - 1;
+            while (low <= high) {
+                const mid = (low + high) >> 1;
+                if (activeLapPoints[mid].lapDist < dist) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            const idx2 = Math.min(activeLapPoints.length - 1, Math.max(0, low));
+            const idx1 = Math.max(0, idx2 - 1);
+            const p1 = activeLapPoints[idx1];
+            const p2 = activeLapPoints[idx2];
+            if (p1 === p2 || p2.lapDist === p1.lapDist) return p1;
+
+            const frac = Math.max(0, Math.min(1, (dist - p1.lapDist) / (p2.lapDist - p1.lapDist)));
+            const lerp = (a, b) => a + (b - a) * frac;
+
+            return {
+                lap: p1.lap,
+                lapDist: dist,
+                t: lerp(p1.t ?? 0, p2.t ?? 0),
+                speed: lerp(p1.speed, p2.speed),
+                rpm: lerp(p1.rpm, p2.rpm),
+                thr: lerp(p1.thr, p2.thr),
+                brk: lerp(p1.brk, p2.brk),
+                steer: lerp(p1.steer, p2.steer),
+                gear: frac < 0.5 ? p1.gear : p2.gear
+            };
+        }
+
+        // INTERACTIVE TELEMETRY HOVER ENGINE
+        function initHoverEngine() {
+            if (!canvas) return;
+
+            const tooltip = document.getElementById('cursor-tooltip');
+            const thLap = document.getElementById('thLap');
+            const thDist = document.getElementById('thDist');
+            const thTime = document.getElementById('thTime');
+            const thSpeed = document.getElementById('thSpeed');
+            const thRpm = document.getElementById('thRpm');
+            const thThr = document.getElementById('thThr');
+            const thThrBar = document.getElementById('thThrBar');
+            const thBrk = document.getElementById('thBrk');
+            const thBrkBar = document.getElementById('thBrkBar');
+            const thSteer = document.getElementById('thSteer');
+
+            const thRowSpeed = document.getElementById('thRowSpeed');
+            const thRowRpm = document.getElementById('thRowRpm');
+            const thRowThr = document.getElementById('thRowThr');
+            const thRowBrk = document.getElementById('thRowBrk');
+            const thRowSteer = document.getElementById('thRowSteer');
+
+            function onMouseMove(e) {
+                if (!canvas || activeLapPoints.length === 0) return;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                if (mouseX < 0 || mouseX > rect.width || mouseY < 0 || mouseY > rect.height) {
+                    onMouseLeave();
+                    return;
+                }
+
+                isHovering = true;
+                hoverCanvasX = mouseX;
+
+                const span = currentWindowEndDist - currentWindowStartDist;
+                if (span <= 0) return;
+                const ratio = Math.max(0, Math.min(1, mouseX / rect.width));
+                const hoveredDist = currentWindowStartDist + ratio * span;
+
+                hoverPoint = getInterpolatedPointAtDist(hoveredDist);
+                if (!hoverPoint) return;
+
+                // 1. Update Tooltip Header
+                if (thLap) thLap.textContent = hoverPoint.lap;
+                if (thDist) thDist.textContent = hoverPoint.lapDist >= 1000 
+                    ? (hoverPoint.lapDist / 1000.0).toFixed(3) + ' km' 
+                    : Math.round(hoverPoint.lapDist) + ' m';
+                if (thTime) thTime.textContent = formatSeconds(hoverPoint.t);
+
+                // 2. Update Channel Values
+                if (thSpeed) thSpeed.textContent = Math.round(hoverPoint.speed) + ' km/h';
+                if (thRpm) thRpm.textContent = Math.round(hoverPoint.rpm).toLocaleString();
+                if (thThr) thThr.textContent = Math.round(hoverPoint.thr) + '%';
+                if (thThrBar) thThrBar.style.width = Math.min(100, Math.max(0, hoverPoint.thr)) + '%';
+                if (thBrk) thBrk.textContent = Math.round(hoverPoint.brk) + '%';
+                if (thBrkBar) thBrkBar.style.width = Math.min(100, Math.max(0, hoverPoint.brk)) + '%';
+                if (thSteer) thSteer.textContent = (hoverPoint.steer >= 0 ? '+' : '') + Number(hoverPoint.steer).toFixed(1) + '°';
+
+                // 3. Update Disabled/Visible Styling matching channel buttons
+                if (thRowSpeed) thRowSpeed.classList.toggle('disabled-ch', !channelVisibility.speed);
+                if (thRowRpm) thRowRpm.classList.toggle('disabled-ch', !channelVisibility.rpm);
+                if (thRowThr) thRowThr.classList.toggle('disabled-ch', !channelVisibility.throttle);
+                if (thRowBrk) thRowBrk.classList.toggle('disabled-ch', !channelVisibility.brake);
+                if (thRowSteer) thRowSteer.classList.toggle('disabled-ch', !channelVisibility.steering);
+
+                // 4. Position Floating Tooltip HUD
+                if (tooltip) {
+                    tooltip.classList.remove('d-none');
+                    const tooltipWidth = tooltip.offsetWidth || 320;
+                    const tooltipHeight = tooltip.offsetHeight || 230;
+                    let tipX = mouseX + 20;
+                    let tipY = mouseY - 30;
+
+                    // Auto-flip horizontally if overflowing right side
+                    if (tipX + tooltipWidth > rect.width - 8) {
+                        tipX = mouseX - tooltipWidth - 18;
+                    }
+                    if (tipX < 8) tipX = 8;
+
+                    // Clamp vertically within wrapper
+                    if (tipY < 8) tipY = 8;
+                    if (tipY + tooltipHeight > rect.height - 8) {
+                        tipY = rect.height - tooltipHeight - 8;
+                    }
+
+                    tooltip.style.transform = `translate(${tipX}px, ${tipY}px)`;
+                }
+
+                // Render crosshair and dots immediately if not playing
+                if (!isPlaying) {
+                    renderCanvas();
+                }
+            }
+
+            function onMouseLeave() {
+                isHovering = false;
+                hoverCanvasX = null;
+                hoverPoint = null;
+                if (tooltip) tooltip.classList.add('d-none');
+                if (!isPlaying) {
+                    renderCanvas();
+                }
+            }
+
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseleave', onMouseLeave);
+
+            // Click on graph to jump replay to that exact position
+            canvas.addEventListener('click', function(e) {
+                if (!hoverPoint || telemetryData.length === 0) return;
+                const targetLap = hoverPoint.lap;
+                const targetDist = hoverPoint.lapDist;
+                let closestIdx = 0;
+                let minDiff = Infinity;
+                for (let i = 0; i < telemetryData.length; i++) {
+                    if (telemetryData[i].lap === targetLap) {
+                        const diff = Math.abs(telemetryData[i].lapDist - targetDist);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            closestIdx = i;
+                        }
+                    }
+                }
+                seekToSlider(closestIdx);
+            });
+        }
+
+        // Initialize on load
+        setTimeout(() => {
+            resizeCanvas();
+            initHoverEngine();
+        }, 100);
+    </script>
+}

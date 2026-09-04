@@ -1,0 +1,564 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+
+<div class="blazor-telemetry-dashboard">
+    <!-- TOP HEADER -->
+    <div class="telemetry-header d-flex justify-content-between align-items-center">
+        <div class="brand-section">
+            <span class="brand-title"><span class="text-white">RACING</span> <span class="text-orange">TELEMETRY</span></span>
+            <span class="badge bg-dark text-muted ms-2">ROLLING VIEWPORT</span>
+        </div>
+        <div class="session-meta d-flex align-items-center gap-3">
+            <span class="meta-item"><i class="fas fa-car me-1 text-orange"></i> @(VehicleName ?? "Porsche 963 LMDh")</span>
+            <span class="meta-item"><i class="fas fa-road me-1 text-cyan"></i> @(TrackName ?? "Interlagos")</span>
+            <span class="badge bg-secondary">@(TotalLaps) LAPS</span>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT (GRAPH + SIDEBAR) -->
+    <div class="dashboard-body">
+        
+        <!-- LEFT: ROLLING WINDOW CANVAS GRAPH -->
+        <div class="graph-panel">
+            <!-- Channel Legend & Toggles -->
+            <div class="channel-toolbar d-flex justify-content-between align-items-center">
+                <div class="channel-toggles d-flex align-items-center gap-2">
+                    <button class="btn-channel @(ShowSpeed ? "active speed" : "disabled")" @onclick="() => ShowSpeed = !ShowSpeed">
+                        <span class="dot dot-speed"></span> SPEED (@((int)CurrentSpeed) km/h)
+                    </button>
+                    <button class="btn-channel @(ShowRPM ? "active rpm" : "disabled")" @onclick="() => ShowRPM = !ShowRPM">
+                        <span class="dot dot-rpm"></span> RPM (@((int)CurrentRPM))
+                    </button>
+                    <button class="btn-channel @(ShowThrottle ? "active throttle" : "disabled")" @onclick="() => ShowThrottle = !ShowThrottle">
+                        <span class="dot dot-throttle"></span> THROTTLE (@((int)CurrentThrottle)%)
+                    </button>
+                    <button class="btn-channel @(ShowBrake ? "active brake" : "disabled")" @onclick="() => ShowBrake = !ShowBrake">
+                        <span class="dot dot-brake"></span> BRAKE (@((int)CurrentBrake)%)
+                    </button>
+                    <button class="btn-channel @(ShowSteering ? "active steering" : "disabled")" @onclick="() => ShowSteering = !ShowSteering">
+                        <span class="dot dot-steering"></span> STEERING (@CurrentSteering.ToString("F1")°)
+                    </button>
+                </div>
+
+                <div class="window-settings d-flex align-items-center gap-2">
+                    <span class="text-muted small">WINDOW:</span>
+                    <select class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 110px;" @bind="WindowDistanceMeters">
+                        <option value="500">500 m</option>
+                        <option value="1000">1.0 km</option>
+                        <option value="1500">1.5 km</option>
+                        <option value="2500">2.5 km</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div class="canvas-container position-relative" id="rollingCanvasWrapper">
+                <canvas id="rollingTelemetryCanvas" width="1200" height="420"></canvas>
+                
+                @if (IsLoading)
+                {
+                    <div class="loading-overlay">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <span class="mt-2 text-muted">Loading Upfront Telemetry Memory Cache...</span>
+                    </div>
+                }
+            </div>
+
+            <!-- PLAYBACK CONTROL BAR -->
+            <div class="playback-bar d-flex align-items-center gap-3">
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-dark text-light border-secondary @(IsPlaying ? "active text-orange" : "")" @onclick="TogglePlay" title="Play / Pause">
+                        <i class="fas @(IsPlaying ? "fa-pause" : "fa-play")"></i> @(IsPlaying ? "PAUSE" : "PLAY")
+                    </button>
+                    <button class="btn btn-sm btn-dark text-light border-secondary" @onclick="ResetPlayback" title="Reset to Beginning">
+                        <i class="fas fa-undo"></i> RESET
+                    </button>
+                </div>
+
+                <!-- Range Scrubber -->
+                <div class="timeline-container flex-grow-1 position-relative d-flex align-items-center">
+                    <input type="range" 
+                           class="form-range custom-range" 
+                           min="0" 
+                           max="@(TotalPoints > 0 ? TotalPoints - 1 : 0)" 
+                           value="@CurrentIndex" 
+                           @oninput="HandleScrubberInput" />
+                </div>
+
+                <!-- Playback Speed Multiplier -->
+                <div class="speed-selector d-flex align-items-center gap-1">
+                    <span class="text-muted small">SPEED:</span>
+                    <button class="btn btn-xs @(PlaybackRate == 1 ? "btn-warning" : "btn-dark")" @onclick="() => PlaybackRate = 1">1x</button>
+                    <button class="btn btn-xs @(PlaybackRate == 2 ? "btn-warning" : "btn-dark")" @onclick="() => PlaybackRate = 2">2x</button>
+                    <button class="btn btn-xs @(PlaybackRate == 4 ? "btn-warning" : "btn-dark")" @onclick="() => PlaybackRate = 4">4x</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: LIVE TELEMETRY HUD SIDEBAR -->
+        <div class="hud-sidebar">
+            <div class="hud-card lap-card">
+                <div class="hud-header">SESSION TIMER</div>
+                <div class="hud-lap-time text-purple">@FormatTime(CurrentTimestampSec)</div>
+                <div class="d-flex justify-content-between small text-muted mt-1">
+                    <span>CURRENT LAP:</span>
+                    <strong class="text-warning">LAP @CurrentLap</strong>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>TRACK DISTANCE:</span>
+                    <strong class="text-light">@((CurrentDistance / 1000.0).ToString("F3")) km</strong>
+                </div>
+            </div>
+
+            <!-- LIVE CHANNELS GAUGES -->
+            <div class="hud-card gauges-card">
+                <div class="hud-header">TELEMETRY CHANNELS</div>
+                
+                <!-- Speed Gauge -->
+                <div class="gauge-item">
+                    <div class="d-flex justify-content-between">
+                        <span class="gauge-label text-green">SPEED</span>
+                        <span class="gauge-value font-monospace text-green">@Math.Round(CurrentSpeed) <small>KM/H</small></span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 4px;">
+                        <div class="progress-bar bg-green" style="width: @((CurrentSpeed / 400.0) * 100)%"></div>
+                    </div>
+                </div>
+
+                <!-- RPM Gauge -->
+                <div class="gauge-item mt-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="gauge-label text-purple">ENGINE RPM</span>
+                        <span class="gauge-value font-monospace text-purple">@Math.Round(CurrentRPM) <small>RPM</small></span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 4px;">
+                        <div class="progress-bar bg-purple" style="width: @((CurrentRPM / 15000.0) * 100)%"></div>
+                    </div>
+                </div>
+
+                <!-- Throttle Gauge -->
+                <div class="gauge-item mt-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="gauge-label text-cyan">THROTTLE</span>
+                        <span class="gauge-value font-monospace text-cyan">@Math.Round(CurrentThrottle) <small>%</small></span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 4px;">
+                        <div class="progress-bar bg-cyan" style="width: @(CurrentThrottle)%"></div>
+                    </div>
+                </div>
+
+                <!-- Brake Gauge -->
+                <div class="gauge-item mt-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="gauge-label text-red">BRAKE</span>
+                        <span class="gauge-value font-monospace text-red">@Math.Round(CurrentBrake) <small>%</small></span>
+                    </div>
+                    <div class="progress bg-dark" style="height: 4px;">
+                        <div class="progress-bar bg-danger" style="width: @(CurrentBrake)%"></div>
+                    </div>
+                </div>
+
+                <!-- Steering Angle -->
+                <div class="gauge-item mt-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="gauge-label text-magenta">STEERING</span>
+                        <span class="gauge-value font-monospace text-magenta">@CurrentSteering.ToString("F1") <small>DEG</small></span>
+                    </div>
+                    <div class="steering-bar position-relative bg-dark" style="height: 4px; overflow: hidden;">
+                        <div class="steering-indicator bg-magenta" style="position: absolute; left: 50%; width: 4px; height: 100%; transform: translateX(@(CurrentSteering * 2)px);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- G-FORCE HUD -->
+            <div class="hud-card gforce-hud">
+                <div class="hud-header">G-FORCE VECTOR</div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="gforce-target position-relative">
+                        <div class="g-circle circle-outer"></div>
+                        <div class="g-circle circle-inner"></div>
+                        <div class="g-cross-h"></div>
+                        <div class="g-cross-v"></div>
+                        <div class="g-dot" style="top: @(50 - (CurrentLongG * 15))%; left: @(50 + (CurrentLatG * 15))%;"></div>
+                    </div>
+                    <div class="gforce-readouts font-monospace text-end small">
+                        <div><span class="text-muted">LAT:</span> <strong class="text-light">@(CurrentLatG >= 0 ? "+" : "")@CurrentLatG.ToString("F2") G</strong></div>
+                        <div><span class="text-muted">LONG:</span> <strong class="text-light">@(CurrentLongG >= 0 ? "+" : "")@CurrentLongG.ToString("F2") G</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .blazor-telemetry-dashboard {
+        background-color: #07070a;
+        color: #d1d5db;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #1a1a24;
+    }
+
+    .telemetry-header {
+        background: #0d0d14;
+        border-bottom: 1px solid #1f1f2e;
+        padding: 10px 16px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+    }
+    .brand-title { font-weight: 800; letter-spacing: 1.5px; font-size: 1.1rem; }
+    .text-orange { color: #ff5a1f !important; }
+    .text-cyan { color: #00d2ff !important; }
+    .text-green { color: #00ff41 !important; }
+    .text-purple { color: #a200ff !important; }
+    .text-red { color: #ff0000 !important; }
+    .text-magenta { color: #ff00ff !important; }
+    .bg-green { background-color: #00ff41 !important; }
+    .bg-purple { background-color: #a200ff !important; }
+    .bg-cyan { background-color: #00d2ff !important; }
+    .bg-magenta { background-color: #ff00ff !important; }
+
+    .dashboard-body {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 12px;
+    }
+
+    .graph-panel {
+        background: #0e0e16;
+        border: 1px solid #1c1c28;
+        border-radius: 4px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .channel-toolbar {
+        background: #12121a;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid #222230;
+    }
+
+    .btn-channel {
+        background: #181824;
+        border: 1px solid #2a2a38;
+        color: #9ca3af;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s;
+    }
+    .btn-channel:hover { background: #222234; color: #fff; }
+    .btn-channel.active.speed { border-color: #00ff41; color: #00ff41; }
+    .btn-channel.active.rpm { border-color: #a200ff; color: #a200ff; }
+    .btn-channel.active.throttle { border-color: #00d2ff; color: #00d2ff; }
+    .btn-channel.active.brake { border-color: #ff0000; color: #ff0000; }
+    .btn-channel.active.steering { border-color: #ff00ff; color: #ff00ff; }
+    .btn-channel.disabled { opacity: 0.35; text-decoration: line-through; }
+
+    .dot { width: 7px; height: 7px; border-radius: 2px; }
+    .dot-speed { background: #00ff41; }
+    .dot-rpm { background: #a200ff; }
+    .dot-throttle { background: #00d2ff; }
+    .dot-brake { background: #ff0000; }
+    .dot-steering { background: #ff00ff; }
+
+    .canvas-container {
+        width: 100%;
+        height: 420px;
+        background: #09090e;
+        border: 1px solid #161622;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    #rollingTelemetryCanvas { width: 100%; height: 100%; display: block; }
+
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(9, 9, 14, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .playback-bar {
+        background: #12121a;
+        border: 1px solid #20202e;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+
+    .custom-range {
+        accent-color: #ff5a1f;
+        cursor: pointer;
+    }
+
+    /* HUD SIDEBAR */
+    .hud-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .hud-card {
+        background: #0e0e16;
+        border: 1px solid #1c1c28;
+        border-radius: 4px;
+        padding: 10px 12px;
+    }
+    .hud-header {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        color: #6b7280;
+        margin-bottom: 6px;
+        border-bottom: 1px solid #1a1a24;
+        padding-bottom: 3px;
+    }
+    .hud-lap-time {
+        font-family: monospace;
+        font-size: 1.4rem;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+    .gauge-label { font-size: 0.72rem; font-weight: 700; }
+    .gauge-value { font-size: 0.82rem; font-weight: 700; }
+
+    /* G-FORCE RADAR */
+    .gforce-target {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 1px solid #2a2a3c;
+        background: #0a0a10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .g-circle { position: absolute; border: 1px solid rgba(255,255,255,0.06); border-radius: 50%; }
+    .circle-outer { width: 48px; height: 48px; }
+    .circle-inner { width: 24px; height: 24px; }
+    .g-cross-h { position: absolute; width: 100%; height: 1px; background: rgba(255,255,255,0.08); }
+    .g-cross-v { position: absolute; height: 100%; width: 1px; background: rgba(255,255,255,0.08); }
+    .g-dot {
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        background: #ff5a1f;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px #ff5a1f;
+        transition: top 0.05s, left 0.05s;
+    }
+</style>
+
+@code {
+    [Parameter] public int SessionId { get; set; } = 1;
+    [Parameter] public string VehicleName { get; set; } = "Porsche 963 LMDh";
+    [Parameter] public string TrackName { get; set; } = "Interlagos";
+    [Parameter] public double WindowDistanceMeters { get; set; } = 1000.0; // 1.0 km rolling window
+
+    // In-memory upfront cache of all session telemetry points
+    private List<TelemetryPointDto> _telemetryCache = new();
+
+    private bool IsLoading = true;
+    private bool IsPlaying = false;
+    private int PlaybackRate = 1;
+    private int CurrentIndex = 0;
+    private int TotalPoints => _telemetryCache.Count;
+    private int TotalLaps = 1;
+
+    // Channel toggles
+    private bool ShowSpeed = true;
+    private bool ShowRPM = true;
+    private bool ShowThrottle = true;
+    private bool ShowBrake = true;
+    private bool ShowSteering = true;
+
+    // Live HUD metrics
+    private double CurrentSpeed => GetCurrentPoint()?.Speed ?? 0;
+    private double CurrentRPM => GetCurrentPoint()?.RPM ?? 0;
+    private double CurrentThrottle => GetCurrentPoint()?.Throttle ?? 0;
+    private double CurrentBrake => GetCurrentPoint()?.Brake ?? 0;
+    private double CurrentSteering => GetCurrentPoint()?.Steering ?? 0;
+    private double CurrentDistance => GetCurrentPoint()?.Distance ?? 0;
+    private int CurrentLap => GetCurrentPoint()?.LapNumber ?? 1;
+    private double CurrentTimestampSec => GetCurrentPoint()?.TimestampSec ?? 0;
+
+    private double CurrentLatG = 0;
+    private double CurrentLongG = 0;
+
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<TelemetryRollingGraph>? _dotNetRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUpfrontTelemetryAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("initRollingTelemetryCanvas", _dotNetRef, _telemetryCache);
+        }
+    }
+
+    private async Task LoadUpfrontTelemetryAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            // Fetch ALL data upfront into memory (no lazy loading)
+            var response = await Http.GetFromJsonAsync<SessionTelemetryResponse>($"/api/TelemetryApi/session/{SessionId}");
+            if (response != null && response.Data != null)
+            {
+                _telemetryCache = response.Data;
+                TotalLaps = response.TotalLaps;
+                VehicleName = response.Vehicle?.Name ?? VehicleName;
+                TrackName = response.Track?.Name ?? TrackName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading telemetry upfront: {ex.Message}");
+            // Fallback synthetic data generator for standalone execution
+            GenerateSyntheticFallbackData();
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GenerateSyntheticFallbackData()
+    {
+        _telemetryCache = new List<TelemetryPointDto>();
+        double dist = 0;
+        for (int i = 0; i < 3000; i++)
+        {
+            double t = i * 0.05;
+            dist += (20 + 40 * Math.Sin(t * 0.1)) * 0.05 * 10;
+            double speed = 120 + 160 * Math.Sin(t * 0.15) + 30 * Math.Cos(t * 0.5);
+            double rpm = 4000 + (speed / 320.0) * 8500;
+            double throttle = Math.Max(0, Math.Sin(t * 0.15) * 100);
+            double brake = Math.Max(0, -Math.Sin(t * 0.15) * 100);
+            double steer = Math.Sin(t * 0.3) * 25;
+
+            _telemetryCache.Add(new TelemetryPointDto
+            {
+                PointId = i,
+                LapNumber = (int)(dist / 4309) + 1,
+                Distance = dist,
+                Speed = Math.Max(40, speed),
+                RPM = Math.Max(1000, rpm),
+                Throttle = throttle,
+                Brake = brake,
+                Steering = steer,
+                TimestampSec = t
+            });
+        }
+        TotalLaps = 3;
+    }
+
+    private TelemetryPointDto? GetCurrentPoint()
+    {
+        if (_telemetryCache.Count == 0 || CurrentIndex < 0 || CurrentIndex >= _telemetryCache.Count)
+            return null;
+        return _telemetryCache[CurrentIndex];
+    }
+
+    private void TogglePlay()
+    {
+        IsPlaying = !IsPlaying;
+        JSRuntime.InvokeVoidAsync("setRollingPlaybackState", IsPlaying, PlaybackRate, WindowDistanceMeters);
+    }
+
+    private void ResetPlayback()
+    {
+        IsPlaying = false;
+        CurrentIndex = 0;
+        JSRuntime.InvokeVoidAsync("resetRollingPlayback");
+        UpdateGForce();
+        StateHasChanged();
+    }
+
+    private void HandleScrubberInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int newIdx))
+        {
+            CurrentIndex = Math.Clamp(newIdx, 0, TotalPoints - 1);
+            JSRuntime.InvokeVoidAsync("seekRollingPlayback", CurrentIndex);
+            UpdateGForce();
+        }
+    }
+
+    [JSInvokable]
+    public void OnPlaybackTick(int newIndex)
+    {
+        CurrentIndex = newIndex;
+        UpdateGForce();
+        StateHasChanged();
+    }
+
+    private void UpdateGForce()
+    {
+        var pt = GetCurrentPoint();
+        if (pt == null) return;
+        double speedMs = pt.Speed / 3.6;
+        CurrentLatG = (speedMs > 5 && Math.Abs(pt.Steering) > 0.5)
+            ? (speedMs * speedMs * Math.Sin(Math.Abs(pt.Steering) * Math.PI / 180.0)) / (9.81 * 75.0)
+            : 0;
+        if (pt.Steering < 0) CurrentLatG = -CurrentLatG;
+        CurrentLongG = (pt.Throttle / 100.0 * 1.35) - (pt.Brake / 100.0 * 2.85);
+    }
+
+    private string FormatTime(double sec)
+    {
+        var ts = TimeSpan.FromSeconds(sec);
+        return $"{ts.Minutes:D2}:{ts.Seconds:D2}.{ts.Milliseconds:D3}";
+    }
+
+    public class SessionTelemetryResponse
+    {
+        public int SessionId { get; set; }
+        public string? SessionName { get; set; }
+        public VehicleDto? Vehicle { get; set; }
+        public TrackDto? Track { get; set; }
+        public int TotalLaps { get; set; }
+        public List<TelemetryPointDto>? Data { get; set; }
+    }
+
+    public class VehicleDto { public int VehicleId { get; set; } public string? Name { get; set; } }
+    public class TrackDto { public int TrackId { get; set; } public string? Name { get; set; } }
+
+    public class TelemetryPointDto
+    {
+        public int PointId { get; set; }
+        public int LapNumber { get; set; }
+        public double Distance { get; set; }
+        public double Speed { get; set; }
+        public double RPM { get; set; }
+        public double Throttle { get; set; }
+        public double Brake { get; set; }
+        public double Steering { get; set; }
+        public double TimestampSec { get; set; }
+    }
+}

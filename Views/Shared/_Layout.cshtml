@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RacingTelemetryAnalyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #090a0f;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .navbar-slim {
+            background: linear-gradient(180deg, #13151f 0%, #0c0d14 100%) !important;
+            border-bottom: 2px solid #ff5a1f;
+            height: 48px;
+            padding: 0 1.5rem !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 1030;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            color: #ffffff !important;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .navbar-brand .accent-text {
+            color: #ff5a1f !important;
+        }
+        .nav-link {
+            color: #a0a6b5 !important;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            padding: 6px 14px !important;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+            background: rgba(255, 90, 31, 0.15);
+            border-bottom: 2px solid #ff5a1f;
+        }
+        .header-telemetry-badge {
+            font-family: 'Consolas', 'Roboto Mono', monospace;
+            font-size: 0.75rem;
+            color: #6c7385;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-dot-live {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #00ff41;
+            box-shadow: 0 0 6px #00ff41;
+            display: inline-block;
+        }
+        .app-main-viewport {
+            min-height: calc(100vh - 48px);
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand navbar-dark navbar-slim">
+            <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
+                <a class="navbar-brand m-0" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span style="color: #ff5a1f; font-size: 1.1rem;">🏁</span>
+                    <span>RACING TELEMETRY <span class="accent-text">ANALYZER</span></span>
+                </a>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">GARAGE</a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Telemetry" ? "active" : "")" asp-area="" asp-controller="Telemetry" asp-action="Index">RACING TELEMETRY</a>
+                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Track" ? "active" : "")" asp-area="" asp-controller="Track" asp-action="Index">TRACKS</a>
+                </div>
+
+                <div class="header-telemetry-badge d-none d-lg-flex">
+                    <span><span class="status-dot-live"></span>SYSTEM READY</span>
+                    <span style="color: #444b5d;">|</span>
+                    <span style="color: #00d2ff;">1080P PRO WORKSTATION</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="app-main-viewport">
+        <main role="main" class="flex-grow-1">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

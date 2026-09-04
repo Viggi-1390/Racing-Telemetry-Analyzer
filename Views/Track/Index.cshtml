@@ -1,0 +1,300 @@
+@model IEnumerable<RacingTelemetryAnalyzer.Models.Track>
+@{
+    ViewData["Title"] = "Track Selection";
+    int vehicleId = ViewBag.VehicleId ?? 0;
+}
+
+<div class="track-selection-container">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h1 class="page-title">TRACK <span class="text-orange">SELECTION</span></h1>
+        <a href="/Track/AddTrack?vehicleId=@vehicleId" class="btn-add-track">+ ADD TRACK</a>
+    </div>
+
+    <div class="track-grid">
+        @foreach (var track in Model)
+        {
+            // Simple mapping for flags based on country
+            string flagEmoji = track.Country.ToUpper() switch {
+                "ITALY" => "🇮🇹",
+                "UNITED KINGDOM" => "🇬🇧",
+                "UK" => "🇬🇧",
+                "FRANCE" => "🇫🇷",
+                "BELGIUM" => "🇧🇪",
+                "JAPAN" => "🇯🇵",
+                "GERMANY" => "🇩🇪",
+                _ => "🏁"
+            };
+
+            <div class="track-card" id="track-@track.TrackId" onclick="selectTrack(@track.TrackId)">
+                <div class="track-img-wrapper">
+                    <!-- Selected badges -->
+                    <div class="selected-badge">SELECTED</div>
+                    <div class="selected-check">✔</div>
+                    
+                    <img src="@track.ImagePath" alt="@track.Name" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div class="track-fallback" style="display: none;">
+                        <svg viewBox="0 0 100 50" class="fallback-svg">
+                            <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="2 2" />
+                        </svg>
+                        <span class="fallback-text">TRACK PREVIEW NOT FOUND</span>
+                    </div>
+                    <!-- Flag overlay -->
+                    <div class="track-flag-overlay">@flagEmoji</div>
+                </div>
+                <div class="track-info">
+                    <h2>@track.Name</h2>
+                    <p class="track-location">@flagEmoji @track.Country</p>
+                    <div class="track-stats">
+                        <div class="stat"><span class="label">LENGTH</span><span class="value">@track.Length km</span></div>
+                        <div class="stat"><span class="label">TURNS</span><span class="value">@track.NumberOfTurns</span></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    
+    <div class="d-flex justify-content-center mt-4 pb-5">
+        <a href="#" id="btn-continue" class="btn-continue disabled">🏁 CONTINUE TO ANALYSIS</a>
+    </div>
+</div>
+
+<style>
+    body { background-color: #0a0a0c; color: #fff; }
+    .page-title { font-weight: 800; letter-spacing: 3px; font-size: 2rem; margin: 0; }
+    .text-orange { color: #ff4500; }
+    
+    .btn-add-track {
+        background: transparent;
+        border: 2px solid #00ffcc;
+        color: #00ffcc;
+        padding: 10px 24px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        border-radius: 4px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    .btn-add-track:hover {
+        background: rgba(0, 255, 204, 0.1);
+        color: #00ffcc;
+        box-shadow: 0 0 15px rgba(0,255,204,0.3);
+    }
+
+    .track-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 25px;
+    }
+
+    .track-card {
+        background: #0f1015;
+        border: 2px solid #222;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        display: flex;
+        flex-direction: column;
+    }
+    .track-card:hover {
+        transform: translateY(-5px);
+        border-color: #00ffcc; /* Cyan border on hover instead of orange */
+        box-shadow: 0 10px 20px rgba(0, 255, 204, 0.15);
+    }
+    .track-card.active {
+        border-color: #00ffcc;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+    }
+
+    .track-img-wrapper {
+        height: 200px;
+        width: 100%;
+        background-color: #0d0d14;
+        background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 30px 30px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #1a1a24;
+    }
+    
+    .selected-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #00ffcc;
+        color: #000;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        display: none;
+        z-index: 2;
+    }
+    .selected-check {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #00ffcc;
+        color: #000;
+        font-size: 0.9rem;
+        width: 24px;
+        height: 24px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-weight: bold;
+        z-index: 2;
+    }
+    .track-card.active .selected-badge,
+    .track-card.active .selected-check {
+        display: flex;
+    }
+    .track-flag-overlay {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        font-size: 1.4rem;
+        z-index: 2;
+        opacity: 0.9;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .track-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0.7;
+        transition: opacity 0.3s, filter 0.3s;
+        padding: 20px; /* More padding so track map isn't too close to edges */
+        filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.3));
+    }
+    .track-card:hover .track-img-wrapper img, .track-card.active .track-img-wrapper img {
+        opacity: 1;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 204, 0.6));
+    }
+
+    .track-fallback {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, #1a1a24 0%, #000 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.5;
+        transition: opacity 0.3s;
+    }
+    .track-card:hover .track-fallback, .track-card.active .track-fallback {
+        opacity: 0.8;
+    }
+    .fallback-svg {
+        width: 80px;
+        height: 40px;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 5px #00ffcc);
+    }
+    .fallback-text {
+        color: #00ffcc;
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+        font-family: monospace;
+    }
+
+    .track-info {
+        padding: 15px 20px 20px 20px;
+        background: #0d0d14; /* Match image wrapper background slightly */
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .track-info h2 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #fff;
+    }
+    .track-card.active .track-info h2 {
+        color: #00ffcc;
+    }
+    
+    .track-location {
+        color: #888;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        margin-bottom: auto;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .track-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+        border-top: 1px solid #1a1a24;
+        padding-top: 15px;
+    }
+    .track-stats .stat {
+        display: flex;
+        flex-direction: column;
+    }
+    .track-stats .label {
+        font-size: 0.65rem;
+        color: #777;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+    .track-stats .value {
+        font-size: 1.1rem;
+        color: #00ffcc;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .btn-continue {
+        background: linear-gradient(135deg, #111, #222);
+        color: #ff4500;
+        padding: 12px 60px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.3s;
+        border: 2px solid #ff4500;
+        clip-path: polygon(15px 0, calc(100% - 15px) 0, 100% 100%, 0 100%);
+        display: inline-block;
+    }
+    .btn-continue:hover:not(.disabled) {
+        background: linear-gradient(135deg, #ff4500, #e03e00);
+        box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+        color: #fff;
+    }
+    .btn-continue.disabled {
+        background: #111;
+        border-color: #333;
+        color: #555;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    function selectTrack(trackId) {
+        document.querySelectorAll('.track-card').forEach(card => card.classList.remove('active'));
+        document.getElementById('track-' + trackId).classList.add('active');
+        
+        const btnContinue = document.getElementById('btn-continue');
+        btnContinue.classList.remove('disabled');
+        btnContinue.href = '/Telemetry/Loading?vehicleId=@vehicleId&trackId=' + trackId;
+    }
+</script>
+
