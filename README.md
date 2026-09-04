@@ -376,9 +376,6 @@ dotnet build -c Release && dotnet bin/Release/net8.0/RacingTelemetryAnalyzer.dll
 
 ---
 
-
----
-
 ## 🤝 Contributing
 
 Developed by **Viggi (Vighnesh)** as a semester project.  
