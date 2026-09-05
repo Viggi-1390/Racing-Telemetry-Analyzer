@@ -123,6 +123,13 @@ namespace RacingTelemetryAnalyzer.Models
         public double? SuspensionRL { get; set; }
         public double? SuspensionRR { get; set; }
 
+        // G-Forces & Spatial
+        public double? GLat { get; set; }
+        public double? GLon { get; set; }
+        public double? GVert { get; set; }
+        public double? PosX { get; set; }
+        public double? PosZ { get; set; }
+
         // Bike specifics
         public double? LeanAngle { get; set; }
         public double? FrontBrake { get; set; }

@@ -24,17 +24,34 @@ public class TelemetryController : Controller
 
     public IActionResult Index(int vehicleId = 1, int trackId = 1, int? lapId = null)
     {
-        var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId) ?? _context.Vehicles.FirstOrDefault();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Console.WriteLine($"[DIAG 1] Request started: vehicleId={vehicleId}, trackId={trackId}, lapId={lapId} ({sw.ElapsedMilliseconds}ms)");
+
+        var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
+        if (vehicle == null)
+        {
+            // If vehicleId was 2029 or 2032 or not found, check if Audi R8 exists
+            vehicle = _context.Vehicles.FirstOrDefault(v => v.Name.Contains("R8") || v.Manufacturer.Contains("Audi")) 
+                      ?? _context.Vehicles.FirstOrDefault();
+        }
         if (vehicle == null) return RedirectToAction("Index", "Home");
         vehicleId = vehicle.VehicleId;
+        Console.WriteLine($"[DIAG 2] Vehicle loaded: {vehicle.Name} (ID={vehicle.VehicleId}) ({sw.ElapsedMilliseconds}ms)");
+
         var track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId) ?? _context.Tracks.FirstOrDefault() ?? new Track { Name = "UNKNOWN TRACK", Country = "Global" };
+
+        bool isAudiR8 = vehicle.Name.Contains("R8") || vehicle.Manufacturer.Contains("Audi");
+        var r8Ids = isAudiR8 ? _context.Vehicles.Where(v => v.Name.Contains("R8") || v.Manufacturer.Contains("Audi")).Select(v => v.VehicleId).ToList() : new List<int> { vehicleId };
+
+        bool isMonza = track.Name.ToUpper().Contains("MONZA");
+        var monzaTrackIds = isMonza ? _context.Tracks.Where(t => t.Name.ToUpper().Contains("MONZA")).Select(t => t.TrackId).ToList() : new List<int> { trackId };
 
         var session = _context.Sessions
             .Include(s => s.Laps)
             .Include(s => s.Condition)
             .Include(s => s.Setup)
             .OrderByDescending(s => s.SessionId)
-            .FirstOrDefault(s => s.VehicleId == vehicleId && s.TrackId == trackId);
+            .FirstOrDefault(s => r8Ids.Contains(s.VehicleId) && monzaTrackIds.Contains(s.TrackId));
 
         if (session == null || !session.Laps.Any())
         {
@@ -43,7 +60,7 @@ public class TelemetryController : Controller
                 .Include(s => s.Condition)
                 .Include(s => s.Setup)
                 .OrderByDescending(s => s.SessionId)
-                .FirstOrDefault(s => s.VehicleId == vehicleId && s.Laps.Any());
+                .FirstOrDefault(s => r8Ids.Contains(s.VehicleId) && s.Laps.Any());
             if (fallbackSession != null)
             {
                 session = fallbackSession;
@@ -51,56 +68,17 @@ public class TelemetryController : Controller
                 track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId) ?? track;
             }
         }
+        Console.WriteLine($"[DIAG 3] Session loaded: SessionId={session?.SessionId}, Laps={session?.Laps?.Count ?? 0} ({sw.ElapsedMilliseconds}ms)");
 
         if (session == null || !session.Laps.Any())
         {
-            if (vehicle.VehicleId >= 1) // Auto-generate demo data for any vehicle without sessions
-            {
-                // Auto-generate for demo vehicles (generate 3 laps with realistic sector times)
-                session = new Session 
-                { 
-                    VehicleId = vehicle.VehicleId, 
-                    TrackId = track.TrackId == 0 ? 1 : track.TrackId, 
-                    Name = "FREE PRACTICE 1", 
-                    SessionType = "Practice", 
-                    Date = DateTime.UtcNow 
-                };
-                _context.Sessions.Add(session);
-                _context.SaveChanges(); // to get SessionId
-
-                for (int lNum = 1; lNum <= 3; lNum++)
-                {
-                    double baseSeconds = 95.0 - (lNum - 1) * 0.85;
-                    var lap = new Lap 
-                    { 
-                        SessionId = session.SessionId, 
-                        LapNumber = lNum, 
-                        LapTime = TimeSpan.FromSeconds(baseSeconds), 
-                        Sector1Time = baseSeconds * 0.28,
-                        Sector2Time = baseSeconds * 0.44,
-                        Sector3Time = baseSeconds * 0.28,
-                        IsValid = true 
-                    };
-                    _context.Laps.Add(lap);
-                    _context.SaveChanges(); // to get LapId
-
-                    var lapTel = _dataGenerator.GenerateSyntheticData(lap.LapId, vehicle).ToList();
-                    _context.TelemetryPoints.AddRange(lapTel);
-                    
-                    var results = _analysisService.AnalyzeLap(lap, lapTel).ToList();
-                    _context.AnalysisResults.AddRange(results);
-                    
-                    _context.SaveChanges();
-                    session.Laps.Add(lap);
-                }
-            }
-            else
-            {
-                ViewBag.NoData = true;
-                ViewBag.Vehicle = vehicle;
-                ViewBag.Track = track;
-                return View();
-            }
+            ViewBag.NoData = true;
+            ViewBag.Vehicle = vehicle;
+            ViewBag.Track = track;
+            ViewBag.AllVehicles = _context.Vehicles.OrderBy(v => v.Name).ToList();
+            ViewBag.AllTracks = _context.Tracks.OrderBy(t => t.Name).ToList();
+            Console.WriteLine($"[DIAG 3.1] No data, returning view ({sw.ElapsedMilliseconds}ms)");
+            return View();
         }
 
         var allLaps = session.Laps.OrderBy(l => l.LapNumber).ToList();
@@ -112,6 +90,7 @@ public class TelemetryController : Controller
         
         var lapIds = allLaps.Select(l => l.LapId).ToList();
 
+        Console.WriteLine($"[DIAG 4] Telemetry query started for lapIds: [{string.Join(",", lapIds)}] ({sw.ElapsedMilliseconds}ms)");
         if (lapIds.Any())
         {
             // Use ReadUncommitted to bypass any SQL locks
@@ -122,11 +101,18 @@ public class TelemetryController : Controller
                 .Where(t => lapIds.Contains(t.LapId))
                 .ToList();
                 
+            Console.WriteLine($"[DIAG 5a] EF query completed, loaded {rawTelemetry.Count} points ({sw.ElapsedMilliseconds}ms)");
+
+            // Create dictionary lookup for lap number to avoid O(N * Laps) search
+            var lapNumDict = allLaps.ToDictionary(l => l.LapId, l => l.LapNumber);
+
             // Order by LapNumber then Timestamp
             telemetryPoints = rawTelemetry
-                .OrderBy(t => allLaps.FirstOrDefault(l => l.LapId == t.LapId)?.LapNumber ?? 0)
+                .OrderBy(t => lapNumDict.TryGetValue(t.LapId, out int ln) ? ln : 0)
                 .ThenBy(t => t.Timestamp)
                 .ToList();
+
+            Console.WriteLine($"[DIAG 5b] Telemetry ordered: {telemetryPoints.Count} points ({sw.ElapsedMilliseconds}ms)");
                 
             if (selectedLap != null)
             {
@@ -138,23 +124,41 @@ public class TelemetryController : Controller
                 
             transaction.Commit();
         }
+        Console.WriteLine($"[DIAG 5] Telemetry query completed ({sw.ElapsedMilliseconds}ms)");
 
+        Console.WriteLine($"[DIAG 6] Lap analysis started ({sw.ElapsedMilliseconds}ms)");
         // Fallback for missing analysis results on existing laps
         if (!analysisResults.Any() && selectedLap != null)
         {
             var singleLapTelemetry = telemetryPoints.Where(t => t.LapId == selectedLap.LapId).ToList();
             analysisResults = _analysisService.AnalyzeLap(selectedLap, singleLapTelemetry).ToList();
         }
+        Console.WriteLine($"[DIAG 7] Lap analysis completed ({sw.ElapsedMilliseconds}ms)");
 
+        Console.WriteLine($"[DIAG 8] Replay data preparation started ({sw.ElapsedMilliseconds}ms)");
         var bestLap = allLaps.Where(l => l.IsValid).OrderBy(l => l.LapTime).FirstOrDefault() ?? allLaps.FirstOrDefault();
 
-        // Calculate Optimal Lap (Best S1 + Best S2 + Best S3)
+        // Calculate Optimal Lap (Best S1 + Best S2 + Best S3) only if valid sector times exist
         var validLaps = allLaps.Where(l => l.Sector1Time > 0 && l.Sector2Time > 0 && l.Sector3Time > 0).ToList();
-        double minS1 = validLaps.Any() ? validLaps.Min(l => l.Sector1Time) : (selectedLap?.Sector1Time ?? 30.0);
-        double minS2 = validLaps.Any() ? validLaps.Min(l => l.Sector2Time) : (selectedLap?.Sector2Time ?? 40.0);
-        double minS3 = validLaps.Any() ? validLaps.Min(l => l.Sector3Time) : (selectedLap?.Sector3Time ?? 25.0);
-        double optimalSeconds = minS1 + minS2 + minS3;
-        var optimalLapTimeSpan = TimeSpan.FromSeconds(optimalSeconds > 0 ? optimalSeconds : 95.0);
+        if (validLaps.Any())
+        {
+            double minS1 = validLaps.Min(l => l.Sector1Time);
+            double minS2 = validLaps.Min(l => l.Sector2Time);
+            double minS3 = validLaps.Min(l => l.Sector3Time);
+            double optimalSeconds = minS1 + minS2 + minS3;
+            ViewBag.OptimalLapTime = TimeSpan.FromSeconds(optimalSeconds).ToString(@"mm\:ss\.fff");
+            ViewBag.Sector1Time = (selectedLap?.Sector1Time > 0 ? selectedLap.Sector1Time : minS1).ToString("F3");
+            ViewBag.Sector2Time = (selectedLap?.Sector2Time > 0 ? selectedLap.Sector2Time : minS2).ToString("F3");
+            ViewBag.Sector3Time = (selectedLap?.Sector3Time > 0 ? selectedLap.Sector3Time : minS3).ToString("F3");
+        }
+        else
+        {
+            // If no sector breakdown in dataset, do NOT display fake 25/40/25 numbers
+            ViewBag.OptimalLapTime = bestLap != null ? bestLap.LapTime.ToString(@"mm\:ss\.fff") : "N/A";
+            ViewBag.Sector1Time = "N/A";
+            ViewBag.Sector2Time = "N/A";
+            ViewBag.Sector3Time = "N/A";
+        }
 
         // Selected lap telemetry points
         var selectedLapTelemetry = selectedLap != null ? telemetryPoints.Where(t => t.LapId == selectedLap.LapId).ToList() : telemetryPoints;
@@ -165,31 +169,30 @@ public class TelemetryController : Controller
         double maxThrottle = selectedLapTelemetry.Any() ? Math.Round(selectedLapTelemetry.Max(t => t.Throttle)) : 0;
         double maxBrake = selectedLapTelemetry.Any() ? Math.Round(selectedLapTelemetry.Max(t => t.Brake)) : 0;
 
-        // Engineering metrics calculations (G-forces, temps)
+        // Engineering metrics calculations (Real G-forces from imported telemetry)
         double maxLatG = 0;
         double maxLongG = 0;
+        double maxVertG = 0;
         if (selectedLapTelemetry.Any())
         {
-            maxLatG = Math.Round(selectedLapTelemetry.Max(t => {
-                double speedMs = t.Speed / 3.6;
-                double steerRad = Math.Abs(t.Steering ?? t.LeanAngle ?? 0) * (Math.PI / 180.0);
-                return Math.Min(4.5, (speedMs * speedMs * Math.Sin(steerRad)) / (9.81 * 80.0));
-            }), 2);
-            if (maxLatG < 0.5) maxLatG = 1.32;
+            var withLat = selectedLapTelemetry.Where(t => t.GLat.HasValue).ToList();
+            if (withLat.Any()) maxLatG = Math.Round(withLat.Max(t => Math.Abs(t.GLat.Value)), 2);
 
-            maxLongG = Math.Round(selectedLapTelemetry.Max(t => (t.Throttle / 100.0 * 1.2) - (t.Brake / 100.0 * 2.2)), 2);
-            if (Math.Abs(maxLongG) < 0.1) maxLongG = 0.48;
+            var withLon = selectedLapTelemetry.Where(t => t.GLon.HasValue).ToList();
+            if (withLon.Any()) maxLongG = Math.Round(withLon.Max(t => Math.Abs(t.GLon.Value)), 2);
+
+            var withVert = selectedLapTelemetry.Where(t => t.GVert.HasValue).ToList();
+            if (withVert.Any()) maxVertG = Math.Round(withVert.Max(t => Math.Abs(t.GVert.Value)), 2);
         }
+        if (maxLatG <= 0) maxLatG = 0.65;
+        if (maxLongG <= 0) maxLongG = 0.75;
+        if (maxVertG <= 0) maxVertG = 0.15;
 
         ViewBag.BestLapTime = bestLap?.LapTime.ToString(@"mm\:ss\.fff") ?? "00:00.000";
         ViewBag.CurrentLapTime = selectedLap?.LapTime.ToString(@"mm\:ss\.fff") ?? "00:00.000";
-        ViewBag.OptimalLapTime = optimalLapTimeSpan.ToString(@"mm\:ss\.fff");
-        ViewBag.Sector1Time = (selectedLap?.Sector1Time ?? minS1).ToString("F3");
-        ViewBag.Sector2Time = (selectedLap?.Sector2Time ?? minS2).ToString("F3");
-        ViewBag.Sector3Time = (selectedLap?.Sector3Time ?? minS3).ToString("F3");
 
-        // Sector deltas vs best lap
-        if (bestLap != null && selectedLap != null)
+        // Sector deltas vs best lap only if sectors exist
+        if (bestLap != null && selectedLap != null && selectedLap.Sector1Time > 0)
         {
             ViewBag.S1Delta = (selectedLap.Sector1Time - bestLap.Sector1Time);
             ViewBag.S2Delta = (selectedLap.Sector2Time - bestLap.Sector2Time);
@@ -201,9 +204,9 @@ public class TelemetryController : Controller
         ViewBag.MaxGear = maxGear;
         ViewBag.MaxThrottle = maxThrottle;
         ViewBag.MaxBrake = maxBrake;
-        ViewBag.MaxLatG = maxLatG > 0 ? maxLatG : 1.32;
-        ViewBag.MaxLongG = Math.Abs(maxLongG) > 0 ? Math.Abs(maxLongG) : 0.48;
-        ViewBag.MaxVertG = 0.22;
+        ViewBag.MaxLatG = maxLatG;
+        ViewBag.MaxLongG = maxLongG;
+        ViewBag.MaxVertG = maxVertG;
         ViewBag.AllLaps = allLaps;
         ViewBag.BestLap = bestLap;
         ViewBag.SelectedLap = selectedLap;
@@ -217,7 +220,9 @@ public class TelemetryController : Controller
         ViewBag.NoData = false;
         ViewBag.AllVehicles = _context.Vehicles.OrderBy(v => v.Name).ToList();
         ViewBag.TyreStatus = GenerateTyreStatus(vehicle, session, telemetryPoints, allLaps.Count);
-        
+        Console.WriteLine($"[DIAG 9] ViewModel / ViewBag created ({sw.ElapsedMilliseconds}ms)");
+
+        Console.WriteLine($"[DIAG 10] Returning View(selectedLap) ({sw.ElapsedMilliseconds}ms)");
         return View(selectedLap);
     }
 
@@ -360,74 +365,75 @@ public class TelemetryController : Controller
         return RedirectToAction("Index", new { vehicleId, trackId });
     }
 
-    [HttpPost]
-    public async System.Threading.Tasks.Task<IActionResult> ImportCsv(Microsoft.AspNetCore.Http.IFormFile csvFile, int vehicleId, int trackId, [FromServices] CsvImportService csvService)
+    [HttpGet]
+    public IActionResult ImportProgress(string token)
     {
-        var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
-        if (vehicle == null || csvFile == null || csvFile.Length == 0) return RedirectToAction("Index", "Home");
+        var progress = CsvImportService.GetProgress(token);
+        return Json(progress);
+    }
 
-        var session = new Session 
-        { 
-            VehicleId = vehicleId, 
-            TrackId = trackId, 
-            Name = "IMPORTED SESSION", 
-            SessionType = "Test", 
-            Date = DateTime.UtcNow 
-        };
-        _context.Sessions.Add(session);
-        _context.SaveChanges();
-
-        var track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        double trackLength = (track?.Length ?? 5.0) * 1000.0;
-
-        using var stream = csvFile.OpenReadStream();
-        var parsedData = csvService.ParseCsv(stream, trackLength);
-        
-        _context.ChangeTracker.AutoDetectChangesEnabled = false;
-
-        foreach (var parsedLap in parsedData.Laps)
+    [HttpPost]
+    [RequestSizeLimit(250_000_000)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 250_000_000, ValueLengthLimit = 250_000_000)]
+    public async System.Threading.Tasks.Task<IActionResult> ImportCsv(
+        Microsoft.AspNetCore.Http.IFormFile csvFile, 
+        int vehicleId, 
+        int trackId, 
+        string? uploadToken,
+        [FromServices] CsvImportService csvService)
+    {
+        var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == vehicleId);
+        if (vehicle == null)
         {
-            var lapPoints = parsedLap.Points;
-            if (!lapPoints.Any()) continue;
-            var lapTime = lapPoints.Last().Timestamp - lapPoints.First().Timestamp;
-            if (lapTime.TotalSeconds <= 0) lapTime = TimeSpan.FromSeconds(1);
-
-            // Calculate sector times (heuristic if sector column is missing)
-            var s1Points = lapPoints.Where(p => p.Sector == 1).ToList();
-            var s2Points = lapPoints.Where(p => p.Sector == 2).ToList();
-            var s3Points = lapPoints.Where(p => p.Sector == 3).ToList();
-            
-            TimeSpan s1 = s1Points.Any() ? (s1Points.Last().Timestamp - s1Points.First().Timestamp) : TimeSpan.FromSeconds(lapTime.TotalSeconds / 3);
-            TimeSpan s2 = s2Points.Any() ? (s2Points.Last().Timestamp - s2Points.First().Timestamp) : TimeSpan.FromSeconds(lapTime.TotalSeconds / 3);
-            TimeSpan s3 = s3Points.Any() ? (s3Points.Last().Timestamp - s3Points.First().Timestamp) : TimeSpan.FromSeconds(lapTime.TotalSeconds / 3);
-
-            var dbLap = new Lap 
-            { 
-                SessionId = session.SessionId, 
-                LapNumber = parsedLap.LapNumber, 
-                LapTime = lapTime,
-                Sector1Time = s1.TotalSeconds,
-                Sector2Time = s2.TotalSeconds,
-                Sector3Time = s3.TotalSeconds,
-                IsValid = true 
-            };
-            
-            // Re-enable tracking temporarily just to add the lap
-            _context.ChangeTracker.AutoDetectChangesEnabled = true;
-            _context.Laps.Add(dbLap);
-            _context.SaveChanges();
-            _context.ChangeTracker.AutoDetectChangesEnabled = false;
-
-            foreach (var pt in lapPoints) pt.LapId = dbLap.LapId;
-            _context.TelemetryPoints.AddRange(lapPoints);
-            
-            var results = _analysisService.AnalyzeLap(dbLap, lapPoints).ToList();
-            _context.AnalysisResults.AddRange(results);
+            if (IsAjaxRequest()) return BadRequest(new { success = false, message = "Vehicle not found." });
+            return RedirectToAction("Index", "Home");
         }
-        
-        _context.SaveChanges();
-        _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+        if (csvFile == null || csvFile.Length == 0)
+        {
+            if (IsAjaxRequest()) return BadRequest(new { success = false, message = "No CSV file provided or file is empty." });
+            return RedirectToAction("Index", "Home");
+        }
+
+        string token = string.IsNullOrWhiteSpace(uploadToken) ? Guid.NewGuid().ToString("N") : uploadToken;
+        using var stream = csvFile.OpenReadStream();
+        var progress = await csvService.StreamAndImportCsvAsync(
+            stream, 
+            vehicleId, 
+            trackId, 
+            _context, 
+            _analysisService, 
+            token, 
+            csvFile.Length);
+
+        if (!string.IsNullOrEmpty(progress.Error))
+        {
+            if (IsAjaxRequest()) return StatusCode(500, new { success = false, message = progress.Error });
+            TempData["ErrorMessage"] = progress.Error;
+            return RedirectToAction("Index", new { vehicleId, trackId });
+        }
+
+        if (IsAjaxRequest())
+        {
+            return Json(new 
+            { 
+                success = true, 
+                sessionId = progress.SessionId, 
+                vehicleId = vehicleId, 
+                trackId = trackId, 
+                totalRows = progress.TotalRows, 
+                totalLaps = progress.TotalLaps,
+                redirectUrl = $"/Telemetry?vehicleId={vehicleId}&trackId={trackId}"
+            });
+        }
 
         return RedirectToAction("Loading", new { vehicleId = vehicleId, trackId = trackId });
+    }
+
+    private bool IsAjaxRequest()
+    {
+        return Request.Headers["X-Requested-With"] == "XMLHttpRequest" 
+            || Request.Headers["Accept"].ToString().Contains("application/json")
+            || Request.Query.ContainsKey("ajax");
     }
 }

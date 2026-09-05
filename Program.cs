@@ -12,6 +12,20 @@ builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<DataGeneratorService>();
 builder.Services.AddScoped<CsvImportService>();
 
+// Configure Kestrel Server Limits for large telemetry datasets (up to 250 MB)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 250_000_000;
+});
+
+// Configure Form Options for multipart file uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 250_000_000;
+    options.ValueLengthLimit = 250_000_000;
+    options.MultipartHeadersLengthLimit = 64_000;
+});
+
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddCors(options =>
@@ -38,6 +52,8 @@ app.UseCors();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

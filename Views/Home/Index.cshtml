@@ -277,15 +277,6 @@
                      </div>
                 </div>
             }
-
-            <!-- "+ ADD VEHICLE" CARD AT END OF CAROUSEL -->
-            <div class="vehicle-card add-card" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
-                <div class="add-card-content">
-                    <div class="add-plus-icon">+</div>
-                    <div class="add-card-text">ADD VEHICLE</div>
-                    <div class="add-card-sub">Upload Custom Car / Bike</div>
-                </div>
-            </div>
         </div>
 
         <button class="carousel-arrow-btn next-btn" id="carouselNextBtn" title="Next Vehicles">
@@ -1297,45 +1288,6 @@
         font-weight: 800;
         color: var(--c-cyan);
     }
-
-    /* FULL-HEIGHT "+ ADD VEHICLE" CARD IN CAROUSEL */
-    .vehicle-card.add-card {
-        border: 2px dashed rgba(255, 255, 255, 0.25);
-        background: rgba(18, 20, 32, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .vehicle-card.add-card:hover {
-        border-color: var(--c-orange);
-        background: rgba(255, 90, 31, 0.1);
-    }
-
-    .add-card-content {
-        text-align: center;
-        padding: 12px;
-    }
-
-    .add-plus-icon {
-        font-size: 2.6rem;
-        color: var(--c-orange);
-        line-height: 1;
-        margin-bottom: 6px;
-    }
-
-    .add-card-text {
-        font-size: 0.92rem;
-        font-weight: 900;
-        letter-spacing: 1.5px;
-        color: #ffffff;
-    }
-
-    .add-card-sub {
-        font-size: 0.72rem;
-        color: var(--c-muted);
-    }
-
     /* --------------------------------------------------------------------------
        MODAL STYLING
        -------------------------------------------------------------------------- */
@@ -1793,7 +1745,7 @@
         let firstCard = null;
         const track = document.getElementById('vehicleCarouselTrack');
 
-        document.querySelectorAll('.vehicle-card:not(.add-card)').forEach(card => {
+        document.querySelectorAll('.vehicle-card').forEach(card => {
             const cardType = card.getAttribute('data-type');
             const cardCat = card.getAttribute('data-category');
 
@@ -1864,7 +1816,7 @@
 
         // Prevent native context menu on vehicle cards and show custom motorsport menu
         document.addEventListener('contextmenu', (e) => {
-            const card = e.target.closest('.vehicle-card:not(.add-card)');
+            const card = e.target.closest('.vehicle-card');
             if (card) {
                 e.preventDefault();
                 const id = parseInt(card.getAttribute('data-id'));
@@ -2126,7 +2078,7 @@
                 } else {
                     card.classList.add('d-none');
                     if (selectedVehicleId === updated.id) {
-                        const remaining = Array.from(document.querySelectorAll('.vehicle-card:not(.add-card)'));
+                        const remaining = Array.from(document.querySelectorAll('.vehicle-card'));
                         const nextVisible = remaining.find(c => !c.classList.contains('d-none'));
                         if (nextVisible) {
                             selectVehicleById(parseInt(nextVisible.getAttribute('data-id')));
@@ -2217,7 +2169,7 @@
 
             // 4. If deleted vehicle was selected, automatically select another available vehicle
             if (selectedVehicleId === deletedId) {
-                const remainingCards = Array.from(document.querySelectorAll('.vehicle-card:not(.add-card)'));
+                const remainingCards = Array.from(document.querySelectorAll('.vehicle-card'));
                 const visibleCard = remainingCards.find(c => !c.classList.contains('d-none')) || remainingCards[0];
 
                 if (visibleCard) {

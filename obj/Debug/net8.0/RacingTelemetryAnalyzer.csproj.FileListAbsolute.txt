@@ -364,3 +364,4 @@ C:\Users\vighn\OneDrive\Documents\Projects\RacingTelemetryAnalyzer\bin\Debug\net
 C:\Users\vighn\OneDrive\Documents\Projects\RacingTelemetryAnalyzer\bin\Debug\net8.0\RacingTelemetryAnalyzer.pdb
 C:\Users\vighn\OneDrive\Documents\Projects\RacingTelemetryAnalyzer\obj\Debug\net8.0\RacingTelemetryAnalyzer.genruntimeconfig.cache
 C:\Users\vighn\OneDrive\Documents\Projects\RacingTelemetryAnalyzer\obj\Debug\net8.0\ref\RacingTelemetryAnalyzer.dll
+C:\Users\vighn\OneDrive\Documents\Projects\RacingTelemetryAnalyzer\obj\Debug\net8.0\RacingTelemetryAnalyzer.sourcelink.json
