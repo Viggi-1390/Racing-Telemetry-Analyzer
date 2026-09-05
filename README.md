@@ -7,7 +7,7 @@ A high-performance ASP.NET Core application for capturing, analyzing, and optimi
 ### Prerequisites
 - **.NET 8.0** (or later)
 - **SQL Server** (local or remote)
-- **Visual Studio 2022** or VS Code
+- **Visual Studio 2026** or VS Code
 
 ### Installation & Setup
 
