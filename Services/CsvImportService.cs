@@ -59,7 +59,8 @@ public class CsvImportService
         ApplicationDbContext context,
         ITelemetryAnalysisService analysisService,
         string token,
-        long fileSizeBytes = 0)
+        long fileSizeBytes = 0,
+        string? sessionType = null)
     {
         var progress = new ImportProgress
         {
@@ -86,13 +87,15 @@ public class CsvImportService
 
             double trackLengthMeters = (track.Length > 0 ? track.Length : 5.0) * 1000.0;
 
+            var validatedSessionType = RacingTelemetryAnalyzer.Models.SessionTypeHelper.ValidateOrDefault(sessionType);
+
             // 1. Create Telemetry Session
             var session = new Session
             {
                 VehicleId = vehicleId,
                 TrackId = track.TrackId == 0 ? 1 : track.TrackId,
-                Name = $"IMPORTED SESSION - {DateTime.UtcNow:yyyy-MM-dd HH:mm}",
-                SessionType = "Imported",
+                Name = validatedSessionType,
+                SessionType = validatedSessionType,
                 Date = DateTime.UtcNow
             };
             context.Sessions.Add(session);

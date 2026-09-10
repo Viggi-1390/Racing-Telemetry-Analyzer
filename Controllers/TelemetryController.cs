@@ -22,10 +22,10 @@ public class TelemetryController : Controller
         _context = context;
     }
 
-    public IActionResult Index(int vehicleId = 1, int trackId = 1, int? lapId = null)
+    public IActionResult Index(int vehicleId = 1, int trackId = 1, int? lapId = null, int? sessionId = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        Console.WriteLine($"[DIAG 1] Request started: vehicleId={vehicleId}, trackId={trackId}, lapId={lapId} ({sw.ElapsedMilliseconds}ms)");
+        Console.WriteLine($"[DIAG 1] Request started: vehicleId={vehicleId}, trackId={trackId}, lapId={lapId}, sessionId={sessionId} ({sw.ElapsedMilliseconds}ms)");
 
         var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
         if (vehicle == null)
@@ -40,18 +40,41 @@ public class TelemetryController : Controller
 
         var track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId) ?? _context.Tracks.FirstOrDefault() ?? new Track { Name = "UNKNOWN TRACK", Country = "Global" };
 
+        // Load all sessions for this vehicle (for session switcher)
         bool isAudiR8 = vehicle.Name.Contains("R8") || vehicle.Manufacturer.Contains("Audi");
         var r8Ids = isAudiR8 ? _context.Vehicles.Where(v => v.Name.Contains("R8") || v.Manufacturer.Contains("Audi")).Select(v => v.VehicleId).ToList() : new List<int> { vehicleId };
+
+        var allSessions = _context.Sessions
+            .Include(s => s.Laps)
+            .Where(s => r8Ids.Contains(s.VehicleId) && s.Laps.Any())
+            .OrderByDescending(s => s.SessionId)
+            .ToList();
 
         bool isMonza = track.Name.ToUpper().Contains("MONZA");
         var monzaTrackIds = isMonza ? _context.Tracks.Where(t => t.Name.ToUpper().Contains("MONZA")).Select(t => t.TrackId).ToList() : new List<int> { trackId };
 
-        var session = _context.Sessions
-            .Include(s => s.Laps)
-            .Include(s => s.Condition)
-            .Include(s => s.Setup)
-            .OrderByDescending(s => s.SessionId)
-            .FirstOrDefault(s => r8Ids.Contains(s.VehicleId) && monzaTrackIds.Contains(s.TrackId));
+        Session? session = null;
+
+        // If specific sessionId requested, load that session
+        if (sessionId.HasValue)
+        {
+            session = _context.Sessions
+                .Include(s => s.Laps)
+                .Include(s => s.Condition)
+                .Include(s => s.Setup)
+                .FirstOrDefault(s => s.SessionId == sessionId.Value && r8Ids.Contains(s.VehicleId));
+        }
+
+        // Otherwise pick the latest session for this vehicle+track
+        if (session == null || !session.Laps.Any())
+        {
+            session = _context.Sessions
+                .Include(s => s.Laps)
+                .Include(s => s.Condition)
+                .Include(s => s.Setup)
+                .OrderByDescending(s => s.SessionId)
+                .FirstOrDefault(s => r8Ids.Contains(s.VehicleId) && monzaTrackIds.Contains(s.TrackId));
+        }
 
         if (session == null || !session.Laps.Any())
         {
@@ -73,10 +96,14 @@ public class TelemetryController : Controller
         if (session == null || !session.Laps.Any())
         {
             ViewBag.NoData = true;
+            ViewBag.HasData = false;
+            ViewBag.VehicleId = vehicleId;
+            ViewBag.TrackId = track.TrackId;
             ViewBag.Vehicle = vehicle;
             ViewBag.Track = track;
             ViewBag.AllVehicles = _context.Vehicles.OrderBy(v => v.Name).ToList();
             ViewBag.AllTracks = _context.Tracks.OrderBy(t => t.Name).ToList();
+            ViewBag.SessionTypes = SessionTypeHelper.AllDisplayNames();
             Console.WriteLine($"[DIAG 3.1] No data, returning view ({sw.ElapsedMilliseconds}ms)");
             return View();
         }
@@ -217,6 +244,8 @@ public class TelemetryController : Controller
         ViewBag.Vehicle = vehicle;
         ViewBag.Track = track;
         ViewBag.Session = session;
+        ViewBag.AllSessions = allSessions;
+        ViewBag.SessionTypes = SessionTypeHelper.AllDisplayNames();
         ViewBag.NoData = false;
         ViewBag.AllVehicles = _context.Vehicles.OrderBy(v => v.Name).ToList();
         ViewBag.TyreStatus = GenerateTyreStatus(vehicle, session, telemetryPoints, allLaps.Count);
@@ -317,17 +346,19 @@ public class TelemetryController : Controller
     }
 
     [HttpPost]
-    public IActionResult GenerateData(int vehicleId, int trackId)
+    public IActionResult GenerateData(int vehicleId, int trackId, string? sessionType)
     {
         var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
         if (vehicle == null) return RedirectToAction("Index", "Home");
+
+        var validatedSessionType = SessionTypeHelper.ValidateOrDefault(sessionType);
 
         var session = new Session 
         { 
             VehicleId = vehicleId, 
             TrackId = trackId, 
-            Name = "GENERATED SESSION", 
-            SessionType = "Test", 
+            Name = validatedSessionType, 
+            SessionType = validatedSessionType, 
             Date = DateTime.UtcNow 
         };
         _context.Sessions.Add(session);
@@ -380,6 +411,7 @@ public class TelemetryController : Controller
         int vehicleId, 
         int trackId, 
         string? uploadToken,
+        string? sessionType,
         [FromServices] CsvImportService csvService)
     {
         var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == vehicleId);
@@ -404,7 +436,8 @@ public class TelemetryController : Controller
             _context, 
             _analysisService, 
             token, 
-            csvFile.Length);
+            csvFile.Length,
+            sessionType);
 
         if (!string.IsNullOrEmpty(progress.Error))
         {

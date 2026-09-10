@@ -10,6 +10,7 @@
     var selectedLap = ViewBag.SelectedLap as RacingTelemetryAnalyzer.Models.Lap ?? Model;
     var bestLap = ViewBag.BestLap as RacingTelemetryAnalyzer.Models.Lap;
     var allVehicles = ViewBag.AllVehicles as IEnumerable<RacingTelemetryAnalyzer.Models.Vehicle> ?? new List<RacingTelemetryAnalyzer.Models.Vehicle>();
+    var allSessions = ViewBag.AllSessions as IEnumerable<RacingTelemetryAnalyzer.Models.Session> ?? new List<RacingTelemetryAnalyzer.Models.Session>();
     var tyreStatus = ViewBag.TyreStatus as RacingTelemetryAnalyzer.Models.VehicleTyreStatus;
     var isBike = vehicle != null && vehicle.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Bike;
 
@@ -71,6 +72,26 @@
                 </p>
             </div>
 
+            <!-- Session Type Selector -->
+            <div class="mt-3 mb-2 mx-auto" style="max-width: 420px;">
+                <div class="p-3 rounded" style="background: rgba(255, 90, 31, 0.06); border: 1px solid rgba(255, 90, 31, 0.3);">
+                    <label class="d-block text-uppercase fw-bold mb-2" style="font-size: 0.72rem; letter-spacing: 1.5px; color: #ff5a1f;">
+                        🏁 SESSION TYPE
+                    </label>
+                    <select id="noDataSessionTypeSelect" class="form-select form-select-sm bg-dark text-light border-secondary fw-bold font-monospace"
+                            style="letter-spacing: 1px; font-size: 0.85rem; border-color: rgba(255,90,31,0.4) !important;"
+                            onchange="syncSessionType(this.value)">
+                        <option value="PRACTICE 1" selected>PRACTICE 1</option>
+                        <option value="PRACTICE 2">PRACTICE 2</option>
+                        <option value="PRACTICE 3">PRACTICE 3</option>
+                        <option value="QUALIFYING">QUALIFYING</option>
+                        <option value="SPRINT QUALIFYING">SPRINT QUALIFYING</option>
+                        <option value="SPRINT RACE">SPRINT RACE</option>
+                        <option value="RACE">RACE</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Action Options -->
             <div class="row g-4 mt-2 justify-content-center">
                 <!-- Option 1: Import CSV -->
@@ -84,6 +105,7 @@
                         <form id="noDataImportForm" class="d-flex flex-column gap-3">
                             <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
                             <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
+                            <input type="hidden" name="sessionType" id="noDataImportSessionType" value="PRACTICE 1" />
                             <input type="file" id="noDataCsvFile" name="csvFile" accept=".csv" class="form-control form-control-sm bg-dark text-light border-secondary" required />
                             <button type="button" id="btnNoDataImport" onclick="startCsvUpload('noDataImportForm', 'noDataCsvFile', 'noDataProgressContainer', 'noDataProgressBar', 'noDataProgressStatus', 'noDataProgressDetail')" class="btn btn-outline-info w-100 py-2" style="font-weight:700; letter-spacing:1px; border-color:#00e5ff; color:#00e5ff;">
                                 ⬆ UPLOAD & PARSE CSV
@@ -113,6 +135,7 @@
                         <form method="post" action="/Telemetry/GenerateData" class="d-flex flex-column gap-3">
                             <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
                             <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
+                            <input type="hidden" name="sessionType" id="noDataGenerateSessionType" value="PRACTICE 1" />
                             <div class="text-muted small py-1">Target Track: <strong class="text-light">@(track?.Name ?? "MONZA")</strong></div>
                             <button type="submit" class="btn btn-orange-primary w-100 py-2" style="background:#ff5a1f; color:#fff; font-weight:700; letter-spacing:1px; border:none;">
                                 ⚡ GENERATE DEMO SESSION
@@ -181,15 +204,36 @@
 
                 <!-- SESSION INFO -->
                 <div class="dash-card session-card">
-                    <div class="card-section-title">SESSION INFO</div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="card-section-title mb-0" style="font-size: 0.68rem; color: #ff5a1f;">SESSION INFO</span>
+                        @if (allSessions != null && allSessions.Count() > 1)
+                        {
+                            <select class="form-select form-select-sm vehicle-quick-select" 
+                                    style="max-width: 150px; font-size: 0.72rem;"
+                                    title="Switch Session"
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&sessionId=' + this.value;">
+                                @foreach (var s in allSessions)
+                                {
+                                    if (s.SessionId == session?.SessionId)
+                                    {
+                                        <option value="@s.SessionId" selected>@(string.IsNullOrEmpty(s.SessionType) ? s.Name : s.SessionType)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s.SessionId">@(string.IsNullOrEmpty(s.SessionType) ? s.Name : s.SessionType)</option>
+                                    }
+                                }
+                            </select>
+                        }
+                    </div>
                     <div class="info-rows">
                         <div class="info-row">
                             <span class="info-label">Track</span>
-                            <span class="info-val">@(track?.Name ?? "Le Mans")</span>
+                            <span class="info-val">@(track?.Name ?? "Monza")</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Session</span>
-                            <span class="info-val">@(session?.Name ?? "Free Practice 1")</span>
+                            <span class="info-val text-orange fw-bold">@(session?.SessionType ?? session?.Name ?? "PRACTICE 1")</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Date</span>
@@ -815,6 +859,18 @@
                     <form id="modalImportForm" class="d-flex flex-column gap-3">
                         <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
                         <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
+                        <div>
+                            <label class="form-label text-muted small fw-bold" style="letter-spacing: 1px; color: #ff5a1f;">🏁 SESSION TYPE</label>
+                            <select name="sessionType" class="form-select form-select-sm bg-dark text-light border-secondary fw-bold font-monospace" style="letter-spacing: 1px;">
+                                <option value="PRACTICE 1" selected>PRACTICE 1</option>
+                                <option value="PRACTICE 2">PRACTICE 2</option>
+                                <option value="PRACTICE 3">PRACTICE 3</option>
+                                <option value="QUALIFYING">QUALIFYING</option>
+                                <option value="SPRINT QUALIFYING">SPRINT QUALIFYING</option>
+                                <option value="SPRINT RACE">SPRINT RACE</option>
+                                <option value="RACE">RACE</option>
+                            </select>
+                        </div>
                         <div>
                             <label class="form-label text-muted small fw-bold">SELECT CSV DATASET</label>
                             <input type="file" id="modalCsvFile" name="csvFile" accept=".csv" class="form-control form-control-sm bg-dark text-light border-secondary" required />
@@ -2508,6 +2564,13 @@
             };
 
             xhr.send(formData);
+        }
+
+        function syncSessionType(val) {
+            const importInput = document.getElementById('noDataImportSessionType');
+            if (importInput) importInput.value = val;
+            const generateInput = document.getElementById('noDataGenerateSessionType');
+            if (generateInput) generateInput.value = val;
         }
     </script>
 }

@@ -1,11 +1,48 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace RacingTelemetryAnalyzer.Models
 {
     public enum VehicleType { Car, Bike }
     public enum VehicleCategory { Race, Production }
+
+    public enum MotorsportSessionType
+    {
+        Practice1,
+        Practice2,
+        Practice3,
+        Qualifying,
+        SprintQualifying,
+        SprintRace,
+        Race
+    }
+
+    public static class SessionTypeHelper
+    {
+        private static readonly Dictionary<MotorsportSessionType, string> DisplayNames = new()
+        {
+            { MotorsportSessionType.Practice1, "PRACTICE 1" },
+            { MotorsportSessionType.Practice2, "PRACTICE 2" },
+            { MotorsportSessionType.Practice3, "PRACTICE 3" },
+            { MotorsportSessionType.Qualifying, "QUALIFYING" },
+            { MotorsportSessionType.SprintQualifying, "SPRINT QUALIFYING" },
+            { MotorsportSessionType.SprintRace, "SPRINT RACE" },
+            { MotorsportSessionType.Race, "RACE" }
+        };
+
+        public static string ToDisplayName(this MotorsportSessionType type) => DisplayNames[type];
+
+        public static string[] AllDisplayNames() => DisplayNames.Values.ToArray();
+
+        public static string ValidateOrDefault(string? sessionType)
+        {
+            if (string.IsNullOrWhiteSpace(sessionType)) return "PRACTICE 1";
+            var upper = sessionType.Trim().ToUpperInvariant();
+            return DisplayNames.Values.Contains(upper) ? upper : "PRACTICE 1";
+        }
+    }
     
     public class Vehicle
     {

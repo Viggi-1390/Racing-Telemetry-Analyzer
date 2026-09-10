@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8e72691d6e20b528c8ac6d5e912c9ca3403462ec")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+227f0fbea4194d703a37ba9a01d39c0e24ee5223")]
 [assembly: System.Reflection.AssemblyProductAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
