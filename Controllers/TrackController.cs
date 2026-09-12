@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RacingTelemetryAnalyzer.Models;
 using RacingTelemetryAnalyzer.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
@@ -104,6 +105,181 @@ namespace RacingTelemetryAnalyzer.Controllers
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Index", new { vehicleId = vehicleId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTrack(int? id)
+        {
+            int targetId = id ?? 0;
+            if (targetId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Valid Track ID is required." });
+            }
+
+            var track = await _context.Tracks.AsNoTracking().FirstOrDefaultAsync(t => t.TrackId == targetId);
+            if (track == null)
+            {
+                return NotFound(new { success = false, message = $"Track ID {targetId} was not found." });
+            }
+
+            return Json(new
+            {
+                success = true,
+                track = new
+                {
+                    id = track.TrackId,
+                    name = track.Name,
+                    country = track.Country,
+                    length = track.Length,
+                    numberOfTurns = track.NumberOfTurns,
+                    imagePath = track.ImagePath
+                }
+            });
+        }
+
+        [HttpGet("/api/tracks/{id:int}")]
+        public async Task<IActionResult> GetTrackApi(int id)
+        {
+            return await GetTrack(id);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditTrack(int? id, [FromForm] Track? formTrack, IFormFile? ImageFile)
+        {
+            Track? updatedTrack = formTrack;
+
+            if (Request.HasJsonContentType())
+            {
+                try
+                {
+                    using var reader = new StreamReader(Request.Body);
+                    var jsonBody = await reader.ReadToEndAsync();
+                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    updatedTrack = System.Text.Json.JsonSerializer.Deserialize<Track>(jsonBody, options);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { success = false, message = "Invalid JSON payload: " + ex.Message });
+                }
+            }
+
+            int targetId = id ?? updatedTrack?.TrackId ?? 0;
+            if (targetId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Valid Track ID is required." });
+            }
+
+            var track = await _context.Tracks.FirstOrDefaultAsync(t => t.TrackId == targetId);
+            if (track == null)
+            {
+                return NotFound(new { success = false, message = $"Track ID {targetId} not found." });
+            }
+
+            if (updatedTrack == null)
+            {
+                return BadRequest(new { success = false, message = "Track data is required." });
+            }
+
+            if (string.IsNullOrWhiteSpace(updatedTrack.Name))
+            {
+                return BadRequest(new { success = false, message = "Track Name cannot be blank." });
+            }
+
+            if (string.IsNullOrWhiteSpace(updatedTrack.Country))
+            {
+                return BadRequest(new { success = false, message = "Country / Location cannot be blank." });
+            }
+
+            if (updatedTrack.Length <= 0 || updatedTrack.Length > 100)
+            {
+                return BadRequest(new { success = false, message = "Track length must be a positive number between 0.1 and 100 km." });
+            }
+
+            if (updatedTrack.NumberOfTurns <= 0 || updatedTrack.NumberOfTurns > 200)
+            {
+                return BadRequest(new { success = false, message = "Number of turns must be between 1 and 200." });
+            }
+
+            track.Name = updatedTrack.Name.Trim().ToUpper();
+            track.Country = updatedTrack.Country.Trim();
+            track.Length = Math.Round(updatedTrack.Length, 3);
+            track.NumberOfTurns = updatedTrack.NumberOfTurns;
+
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tracks");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(ImageFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await ImageFile.CopyToAsync(fileStream);
+                }
+
+                track.ImagePath = $"/images/tracks/{uniqueFileName}";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                track = new
+                {
+                    id = track.TrackId,
+                    name = track.Name,
+                    country = track.Country,
+                    length = track.Length,
+                    numberOfTurns = track.NumberOfTurns,
+                    imagePath = track.ImagePath
+                }
+            });
+        }
+
+        [HttpPost("/api/tracks/{id:int}")]
+        public async Task<IActionResult> EditTrackApi(int id, [FromForm] Track? formTrack, IFormFile? ImageFile)
+        {
+            return await EditTrack(id, formTrack, ImageFile);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteTrack([FromForm] int? id)
+        {
+            int targetId = id ?? 0;
+            if (targetId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid Track ID." });
+            }
+
+            var track = await _context.Tracks
+                .Include(t => t.Sessions)
+                .Include(t => t.Sections)
+                .FirstOrDefaultAsync(t => t.TrackId == targetId);
+
+            if (track == null)
+            {
+                return NotFound(new { success = false, message = $"Track ID {targetId} not found." });
+            }
+
+            try
+            {
+                _context.Tracks.Remove(track);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, deletedId = targetId, name = track.Name });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to delete track: " + ex.Message });
+            }
+        }
+
+        [HttpPost("/api/tracks/{id:int}/delete")]
+        [HttpDelete("/api/tracks/{id:int}")]
+        public async Task<IActionResult> DeleteTrackApi(int id)
+        {
+            return await DeleteTrack(id);
         }
     }
 }

@@ -10,7 +10,7 @@
         <a href="/Track/AddTrack?vehicleId=@vehicleId" class="btn-add-track">+ ADD TRACK</a>
     </div>
 
-    <div class="track-grid">
+    <div class="track-grid" id="trackGrid">
         @foreach (var track in Model)
         {
             // Simple mapping for flags based on country
@@ -22,16 +22,32 @@
                 "BELGIUM" => "🇧🇪",
                 "JAPAN" => "🇯🇵",
                 "GERMANY" => "🇩🇪",
+                "BRAZIL" => "🇧🇷",
+                "USA" => "🇺🇸",
+                "UNITED STATES" => "🇺🇸",
+                "AMERICA" => "🇺🇸",
+                "AUSTRALIA" => "🇦🇺",
+                "SPAIN" => "🇪🇸",
+                "NETHERLANDS" => "🇳🇱",
+                "AUSTRIA" => "🇦🇹",
+                "CANADA" => "🇨🇦",
                 _ => "🏁"
             };
 
-            <div class="track-card" id="track-@track.TrackId" onclick="selectTrack(@track.TrackId)">
+            <div class="track-card" id="track-@track.TrackId" 
+                 data-id="@track.TrackId"
+                 data-name="@track.Name"
+                 data-country="@track.Country"
+                 data-length="@track.Length"
+                 data-turns="@track.NumberOfTurns"
+                 data-img="@track.ImagePath"
+                 onclick="selectTrack(@track.TrackId)">
                 <div class="track-img-wrapper">
                     <!-- Selected badges -->
                     <div class="selected-badge">SELECTED</div>
                     <div class="selected-check">✔</div>
                     
-                    <img src="@track.ImagePath" alt="@track.Name" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <img src="@track.ImagePath" alt="@track.Name" class="track-card-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                     <div class="track-fallback" style="display: none;">
                         <svg viewBox="0 0 100 50" class="fallback-svg">
                             <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="2 2" />
@@ -42,11 +58,14 @@
                     <div class="track-flag-overlay">@flagEmoji</div>
                 </div>
                 <div class="track-info">
-                    <h2>@track.Name</h2>
-                    <p class="track-location">@flagEmoji @track.Country</p>
+                    <h2 class="track-card-name">@track.Name</h2>
+                    <p class="track-location">
+                        <span class="track-flag-text">@flagEmoji</span> 
+                        <span class="track-country-text">@track.Country</span>
+                    </p>
                     <div class="track-stats">
-                        <div class="stat"><span class="label">LENGTH</span><span class="value">@track.Length km</span></div>
-                        <div class="stat"><span class="label">TURNS</span><span class="value">@track.NumberOfTurns</span></div>
+                        <div class="stat"><span class="label">LENGTH</span><span class="value track-stat-length">@track.Length km</span></div>
+                        <div class="stat"><span class="label">TURNS</span><span class="value track-stat-turns">@track.NumberOfTurns</span></div>
                     </div>
                 </div>
             </div>
@@ -58,10 +77,145 @@
     </div>
 </div>
 
+<!-- ========================================================================== -->
+<!-- CONTEXT MENU: RIGHT-CLICK ON TRACK CARD                                    -->
+<!-- ========================================================================== -->
+<div id="trackContextMenu" class="track-context-menu d-none">
+    <div class="context-menu-header">
+        <span class="context-track-name" id="ctxTrackTitle">TRACK</span>
+        <span class="context-pill">// ACTIONS</span>
+    </div>
+    <div class="context-menu-items">
+        <button type="button" class="context-menu-item" id="ctxBtnEditTrack" onclick="onContextEditTrackClicked()">
+            <span class="ctx-icon">✏️</span>
+            <span class="ctx-label">Edit Track Details</span>
+        </button>
+        <div class="context-menu-divider"></div>
+        <button type="button" class="context-menu-item item-danger" id="ctxBtnDeleteTrack" onclick="onContextDeleteTrackClicked()">
+            <span class="ctx-icon">🗑️</span>
+            <span class="ctx-label">Delete Track</span>
+        </button>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- MODAL: EDIT TRACK DETAILS                                                  -->
+<!-- ========================================================================== -->
+<div class="modal fade" id="editTrackModal" tabindex="-1" aria-labelledby="editTrackModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-motorsport">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="editTrackModalLabel">
+                    <span class="text-orange">✏️</span> EDIT TRACK SPECIFICATIONS
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editTrackForm" onsubmit="submitEditTrack(event)">
+                <input type="hidden" id="editTrackId" name="TrackId" value="" />
+                <div class="modal-body p-4">
+                    <div id="editTrackAlertError" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
+
+                    <!-- SECTION 1: TRACK IDENTITY -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 01 TRACK IDENTITY</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">TRACK NAME</label>
+                                <input type="text" id="editTrackName" name="Name" class="form-control form-control-dark" required placeholder="e.g. MONZA">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">COUNTRY / LOCATION</label>
+                                <input type="text" id="editTrackCountry" name="Country" class="form-control form-control-dark" required placeholder="e.g. Italy">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: TRACK SPECIFICATIONS -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 02 TRACK SPECIFICATIONS</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">LENGTH (KM)</label>
+                                <input type="number" id="editTrackLength" name="Length" class="form-control form-control-dark" step="0.001" min="0.1" max="100" required placeholder="5.793">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">NUMBER OF TURNS</label>
+                                <input type="number" id="editTrackTurns" name="NumberOfTurns" class="form-control form-control-dark" min="1" max="200" required placeholder="11">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: TRACK IMAGE / MAP -->
+                    <div class="modal-section-box">
+                        <div class="modal-section-title">// 03 TRACK IMAGE / MAP</div>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <div class="edit-img-preview-box">
+                                    <img id="editTrackImagePreview" src="/images/tracks/default-track.jpg" alt="Track Preview" onerror="this.onerror=null; this.src='/images/tracks/default-track.jpg';" />
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="form-label micro-label">CHANGE / UPLOAD TRACK MAP</label>
+                                <input type="file" id="editTrackImageFile" name="ImageFile" accept="image/*" class="form-control form-control-dark" onchange="previewTrackEditImage(this)">
+                                <small class="text-muted d-block mt-1">Leave empty to keep current image. Supports JPG, PNG, WEBP, SVG.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-orange-primary px-4" id="btnSaveTrack">
+                        <span id="btnSaveTrackText">SAVE CHANGES</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
+<!-- MODAL: DELETE TRACK CONFIRMATION                                           -->
+<!-- ========================================================================== -->
+<div class="modal fade" id="deleteTrackModal" tabindex="-1" aria-labelledby="deleteTrackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-motorsport border-danger">
+            <div class="modal-header border-danger-subtle">
+                <h5 class="modal-title d-flex align-items-center gap-2 text-danger" id="deleteTrackModalLabel">
+                    <span>⚠️</span> DELETE TRACK?
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-2 text-secondary">Are you sure you want to delete:</p>
+                <h4 class="text-white fw-bold mb-3" id="deleteTrackName">TRACK NAME</h4>
+                <div class="alert alert-warning py-2 px-3 small border-0" style="background: rgba(234, 179, 8, 0.15); color: #facc15;">
+                    This action cannot be undone. All telemetry sessions and laps for this track will also be removed.
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center gap-3">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnConfirmDeleteTrack" onclick="confirmDeleteTrack()">
+                    <span id="btnDeleteTrackText">DELETE TRACK</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+    :root {
+        --c-orange: #ff5a1f;
+        --c-orange-glow: rgba(255, 90, 31, 0.4);
+        --c-cyan: #00ffcc;
+        --c-cyan-glow: rgba(0, 255, 204, 0.4);
+        --c-muted: #8b92a5;
+        --font-mono: 'Consolas', 'Roboto Mono', monospace;
+    }
+
     body { background-color: #0a0a0c; color: #fff; }
     .page-title { font-weight: 800; letter-spacing: 3px; font-size: 2rem; margin: 0; }
-    .text-orange { color: #ff4500; }
+    .text-orange { color: #ff5a1f; }
     
     .btn-add-track {
         background: transparent;
@@ -95,10 +249,11 @@
         transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
         display: flex;
         flex-direction: column;
+        user-select: none;
     }
     .track-card:hover {
         transform: translateY(-5px);
-        border-color: #00ffcc; /* Cyan border on hover instead of orange */
+        border-color: #00ffcc;
         box-shadow: 0 10px 20px rgba(0, 255, 204, 0.15);
     }
     .track-card.active {
@@ -169,7 +324,7 @@
         object-fit: contain;
         opacity: 0.7;
         transition: opacity 0.3s, filter 0.3s;
-        padding: 20px; /* More padding so track map isn't too close to edges */
+        padding: 20px;
         filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.3));
     }
     .track-card:hover .track-img-wrapper img, .track-card.active .track-img-wrapper img {
@@ -206,7 +361,7 @@
 
     .track-info {
         padding: 15px 20px 20px 20px;
-        background: #0d0d14; /* Match image wrapper background slightly */
+        background: #0d0d14;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
@@ -262,7 +417,7 @@
 
     .btn-continue {
         background: linear-gradient(135deg, #111, #222);
-        color: #ff4500;
+        color: #ff5a1f;
         padding: 12px 60px;
         font-size: 1.1rem;
         font-weight: 800;
@@ -270,12 +425,12 @@
         text-transform: uppercase;
         text-decoration: none;
         transition: all 0.3s;
-        border: 2px solid #ff4500;
+        border: 2px solid #ff5a1f;
         clip-path: polygon(15px 0, calc(100% - 15px) 0, 100% 100%, 0 100%);
         display: inline-block;
     }
     .btn-continue:hover:not(.disabled) {
-        background: linear-gradient(135deg, #ff4500, #e03e00);
+        background: linear-gradient(135deg, #ff5a1f, #e03e00);
         box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
         color: #fff;
     }
@@ -285,16 +440,640 @@
         color: #555;
         pointer-events: none;
     }
+
+    /* --------------------------------------------------------------------------
+       MODAL & CONTEXT MENU STYLING (MATCHING GARAGE)
+       -------------------------------------------------------------------------- */
+    .modal-motorsport {
+        background: #111420;
+        border: 1px solid var(--c-orange);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--c-orange-glow);
+        color: #ffffff;
+    }
+
+    .modal-motorsport .modal-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 14px 20px;
+    }
+
+    .modal-motorsport .modal-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 20px;
+    }
+
+    .micro-label {
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--c-muted);
+        letter-spacing: 1.2px;
+        margin-bottom: 4px;
+    }
+
+    .form-control-dark {
+        background: #181c2c;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        font-size: 0.88rem;
+        border-radius: 4px;
+    }
+
+    .form-control-dark:focus {
+        background: #1e2337;
+        border-color: var(--c-cyan);
+        box-shadow: 0 0 10px var(--c-cyan-glow);
+        color: #ffffff;
+    }
+
+    .btn-orange-primary {
+        background: var(--c-orange);
+        border: none;
+        color: #ffffff;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+    }
+
+    .btn-orange-primary:hover {
+        background: #ff7138;
+        box-shadow: 0 0 15px var(--c-orange-glow);
+        color: #ffffff;
+    }
+
+    .modal-section-box {
+        background: rgba(24, 28, 44, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 14px 16px;
+    }
+
+    .modal-section-title {
+        font-size: 0.68rem;
+        font-family: var(--font-mono);
+        color: var(--c-orange);
+        letter-spacing: 1px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .edit-img-preview-box {
+        width: 120px;
+        height: 75px;
+        background: #0d0f18;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .edit-img-preview-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 4px;
+    }
+
+    /* CUSTOM TRACK CONTEXT MENU */
+    .track-context-menu {
+        position: fixed;
+        z-index: 1060;
+        min-width: 215px;
+        background: rgba(14, 17, 26, 0.98);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--c-orange);
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px var(--c-orange-glow);
+        padding: 6px;
+        user-select: none;
+        animation: ctxMenuFadeIn 0.12s ease-out;
+    }
+
+    @@keyframes ctxMenuFadeIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .context-menu-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 4px;
+    }
+
+    .context-track-name {
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        color: #fff;
+        max-width: 125px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .context-pill {
+        font-size: 0.6rem;
+        font-family: var(--font-mono);
+        color: var(--c-orange);
+        letter-spacing: 0.8px;
+    }
+
+    .context-menu-items {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .context-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 12px;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #d1d5db;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .context-menu-item .ctx-icon {
+        font-size: 0.95rem;
+    }
+
+    .context-menu-item:hover {
+        background: rgba(255, 90, 31, 0.15);
+        border-color: rgba(255, 90, 31, 0.4);
+        color: #fff;
+        transform: translateX(2px);
+    }
+
+    .context-menu-item.item-danger:hover {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+    }
+
+    .context-menu-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 2px 0;
+    }
 </style>
 
 <script>
+    const vehicleId = @vehicleId;
+    let selectedTrackId = null;
+
+    // In-memory data store serialized from backend
+    const tracksData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(t => new {
+        id = t.TrackId,
+        name = t.Name,
+        country = t.Country,
+        length = t.Length,
+        numberOfTurns = t.NumberOfTurns,
+        imagePath = t.ImagePath
+    })));
+
+    function getCountryFlag(country) {
+        if (!country) return "🏁";
+        const c = country.trim().toUpperCase();
+        switch (c) {
+            case "ITALY": return "🇮🇹";
+            case "UNITED KINGDOM":
+            case "UK": return "🇬🇧";
+            case "FRANCE": return "🇫🇷";
+            case "BELGIUM": return "🇧🇪";
+            case "JAPAN": return "🇯🇵";
+            case "GERMANY": return "🇩🇪";
+            case "BRAZIL": return "🇧🇷";
+            case "USA":
+            case "UNITED STATES":
+            case "AMERICA": return "🇺🇸";
+            case "AUSTRALIA": return "🇦🇺";
+            case "SPAIN": return "🇪🇸";
+            case "NETHERLANDS": return "🇳🇱";
+            case "AUSTRIA": return "🇦🇹";
+            case "CANADA": return "🇨🇦";
+            default: return "🏁";
+        }
+    }
+
     function selectTrack(trackId) {
+        selectedTrackId = trackId;
         document.querySelectorAll('.track-card').forEach(card => card.classList.remove('active'));
-        document.getElementById('track-' + trackId).classList.add('active');
+        const activeCard = document.getElementById('track-' + trackId);
+        if (activeCard) activeCard.classList.add('active');
         
         const btnContinue = document.getElementById('btn-continue');
-        btnContinue.classList.remove('disabled');
-        btnContinue.href = '/Telemetry/Loading?vehicleId=@vehicleId&trackId=' + trackId;
+        if (btnContinue) {
+            btnContinue.classList.remove('disabled');
+            btnContinue.href = '/Telemetry/Loading?vehicleId=' + vehicleId + '&trackId=' + trackId;
+        }
     }
+
+    // ==========================================================================
+    // TRACK MANAGEMENT: RIGHT-CLICK CONTEXT MENU, EDIT & DELETE
+    // ==========================================================================
+    let contextTrackId = null;
+
+    function initTrackContextMenu() {
+        const menu = document.getElementById('trackContextMenu');
+
+        // Prevent native context menu on track cards and show custom motorsport menu
+        document.addEventListener('contextmenu', (e) => {
+            const card = e.target.closest('.track-card');
+            if (card) {
+                e.preventDefault();
+                const id = parseInt(card.getAttribute('data-id'));
+                const track = tracksData.find(t => t.id === id);
+                if (!track) return;
+
+                contextTrackId = id;
+                const titleEl = document.getElementById('ctxTrackTitle');
+                if (titleEl) titleEl.innerText = track.name;
+
+                // Show menu to measure dimensions
+                menu.classList.remove('d-none');
+                const menuWidth = menu.offsetWidth || 215;
+                const menuHeight = menu.offsetHeight || 110;
+
+                // Position near cursor and guarantee viewport bounds
+                let left = e.clientX + 4;
+                let top = e.clientY + 4;
+
+                if (left + menuWidth > window.innerWidth - 10) {
+                    left = Math.max(10, e.clientX - menuWidth - 4);
+                }
+                if (top + menuHeight > window.innerHeight - 10) {
+                    top = Math.max(10, e.clientY - menuHeight - 4);
+                }
+
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+            } else {
+                hideTrackContextMenu();
+            }
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#trackContextMenu')) {
+                hideTrackContextMenu();
+            }
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideTrackContextMenu();
+            }
+        });
+
+        // Close on resize or scroll
+        window.addEventListener('resize', hideTrackContextMenu);
+        window.addEventListener('scroll', hideTrackContextMenu, true);
+    }
+
+    function hideTrackContextMenu() {
+        const menu = document.getElementById('trackContextMenu');
+        if (menu) menu.classList.add('d-none');
+    }
+
+    // --- EDIT TRACK MODAL ---
+    function populateEditTrackForm(track) {
+        document.getElementById('editTrackId').value = track.id;
+        document.getElementById('editTrackName').value = track.name || '';
+        document.getElementById('editTrackCountry').value = track.country || '';
+        document.getElementById('editTrackLength').value = track.length || '';
+        document.getElementById('editTrackTurns').value = track.numberOfTurns || '';
+
+        const previewImg = document.getElementById('editTrackImagePreview');
+        if (previewImg) {
+            const fallbackPath = '/images/tracks/default-track.jpg';
+            previewImg.onerror = function() {
+                this.onerror = null;
+                this.src = fallbackPath;
+            };
+            previewImg.src = track.imagePath || fallbackPath;
+        }
+
+        const fileInput = document.getElementById('editTrackImageFile');
+        if (fileInput) fileInput.value = '';
+    }
+
+    async function onContextEditTrackClicked() {
+        hideTrackContextMenu();
+        if (!contextTrackId) return;
+
+        const alertError = document.getElementById('editTrackAlertError');
+        if (alertError) {
+            alertError.classList.add('d-none');
+            alertError.innerText = '';
+        }
+
+        const targetId = contextTrackId;
+
+        // 1. Immediately pre-fill from cached data
+        const cached = tracksData.find(t => t.id === targetId);
+        if (cached) {
+            populateEditTrackForm(cached);
+        }
+
+        // 2. Open modal smoothly
+        const editModalEl = document.getElementById('editTrackModal');
+        const editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+        editModal.show();
+
+        // 3. Authoritative fetch from database API
+        try {
+            const response = await fetch(`/Track/GetTrack?id=${targetId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.track) {
+                    populateEditTrackForm(data.track);
+                    // Update in-memory cache
+                    const idx = tracksData.findIndex(t => t.id === data.track.id);
+                    if (idx !== -1) {
+                        tracksData[idx] = data.track;
+                    }
+                }
+            } else if (!cached) {
+                throw new Error(`Server returned HTTP ${response.status}`);
+            }
+        } catch (err) {
+            if (!cached && alertError) {
+                alertError.innerText = 'Unable to load track details: ' + err.message;
+                alertError.classList.remove('d-none');
+            }
+        }
+    }
+
+    function previewTrackEditImage(input) {
+        if (input.files && input.files[0]) {
+            const previewImg = document.getElementById('editTrackImagePreview');
+            if (previewImg) {
+                previewImg.src = URL.createObjectURL(input.files[0]);
+            }
+        }
+    }
+
+    async function submitEditTrack(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        const form = document.getElementById('editTrackForm');
+        const btnSave = document.getElementById('btnSaveTrack');
+        const btnSaveText = document.getElementById('btnSaveTrackText');
+        const alertError = document.getElementById('editTrackAlertError');
+
+        if (alertError) {
+            alertError.classList.add('d-none');
+            alertError.innerText = '';
+        }
+
+        // Validation
+        const tName = document.getElementById('editTrackName').value.trim();
+        const tCountry = document.getElementById('editTrackCountry').value.trim();
+        const tLength = parseFloat(document.getElementById('editTrackLength').value);
+        const tTurns = parseInt(document.getElementById('editTrackTurns').value);
+
+        if (!tName || !tCountry) {
+            if (alertError) {
+                alertError.innerText = 'Track Name and Country / Location are required.';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (isNaN(tLength) || tLength <= 0 || tLength > 100) {
+            if (alertError) {
+                alertError.innerText = 'Track Length must be a positive number between 0.1 and 100 km.';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (isNaN(tTurns) || tTurns <= 0 || tTurns > 200) {
+            if (alertError) {
+                alertError.innerText = 'Number of Turns must be an integer between 1 and 200.';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (btnSave) btnSave.disabled = true;
+        if (btnSaveText) btnSaveText.innerText = 'SAVING...';
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/Track/EditTrack', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Server error (HTTP ${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (_) {}
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to update track.');
+            }
+
+            // 1. Update In-Memory tracksData
+            const updated = result.track;
+            const idx = tracksData.findIndex(t => t.id === updated.id);
+            if (idx !== -1) {
+                tracksData[idx] = updated;
+            } else {
+                tracksData.push(updated);
+            }
+
+            // 2. Update the DOM Card
+            const card = document.querySelector(`.track-card[data-id="${updated.id}"]`);
+            if (card) {
+                card.setAttribute('data-name', updated.name);
+                card.setAttribute('data-country', updated.country);
+                card.setAttribute('data-length', updated.length);
+                card.setAttribute('data-turns', updated.numberOfTurns);
+                card.setAttribute('data-img', updated.imagePath);
+
+                const nameEl = card.querySelector('.track-card-name');
+                if (nameEl) nameEl.innerText = updated.name;
+
+                const flagEmoji = getCountryFlag(updated.country);
+                const flagOverlay = card.querySelector('.track-flag-overlay');
+                if (flagOverlay) flagOverlay.innerText = flagEmoji;
+
+                const flagText = card.querySelector('.track-flag-text');
+                if (flagText) flagText.innerText = flagEmoji;
+
+                const countryText = card.querySelector('.track-country-text');
+                if (countryText) countryText.innerText = updated.country;
+
+                const lengthEl = card.querySelector('.track-stat-length');
+                if (lengthEl) lengthEl.innerText = updated.length + ' km';
+
+                const turnsEl = card.querySelector('.track-stat-turns');
+                if (turnsEl) turnsEl.innerText = updated.numberOfTurns;
+
+                const imgEl = card.querySelector('.track-card-img');
+                if (imgEl && updated.imagePath) {
+                    imgEl.src = updated.imagePath;
+                    imgEl.style.display = 'block';
+                    const fallbackEl = card.querySelector('.track-fallback');
+                    if (fallbackEl) fallbackEl.style.display = 'none';
+                }
+            }
+
+            // 3. Close Modal
+            const modalEl = document.getElementById('editTrackModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            // 4. Reset form state cleanly
+            form.reset();
+            const fileInput = document.getElementById('editTrackImageFile');
+            if (fileInput) fileInput.value = '';
+            if (alertError) {
+                alertError.classList.add('d-none');
+                alertError.innerText = '';
+            }
+        } catch (err) {
+            if (alertError) {
+                alertError.innerText = 'Save failed: ' + err.message;
+                alertError.classList.remove('d-none');
+            }
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (btnSaveText) btnSaveText.innerText = 'SAVE CHANGES';
+        }
+    }
+
+    // --- DELETE TRACK MODAL ---
+    function onContextDeleteTrackClicked() {
+        hideTrackContextMenu();
+        if (!contextTrackId) return;
+        const track = tracksData.find(t => t.id === contextTrackId);
+        if (!track) return;
+
+        const nameEl = document.getElementById('deleteTrackName');
+        if (nameEl) nameEl.innerText = `"${track.name}"`;
+
+        const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteTrackModal'));
+        deleteModal.show();
+    }
+
+    async function confirmDeleteTrack() {
+        if (!contextTrackId) return;
+        const btnDelete = document.getElementById('btnConfirmDeleteTrack');
+        const textDelete = document.getElementById('btnDeleteTrackText');
+        if (btnDelete) btnDelete.disabled = true;
+        if (textDelete) textDelete.innerText = 'DELETING...';
+
+        try {
+            const response = await fetch('/Track/DeleteTrack', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'id=' + contextTrackId
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Server error (HTTP ${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (_) {}
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to delete track.');
+            }
+
+            const deletedId = contextTrackId;
+
+            // 1. Remove from in-memory tracksData
+            const idx = tracksData.findIndex(t => t.id === deletedId);
+            if (idx !== -1) {
+                tracksData.splice(idx, 1);
+            }
+
+            // 2. Remove card from DOM
+            const card = document.querySelector(`.track-card[data-id="${deletedId}"]`);
+            if (card) card.remove();
+
+            // 3. Close Modal
+            const modalEl = document.getElementById('deleteTrackModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            // 4. If deleted track was selected, reselect or disable continue
+            if (selectedTrackId === deletedId) {
+                const remainingCards = Array.from(document.querySelectorAll('.track-card'));
+                if (remainingCards.length > 0) {
+                    const newId = parseInt(remainingCards[0].getAttribute('data-id'));
+                    selectTrack(newId);
+                } else {
+                    selectedTrackId = null;
+                    const btnContinue = document.getElementById('btn-continue');
+                    if (btnContinue) {
+                        btnContinue.classList.add('disabled');
+                        btnContinue.href = '#';
+                    }
+                }
+            }
+        } catch (err) {
+            alert('Failed to delete track: ' + err.message);
+        } finally {
+            if (btnDelete) btnDelete.disabled = false;
+            if (textDelete) textDelete.innerText = 'DELETE TRACK';
+            contextTrackId = null;
+        }
+    }
+
+    // Modal Cleanup Listeners
+    const editTrackModalEl = document.getElementById('editTrackModal');
+    if (editTrackModalEl) {
+        editTrackModalEl.addEventListener('hidden.bs.modal', function () {
+            const alertError = document.getElementById('editTrackAlertError');
+            if (alertError) {
+                alertError.classList.add('d-none');
+                alertError.innerText = '';
+            }
+            const btnSave = document.getElementById('btnSaveTrack');
+            const btnSaveText = document.getElementById('btnSaveTrackText');
+            if (btnSave) btnSave.disabled = false;
+            if (btnSaveText) btnSaveText.innerText = 'SAVE CHANGES';
+            const form = document.getElementById('editTrackForm');
+            if (form) form.reset();
+            const fileInput = document.getElementById('editTrackImageFile');
+            if (fileInput) fileInput.value = '';
+        });
+    }
+
+    // Initialize on Load
+    window.addEventListener('DOMContentLoaded', () => {
+        initTrackContextMenu();
+    });
 </script>
+
 
