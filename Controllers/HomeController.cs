@@ -76,6 +76,27 @@ public class HomeController : Controller
             needsSave = true;
         }
 
+        // Add Cadillac V-Series.R as primary showcase vehicle if missing
+        if (!vehicles.Any(v => v.Name.Contains("CADILLAC") || v.Name.Contains("V-SERIES")))
+        {
+            var cadillac = new Vehicle 
+            { 
+                Engine = "5.5L DOHC V8 Hybrid", 
+                Name = "CADILLAC V-SERIES.R", 
+                Manufacturer = "Cadillac", 
+                VehicleType = VehicleType.Car, 
+                VehicleCategory = VehicleCategory.Race, 
+                Class = "GTP / LMDh", 
+                Power = 670, 
+                Weight = 1030, 
+                TopSpeed = 338, 
+                ImagePath = "/images/cars/CadillacVSeriesR.jpg" 
+            };
+            _context.Vehicles.Add(cadillac);
+            vehicles.Insert(0, cadillac);
+            needsSave = true;
+        }
+
         // Add production vehicles if missing
         if (!vehicles.Any(v => v.Name == "FERRARI 296 GTB"))
         {
@@ -98,6 +119,8 @@ public class HomeController : Controller
         // Reconcile and fix any mismatched image paths on disk for known vehicles
         foreach (var v in vehicles)
         {
+            if (v.Name == "CADILLAC V-SERIES.R" && v.ImagePath != "/images/cars/CadillacVSeriesR.jpg") { v.ImagePath = "/images/cars/CadillacVSeriesR.jpg"; needsSave = true; }
+            if (v.Name == "PORSCHE 963" && v.ImagePath != "/images/cars/Porsche963.jpg") { v.ImagePath = "/images/cars/Porsche963.jpg"; needsSave = true; }
             if (v.Name == "FERRARI 296 GTB" && v.ImagePath != "/images/cars/Ferrari 296 GTB.jpg") { v.ImagePath = "/images/cars/Ferrari 296 GTB.jpg"; needsSave = true; }
             if (v.Name == "LAMBORGHINI HURACAN STO" && v.ImagePath != "/images/cars/Lamborghini Huracan STO.jpg") { v.ImagePath = "/images/cars/Lamborghini Huracan STO.jpg"; needsSave = true; }
             if (v.Name == "BMW M4 CSL" && v.ImagePath != "/images/cars/BMW M4 csl.jpg") { v.ImagePath = "/images/cars/BMW M4 csl.jpg"; needsSave = true; }
@@ -113,7 +136,14 @@ public class HomeController : Controller
             _context.SaveChanges();
         }
 
-        return View(vehicles);
+        // Ensure Cadillac V-Series.R is primary/first in the garage list
+        var orderedVehicles = vehicles
+            .OrderByDescending(v => (v.Name.Contains("CADILLAC") || v.Name.Contains("V-SERIES")) ? 1 : 0)
+            .ThenByDescending(v => v.VehicleCategory == VehicleCategory.Race ? 1 : 0)
+            .ThenBy(v => v.Name)
+            .ToList();
+
+        return View(orderedVehicles);
     }
 
     public IActionResult AddVehicle()

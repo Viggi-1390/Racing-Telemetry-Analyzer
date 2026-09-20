@@ -50,7 +50,7 @@
                     <img src="@track.ImagePath" alt="@track.Name" class="track-card-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                     <div class="track-fallback" style="display: none;">
                         <svg viewBox="0 0 100 50" class="fallback-svg">
-                            <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="2 2" />
+                            <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="var(--rta-cyan)" stroke-width="1.5" stroke-dasharray="2 2" />
                         </svg>
                         <span class="fallback-text">TRACK PREVIEW NOT FOUND</span>
                     </div>
@@ -205,22 +205,22 @@
 
 <style>
     :root {
-        --c-orange: #ff5a1f;
-        --c-orange-glow: rgba(255, 90, 31, 0.4);
-        --c-cyan: #00ffcc;
-        --c-cyan-glow: rgba(0, 255, 204, 0.4);
-        --c-muted: #8b92a5;
-        --font-mono: 'Consolas', 'Roboto Mono', monospace;
+        --c-orange: var(--rta-orange);
+        --c-orange-glow: var(--rta-orange-glow);
+        --c-cyan: var(--rta-cyan);
+        --c-cyan-glow: var(--rta-cyan-glow);
+        --c-muted: var(--rta-text-secondary);
+        --font-mono: var(--rta-font-mono);
     }
 
-    body { background-color: #0a0a0c; color: #fff; }
+    body { background-color: var(--rta-bg-canvas); color: #fff; }
     .page-title { font-weight: 800; letter-spacing: 3px; font-size: 2rem; margin: 0; }
-    .text-orange { color: #ff5a1f; }
+    .text-orange { color: var(--rta-orange); }
     
     .btn-add-track {
         background: transparent;
-        border: 2px solid #00ffcc;
-        color: #00ffcc;
+        border: 2px solid var(--rta-cyan);
+        color: var(--rta-cyan);
         padding: 10px 24px;
         font-weight: bold;
         letter-spacing: 2px;
@@ -229,9 +229,9 @@
         text-decoration: none;
     }
     .btn-add-track:hover {
-        background: rgba(0, 255, 204, 0.1);
-        color: #00ffcc;
-        box-shadow: 0 0 15px rgba(0,255,204,0.3);
+        background: rgba(0, 210, 255, 0.1);
+        color: var(--rta-cyan);
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
     }
 
     .track-grid {
@@ -241,8 +241,8 @@
     }
 
     .track-card {
-        background: #0f1015;
-        border: 2px solid #222;
+        background: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
@@ -250,35 +250,36 @@
         display: flex;
         flex-direction: column;
         user-select: none;
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.4);
     }
     .track-card:hover {
-        transform: translateY(-5px);
-        border-color: #00ffcc;
-        box-shadow: 0 10px 20px rgba(0, 255, 204, 0.15);
+        transform: translateY(-4px);
+        border-color: var(--rta-cyan);
+        box-shadow: 0 10px 24px rgba(0, 210, 255, 0.18);
     }
     .track-card.active {
-        border-color: #00ffcc;
-        box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+        border-color: var(--rta-cyan);
+        box-shadow: 0 0 0 1px var(--rta-cyan), 0 0 20px rgba(0, 210, 255, 0.35);
     }
 
     .track-img-wrapper {
         height: 200px;
         width: 100%;
-        background-color: #0d0d14;
+        background-color: var(--rta-bg-canvas);
         background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
         background-size: 30px 30px;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-bottom: 1px solid #1a1a24;
+        border-bottom: 1px solid var(--rta-border-subtle);
     }
     
     .selected-badge {
         position: absolute;
         top: 15px;
         left: 15px;
-        background: #00ffcc;
+        background: var(--rta-cyan);
         color: #000;
         font-size: 0.7rem;
         font-weight: 800;
@@ -292,7 +293,7 @@
         position: absolute;
         top: 15px;
         right: 15px;
-        background: #00ffcc;
+        background: var(--rta-cyan);
         color: #000;
         font-size: 0.9rem;
         width: 24px;
@@ -325,17 +326,17 @@
         opacity: 0.7;
         transition: opacity 0.3s, filter 0.3s;
         padding: 20px;
-        filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.3));
+        filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.3));
     }
     .track-card:hover .track-img-wrapper img, .track-card.active .track-img-wrapper img {
         opacity: 1;
-        filter: drop-shadow(0 0 10px rgba(0, 255, 204, 0.6));
+        filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.6));
     }
 
     .track-fallback {
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle at center, #1a1a24 0%, #000 100%);
+        background: radial-gradient(circle at center, var(--rta-bg-surface-2) 0%, var(--rta-bg-canvas) 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -350,10 +351,10 @@
         width: 80px;
         height: 40px;
         margin-bottom: 10px;
-        filter: drop-shadow(0 0 5px #00ffcc);
+        filter: drop-shadow(0 0 5px var(--rta-cyan));
     }
     .fallback-text {
-        color: #00ffcc;
+        color: var(--rta-cyan);
         font-size: 0.65rem;
         letter-spacing: 2px;
         font-family: monospace;
@@ -361,7 +362,7 @@
 
     .track-info {
         padding: 15px 20px 20px 20px;
-        background: #0d0d14;
+        background: transparent;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
@@ -375,11 +376,11 @@
         color: #fff;
     }
     .track-card.active .track-info h2 {
-        color: #00ffcc;
+        color: var(--rta-cyan);
     }
     
     .track-location {
-        color: #888;
+        color: var(--rta-text-secondary);
         font-size: 0.8rem;
         margin-top: 4px;
         margin-bottom: auto;
@@ -394,7 +395,7 @@
         display: flex;
         justify-content: space-between;
         margin-top: 15px;
-        border-top: 1px solid #1a1a24;
+        border-top: 1px solid var(--rta-border-subtle);
         padding-top: 15px;
     }
     .track-stats .stat {
@@ -403,21 +404,21 @@
     }
     .track-stats .label {
         font-size: 0.65rem;
-        color: #777;
+        color: var(--rta-text-secondary);
         letter-spacing: 1px;
         margin-bottom: 4px;
         text-transform: uppercase;
     }
     .track-stats .value {
         font-size: 1.1rem;
-        color: #00ffcc;
+        color: var(--rta-cyan);
         font-weight: 700;
         letter-spacing: 1px;
     }
 
     .btn-continue {
-        background: linear-gradient(135deg, #111, #222);
-        color: #ff5a1f;
+        background: linear-gradient(135deg, var(--rta-orange), #e03e00);
+        color: #fff;
         padding: 12px 60px;
         font-size: 1.1rem;
         font-weight: 800;
@@ -425,39 +426,44 @@
         text-transform: uppercase;
         text-decoration: none;
         transition: all 0.3s;
-        border: 2px solid #ff5a1f;
-        clip-path: polygon(15px 0, calc(100% - 15px) 0, 100% 100%, 0 100%);
+        border: 1px solid var(--rta-orange);
+        border-radius: 4px;
         display: inline-block;
+        box-shadow: 0 4px 12px rgba(255, 90, 31, 0.2);
     }
     .btn-continue:hover:not(.disabled) {
-        background: linear-gradient(135deg, #ff5a1f, #e03e00);
-        box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+        background: linear-gradient(135deg, #ff7138, #ff5a1f);
+        box-shadow: 0 0 20px rgba(255, 90, 31, 0.4);
         color: #fff;
+    }
+    .btn-continue:active:not(.disabled) {
+        box-shadow: 0 0 25px rgba(255, 90, 31, 0.5);
     }
     .btn-continue.disabled {
         background: #111;
         border-color: #333;
         color: #555;
         pointer-events: none;
+        box-shadow: none;
     }
 
     /* --------------------------------------------------------------------------
        MODAL & CONTEXT MENU STYLING (MATCHING GARAGE)
        -------------------------------------------------------------------------- */
     .modal-motorsport {
-        background: #111420;
-        border: 1px solid var(--c-orange);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--c-orange-glow);
+        background: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--rta-orange-glow);
         color: #ffffff;
     }
 
     .modal-motorsport .modal-header {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid var(--rta-border-subtle);
         padding: 14px 20px;
     }
 
     .modal-motorsport .modal-footer {
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid var(--rta-border-subtle);
         padding: 12px 20px;
     }
 
@@ -470,15 +476,15 @@
     }
 
     .form-control-dark {
-        background: #181c2c;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: var(--rta-bg-canvas);
+        border: 1px solid var(--rta-border-subtle);
         color: #ffffff;
         font-size: 0.88rem;
         border-radius: 4px;
     }
 
     .form-control-dark:focus {
-        background: #1e2337;
+        background: var(--rta-bg-surface-2);
         border-color: var(--c-cyan);
         box-shadow: 0 0 10px var(--c-cyan-glow);
         color: #ffffff;
@@ -499,8 +505,8 @@
     }
 
     .modal-section-box {
-        background: rgba(24, 28, 44, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--rta-bg-canvas);
+        border: 1px solid var(--rta-border-subtle);
         border-radius: 6px;
         padding: 14px 16px;
     }
@@ -517,8 +523,8 @@
     .edit-img-preview-box {
         width: 120px;
         height: 75px;
-        background: #0d0f18;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: var(--rta-bg-canvas);
+        border: 1px solid var(--rta-border-subtle);
         border-radius: 4px;
         overflow: hidden;
         display: flex;
@@ -538,8 +544,8 @@
         position: fixed;
         z-index: 1060;
         min-width: 215px;
-        background: rgba(14, 17, 26, 0.98);
-        backdrop-filter: blur(12px);
+        background: rgba(14, 17, 26, 0.85);
+        backdrop-filter: blur(16px);
         border: 1px solid var(--c-orange);
         border-radius: 6px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px var(--c-orange-glow);
@@ -558,7 +564,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 6px 10px 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid var(--rta-border-subtle);
         margin-bottom: 4px;
     }
 
@@ -622,7 +628,7 @@
 
     .context-menu-divider {
         height: 1px;
-        background: rgba(255, 255, 255, 0.08);
+        background: var(--rta-border-subtle);
         margin: 2px 0;
     }
 </style>

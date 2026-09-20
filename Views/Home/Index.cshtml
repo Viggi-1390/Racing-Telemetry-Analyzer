@@ -22,7 +22,7 @@
 
                 <div class="gauge-center-content">
                     <div class="gauge-speed-label">SPEED</div>
-                    <div class="gauge-speed-val" id="perfSpeedVal">330</div>
+                    <div class="gauge-speed-val" id="perfSpeedVal">338</div>
                     <div class="gauge-speed-unit">KM/H</div>
                 </div>
             </div>
@@ -31,7 +31,7 @@
             <div class="gauge-submetrics">
                 <div class="submetric-box">
                     <span class="submetric-label">RPM</span>
-                    <span class="submetric-val text-cyan" id="perfRpmVal">9,220</span>
+                    <span class="submetric-val text-cyan" id="perfRpmVal">8,800</span>
                 </div>
                 <div class="submetric-box">
                     <span class="submetric-label">GEAR</span>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="submetric-box">
                     <span class="submetric-label" id="perfPowerOrLeanLabel">POWER</span>
-                    <span class="submetric-val text-orange" id="perfPowerOrLeanVal">680 HP</span>
+                    <span class="submetric-val text-orange" id="perfPowerOrLeanVal">670 HP</span>
                 </div>
             </div>
 
@@ -93,7 +93,7 @@
                     <span class="panel-tag">// 02</span>
                     <span class="panel-title">LIVE TELEMETRY</span>
                 </div>
-                <div class="hero-vehicle-badge" id="heroVehicleBadge">Porsche 963 LMDh — Live View</div>
+                <div class="hero-vehicle-badge" id="heroVehicleBadge">Cadillac V-Series.R LMDh — Live View</div>
             </div>
 
             <!-- HERO VEHICLE IMAGE CONTAINER (PROPORTIONAL 16:9 FOCUSED) -->
@@ -104,7 +104,7 @@
                 <div class="stage-crosshair bottom-right">+</div>
 
                 <img id="heroVehicleImg" 
-                     src="/images/cars/Porsche963.jpg" 
+                     src="/images/cars/CadillacVSeriesR.jpg" 
                      alt="Selected Vehicle Preview" 
                      class="hero-vehicle-img"
                      onerror="handleImageError(this)" />
@@ -158,10 +158,10 @@
             </div>
 
             <div class="vehicle-identity-header">
-                <h1 class="stats-name" id="statsVehicleName">PORSCHE 963</h1>
+                <h1 class="stats-name" id="statsVehicleName">CADILLAC V-SERIES.R</h1>
                 <div class="stats-classification">
                     <span class="badge-class" id="statsClassBadge">LMDh</span>
-                    <span class="badge-manufacturer" id="statsManufacturer">PORSCHE</span>
+                    <span class="badge-manufacturer" id="statsManufacturer">CADILLAC</span>
                 </div>
             </div>
 
@@ -169,7 +169,7 @@
             <div class="spec-table-list">
                 <div class="spec-row">
                     <span class="spec-title">POWER</span>
-                    <span class="spec-num text-orange" id="statsPowerVal">680 HP</span>
+                    <span class="spec-num text-orange" id="statsPowerVal">670 HP</span>
                 </div>
                 <div class="spec-row">
                     <span class="spec-title">WEIGHT</span>
@@ -177,15 +177,15 @@
                 </div>
                 <div class="spec-row">
                     <span class="spec-title">TOP SPEED</span>
-                    <span class="spec-num text-cyan" id="statsSpeedVal">330 KM/H</span>
+                    <span class="spec-num text-cyan" id="statsSpeedVal">338 KM/H</span>
                 </div>
                 <div class="spec-row">
                     <span class="spec-title">ENGINE</span>
-                    <span class="spec-num text-truncate" style="max-width: 190px;" id="statsEngineVal">Hybrid V8</span>
+                    <span class="spec-num text-truncate" style="max-width: 190px;" id="statsEngineVal">5.5L DOHC V8 Hybrid</span>
                 </div>
                 <div class="spec-row">
                     <span class="spec-title">PWR-TO-WEIGHT</span>
-                    <span class="spec-num" id="statsPtwVal">0.66 HP/KG</span>
+                    <span class="spec-num" id="statsPtwVal">0.65 HP/KG</span>
                 </div>
                 <div class="spec-row">
                     <span class="spec-title" id="statsExtraLabel">DRIVETRAIN</span>
@@ -243,7 +243,7 @@
             {
                 var vType = v.VehicleType.ToString().ToLower();
                 var vCat = v.VehicleCategory.ToString().ToLower();
-                var cardClass = (v.Name.ToUpper().Contains("PORSCHE 963")) ? "vehicle-card active" : "vehicle-card";
+                var cardClass = (v.Name.ToUpper().Contains("CADILLAC") || v.Name.ToUpper().Contains("PORSCHE 963") || v.Name.ToUpper().Contains("AUDI R8")) ? "vehicle-card" : "vehicle-card";
 
                 <div class="@cardClass" 
                      data-id="@v.VehicleId"
@@ -511,18 +511,18 @@
        16:9 DESKTOP MOTORSPORT WORKSTATION RESIZED PROPORTIONS (1920x1080 OPTIMIZED)
        ========================================================================== */
     :root {
-        --c-bg: #090a0f;
-        --c-panel: rgba(16, 18, 26, 0.90);
-        --c-panel-border: rgba(255, 255, 255, 0.08);
-        --c-orange: #ff5a1f;
-        --c-orange-glow: rgba(255, 90, 31, 0.4);
-        --c-cyan: #00d2ff;
-        --c-cyan-glow: rgba(0, 210, 255, 0.4);
-        --c-red: #ff3344;
-        --c-green: #00ff41;
-        --c-text: #ffffff;
-        --c-muted: #8e95a5;
-        --font-mono: 'Consolas', 'Roboto Mono', 'SF Mono', monospace;
+        --c-bg: var(--rta-bg-canvas);
+        --c-panel: var(--rta-bg-surface-1);
+        --c-panel-border: var(--rta-border-subtle);
+        --c-orange: var(--rta-orange);
+        --c-orange-glow: var(--rta-orange-glow);
+        --c-cyan: var(--rta-cyan);
+        --c-cyan-glow: var(--rta-cyan-glow);
+        --c-red: var(--rta-red);
+        --c-green: var(--rta-green);
+        --c-text: var(--rta-text-primary);
+        --c-muted: var(--rta-text-secondary);
+        --font-mono: var(--rta-font-mono);
     }
 
     body {
@@ -1170,8 +1170,9 @@
         flex: 0 0 clamp(255px, 15.5vw, 295px);
         width: clamp(255px, 15.5vw, 295px);
         height: clamp(180px, 23vh, 225px);
-        background: #111420;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 6px 18px rgba(0, 0, 0, 0.6);
         border-radius: 8px;
         position: relative;
         cursor: pointer;
@@ -1179,19 +1180,18 @@
         display: flex;
         flex-direction: column;
         transition: all 0.24s cubic-bezier(0.25, 1, 0.5, 1);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
     }
 
     .vehicle-card:hover {
-        border-color: rgba(255, 90, 31, 0.7);
-        transform: translateY(-5px);
+        border-color: var(--rta-border-medium);
+        transform: translateY(-4px);
         box-shadow: 0 12px 26px rgba(0, 0, 0, 0.85);
     }
 
     .vehicle-card.active {
-        border: 2px solid var(--c-orange);
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 0 24px var(--c-orange-glow), 0 12px 28px rgba(0,0,0,0.9);
+        border-color: var(--rta-orange);
+        box-shadow: 0 0 0 1px var(--rta-orange), 0 0 16px rgba(255, 90, 31, 0.25);
+        transform: translateY(-4px) scale(1.02);
     }
 
     .card-image-box {
@@ -1292,9 +1292,10 @@
        MODAL STYLING
        -------------------------------------------------------------------------- */
     .modal-motorsport {
-        background: #111420;
-        border: 1px solid var(--c-orange);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--c-orange-glow);
+        background: rgba(17, 20, 32, 0.85);
+        backdrop-filter: blur(24px);
+        border: 1px solid var(--rta-border-medium);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--c-orange-glow);
         color: #ffffff;
     }
 
@@ -1350,19 +1351,20 @@
         position: fixed;
         z-index: 1060;
         min-width: 215px;
-        background: rgba(14, 17, 26, 0.98);
-        backdrop-filter: blur(12px);
+        background: rgba(14, 17, 26, 0.85);
+        backdrop-filter: blur(16px);
         border: 1px solid var(--c-orange);
         border-radius: 6px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px var(--c-orange-glow);
         padding: 6px;
         user-select: none;
-        animation: ctxMenuFadeIn 0.12s ease-out;
+        animation: rta-ctx-open 0.2s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+        transform-origin: top left;
     }
 
-    @@keyframes ctxMenuFadeIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to { opacity: 1; transform: scale(1); }
+    @@keyframes rta-ctx-open {
+        from { opacity: 0; transform: scale(0.9) translateY(-5px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .context-menu-header {

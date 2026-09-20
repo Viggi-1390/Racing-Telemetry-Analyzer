@@ -1,0 +1,307 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%">
+  <defs>
+    <!-- Cyan Glow Filters -->
+    <filter id="gp-glow-core" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.0" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="gp-glow-soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Ground Reflection Gradient -->
+    <linearGradient id="gp-refl-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00d2ff" stop-opacity="0.30" />
+      <stop offset="45%" stop-color="#00d2ff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#00d2ff" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    /* Multi-tier technical line-art styling */
+    .gp-primary { fill: none; stroke: #00d2ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: url(#gp-glow-core); }
+    .gp-aero { fill: rgba(0, 210, 255, 0.18); stroke: #00e5ff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: url(#gp-glow-soft); }
+    .gp-body-secondary { fill: none; stroke: #00b4d8; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+    .gp-fine { fill: none; stroke: #0077b6; stroke-width: 1.0; stroke-linecap: round; opacity: 0.70; }
+    .gp-subtle-lines { fill: none; stroke: #005f8a; stroke-width: 0.8; stroke-dasharray: 4 4; opacity: 0.45; }
+    .gp-glass { fill: rgba(0, 210, 255, 0.12); stroke: #00d2ff; stroke-width: 1.8; }
+    .gp-ground { stroke: #00d2ff; stroke-width: 1.8; opacity: 0.75; filter: url(#gp-glow-soft); }
+    .gp-refl { stroke: url(#gp-refl-grad); fill: none; stroke-width: 1.4; opacity: 0.35; }
+  </style>
+
+  <!-- ======================================================== -->
+  <!-- 1. ENGINEERING BLUEPRINT CONSTRUCTION ARCS & AXES        -->
+  <!-- ======================================================== -->
+  <g id="blueprint-guides">
+    <!-- Ground Datum Line -->
+    <line x1="50" y1="380" x2="950" y2="380" class="gp-ground" />
+    <line x1="100" y1="386" x2="900" y2="386" class="gp-fine" style="stroke-dasharray: 6 5;" />
+
+    <!-- Calibration Ticks along Ground Line -->
+    <g class="gp-fine">
+      <line x1="150" y1="380" x2="150" y2="385" />
+      <line x1="250" y1="380" x2="250" y2="385" />
+      <line x1="350" y1="380" x2="350" y2="385" />
+      <line x1="450" y1="380" x2="450" y2="385" />
+      <line x1="550" y1="380" x2="550" y2="385" />
+      <line x1="650" y1="380" x2="650" y2="385" />
+      <line x1="750" y1="380" x2="750" y2="385" />
+      <line x1="850" y1="380" x2="850" y2="385" />
+    </g>
+
+    <!-- Axle Datum Axes -->
+    <line x1="280" y1="120" x2="280" y2="400" class="gp-subtle-lines" />
+    <line x1="730" y1="100" x2="730" y2="400" class="gp-subtle-lines" />
+    <line x1="230" y1="318" x2="780" y2="318" class="gp-subtle-lines" />
+
+    <!-- Steering Head Rake Angle Axis (~23.5 degrees) -->
+    <line x1="770" y1="390" x2="585" y2="60" class="gp-subtle-lines" />
+
+    <!-- Wheelbase Dimension Line with Arrows -->
+    <line x1="280" y1="410" x2="730" y2="410" class="gp-fine" />
+    <polygon points="280,410 292,406 292,414" fill="#00d2ff" />
+    <polygon points="730,410 718,406 718,414" fill="#00d2ff" />
+    <text x="505" y="424" fill="#00b4d8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle" letter-spacing="2">WHEELBASE 1,440 mm</text>
+
+    <!-- Center of Gravity Marker -->
+    <circle cx="500" cy="270" r="7" class="gp-fine" />
+    <line x1="490" y1="270" x2="510" y2="270" class="gp-fine" />
+    <line x1="500" y1="260" x2="500" y2="280" class="gp-fine" />
+
+    <!-- Aero Flow Streamlines -->
+    <path d="M 660,95 C 520,80 360,130 250,210" class="gp-subtle-lines" />
+    <path d="M 800,210 C 720,220 620,290 530,350" class="gp-subtle-lines" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 2. MOTOGP WHEELS, CARBON ROTORS & RADIAL CALIPERS        -->
+  <!-- ======================================================== -->
+  <g id="gp-wheels">
+    <!-- REAR WHEEL ASSEMBLY (Center: 280, 318) -->
+    <!-- Racing Rear Slick Tyre (17-inch Michelin GP profile) -->
+    <circle cx="280" cy="318" r="62" class="gp-primary" />
+    <circle cx="280" cy="318" r="58" class="gp-fine" />
+    <!-- Lightweight Forged Magnesium Rim Lip -->
+    <circle cx="280" cy="318" r="44" class="gp-primary" />
+    <circle cx="280" cy="318" r="40" class="gp-body-secondary" />
+    <!-- Rear Carbon Brake Disc & Drive Sprocket -->
+    <circle cx="280" cy="318" r="30" class="gp-body-secondary" style="stroke-dasharray: 4 2;" />
+    <circle cx="280" cy="318" r="20" class="gp-fine" />
+    <!-- Wheel Hub & Axle Nut -->
+    <circle cx="280" cy="318" r="9" class="gp-primary" />
+    <circle cx="280" cy="318" r="4" fill="#00d2ff" />
+    <!-- 5-Spoke Y-Pattern Forged Race Wheel -->
+    <g class="gp-fine">
+      <line x1="280" y1="274" x2="280" y2="362" />
+      <line x1="242" y1="296" x2="318" y2="340" />
+      <line x1="242" y1="340" x2="318" y2="296" />
+    </g>
+
+    <!-- FRONT WHEEL ASSEMBLY (Center: 730, 318) -->
+    <!-- Racing Front Slick Tyre -->
+    <circle cx="730" cy="318" r="62" class="gp-primary" />
+    <circle cx="730" cy="318" r="58" class="gp-fine" />
+    <!-- Magnesium Rim Lip -->
+    <circle cx="730" cy="318" r="44" class="gp-primary" />
+    <circle cx="730" cy="318" r="40" class="gp-body-secondary" />
+    <!-- Massive 355mm Carbon-Carbon Brake Rotor -->
+    <circle cx="730" cy="318" r="36" class="gp-body-secondary" style="stroke-dasharray: 4 2;" />
+    <circle cx="730" cy="318" r="26" class="gp-fine" />
+    <!-- Radial-Mount Brembo Monobloc GP Caliper -->
+    <path d="M 694,302 C 692,318 694,334 701,346 L 711,342 C 706,332 704,320 706,306 Z" fill="rgba(0, 210, 255, 0.3)" stroke="#00e5ff" stroke-width="1.6" />
+    <!-- Carbon Disc Aerodynamic Cooling Shroud -->
+    <path d="M 736,282 C 752,288 764,302 766,322 L 758,322 C 756,308 746,296 734,290 Z" class="gp-aero" />
+    <!-- Wheel Hub & Axle Nut -->
+    <circle cx="730" cy="318" r="9" class="gp-primary" />
+    <circle cx="730" cy="318" r="4" fill="#00d2ff" />
+    <!-- 5-Spoke Y-Pattern Forged Race Wheel -->
+    <g class="gp-fine">
+      <line x1="730" y1="274" x2="730" y2="362" />
+      <line x1="692" y1="296" x2="768" y2="340" />
+      <line x1="692" y1="340" x2="768" y2="296" />
+    </g>
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 3. INVERTED FRONT FORKS, TRIPLE CLAMP & LOW CLIP-ONS     -->
+  <!-- ======================================================== -->
+  <g id="gp-front-suspension">
+    <!-- Inverted Öhlins Telescopic Racing Forks (Stanchions & Outer Tubes) -->
+    <line x1="730" y1="318" x2="636" y2="120" class="gp-primary" style="stroke-width: 3.6;" />
+    <line x1="723" y1="318" x2="630" y2="122" class="gp-body-secondary" style="stroke-width: 1.8;" />
+    <!-- Fork Axle Lug / Radial Mounting Bracket -->
+    <path d="M 724,308 L 738,308 L 740,332 L 722,332 Z" fill="rgba(0, 210, 255, 0.3)" stroke="#00d2ff" stroke-width="1.5" />
+
+    <!-- Carbon Front Mudguard / Aero Tyre Hugger -->
+    <path d="M 776,290 C 770,265 740,252 708,260 L 698,280 C 724,272 750,280 756,298 Z" class="gp-aero" />
+
+    <!-- Upper & Lower Billet Aluminum Triple Clamps -->
+    <rect x="626" y="116" width="24" height="7" rx="2" class="gp-primary" />
+    <rect x="644" y="158" width="24" height="7" rx="2" class="gp-body-secondary" />
+    <line x1="636" y1="120" x2="656" y2="162" class="gp-fine" />
+
+    <!-- Low Clip-on Handlebars (Aggressive GP Full-Tuck Position) -->
+    <path d="M 626,128 L 600,134 L 594,140" class="gp-primary" />
+    <!-- Brake Lever & Carbon Safety Lever Guard -->
+    <path d="M 600,134 L 588,146 L 596,150" class="gp-body-secondary" />
+    <path d="M 594,140 C 580,142 576,154 584,160 L 598,158" class="gp-fine" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 4. FULL GRAND PRIX FAIRING & DOWNFORCE WINGLETS          -->
+  <!-- ======================================================== -->
+  <g id="gp-fairing-aero">
+    <!-- Bubble Racing Windscreen Profile -->
+    <path d="M 640,118 C 665,102 694,105 720,132 L 694,146 Z" class="gp-glass" />
+
+    <!-- Sharp Aerodynamic Nose Cone with Ram-Air Intake Duct -->
+    <path d="M 720,132 
+             C 738,150 758,166 772,185 
+             L 752,204 
+             L 726,196 
+             C 712,186 690,174 676,170 
+             L 652,144 Z" 
+          class="gp-primary" />
+    <!-- Ram-Air Inlet Duct Hole -->
+    <polygon points="760,182 770,187 754,196 748,190" fill="#000000" stroke="#00e5ff" stroke-width="1.4" />
+
+    <!-- Massive MotoGP Biplane Downforce Winglet Assembly -->
+    <!-- Upper Winglet Box -->
+    <path d="M 744,176 L 788,180 L 786,189 L 738,186 Z" class="gp-aero" style="stroke-width: 2.2;" />
+    <line x1="788" y1="180" x2="786" y2="202" class="gp-primary" /> <!-- Winglet Outer Endplate Fence -->
+    <!-- Lower Winglet Element / Downwash Channel -->
+    <path d="M 730,195 L 778,203 L 774,211 L 722,205 Z" class="gp-aero" />
+
+    <!-- Full Aerodynamic Side Fairing Envelope -->
+    <path d="M 694,146 
+             L 652,144 
+             L 642,174 
+             C 616,190 574,204 538,220 
+             L 512,266 
+             L 476,316 
+             L 522,342 
+             L 620,352 
+             L 678,332 
+             L 704,280 
+             C 718,250 736,224 752,204 Z" 
+          class="gp-primary" />
+
+    <!-- Side Fairing Ground-Effect Downwash Ducts & Heat Vents -->
+    <g class="gp-body-secondary">
+      <path d="M 678,224 L 642,264 L 650,270 L 690,228 Z" class="gp-aero" />
+      <path d="M 662,250 L 626,286 L 632,292 L 672,254 Z" class="gp-aero" />
+      <line x1="596" y1="280" x2="554" y2="326" class="gp-fine" />
+    </g>
+
+    <!-- Lower Belly Pan / Chin Scoop (Extended Low Ground Effect) -->
+    <path d="M 450,342 L 532,356 L 630,356 L 684,338 L 688,348 L 626,366 L 472,364 Z" class="gp-aero" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 5. CHASSIS BEAM FRAME, SCULPTED TANK & COMPACT ENGINE    -->
+  <!-- ======================================================== -->
+  <g id="gp-chassis-engine">
+    <!-- Muscular Sculpted Fuel Tank / Airbox Cover with Knee Indents -->
+    <path d="M 632,128 
+             C 606,114 570,110 534,116 
+             C 496,122 464,142 438,170 
+             L 432,196 
+             C 458,202 510,190 562,174 
+             L 624,134 Z" 
+          class="gp-primary" />
+    <!-- Tank Knee Grip Recess Contour -->
+    <path d="M 550,124 C 524,130 498,145 478,172 C 498,172 530,164 556,152 Z" class="gp-fine" />
+    <!-- Quick-Fill Racing Fuel Cap -->
+    <ellipse cx="554" cy="118" rx="9" ry="3.5" class="gp-body-secondary" />
+
+    <!-- Massive Twin-Spar Aluminum / Carbon Beam Frame -->
+    <path d="M 640,164 
+             C 602,180 556,204 510,234 
+             L 464,266 
+             L 456,296 
+             L 438,294 
+             L 442,256 
+             C 480,226 526,194 572,170 
+             L 636,154 Z" 
+          fill="rgba(0, 210, 255, 0.15)" 
+          stroke="#00d2ff" 
+          stroke-width="2.6" 
+          class="gp-primary" />
+
+    <!-- Compact V4 Engine Casing, Sump & Dry Clutch -->
+    <circle cx="510" cy="302" r="23" class="gp-body-secondary" />
+    <circle cx="510" cy="302" r="15" class="gp-fine" style="stroke-dasharray: 4 2;" />
+    <circle cx="510" cy="302" r="6" fill="#00d2ff" />
+
+    <!-- Minimalist High-Density Foam GP Racing Seat -->
+    <path d="M 444,192 C 418,196 386,202 364,202 L 368,212 C 392,212 420,206 442,198 Z" fill="#00e5ff" stroke="#ffffff" stroke-width="1.2" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 6. UPSWEPT TAIL UNIT & REAR TAIL COWL WITH AERO FIN      -->
+  <!-- ======================================================== -->
+  <g id="gp-tail-unit">
+    <!-- Upswept Carbon Fibre Tail Cowl -->
+    <path d="M 438,196 
+             L 360,204 
+             L 282,148 
+             L 256,132 
+             C 268,148 284,166 304,184 
+             L 346,222 
+             L 438,232 Z" 
+          class="gp-primary" />
+    
+    <!-- Integrated Tail Aero Spoiler / "Salad Box" Module -->
+    <polygon points="256,132 242,128 248,142 266,148" class="gp-aero" />
+    <!-- Rear Seat Subframe Truss -->
+    <line x1="438" y1="232" x2="330" y2="214" class="gp-body-secondary" />
+    <line x1="392" y1="206" x2="382" y2="252" class="gp-fine" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 7. UNDERSLUNG RACING SWINGARM, CHAIN DRIVE & GP EXHAUST  -->
+  <!-- ======================================================== -->
+  <g id="gp-swingarm-exhaust">
+    <!-- Massive Inverted Underslung Braced Racing Swingarm -->
+    <circle cx="448" cy="292" r="8" class="gp-primary" />
+    <circle cx="448" cy="292" r="4" fill="#00d2ff" />
+    <path d="M 448,292 
+             L 380,310 
+             L 280,318 
+             L 296,330 
+             C 334,336 382,346 418,348 
+             L 442,318 Z" 
+          class="gp-primary" />
+    <polygon points="414,316 356,322 392,336" class="gp-aero" />
+
+    <!-- Rear Öhlins Monoshock Suspension & Reservoir -->
+    <line x1="434" y1="240" x2="424" y2="302" class="gp-body-secondary" style="stroke-width: 3.6;" />
+    <line x1="428" y1="256" x2="430" y2="288" class="gp-fine" style="stroke-dasharray: 3 2;" />
+
+    <!-- Gold GP Racing Drive Chain -->
+    <line x1="448" y1="292" x2="280" y2="300" class="gp-body-secondary" style="stroke-dasharray: 5 2; stroke-width: 1.5;" />
+    <line x1="432" y1="330" x2="280" y2="336" class="gp-body-secondary" style="stroke-dasharray: 5 2; stroke-width: 1.5;" />
+
+    <!-- Titanium Megaphone Race Exhaust with Honeycomb Endcap -->
+    <path d="M 494,332 C 474,342 442,356 406,358 L 364,362 L 356,352 L 402,346 C 432,340 464,330 488,322 Z" class="gp-aero" />
+    <ellipse cx="358" cy="357" rx="4.5" ry="7.5" fill="#060709" stroke="#00e5ff" stroke-width="1.6" />
+    <line x1="358" y1="350" x2="358" y2="364" class="gp-fine" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- 8. GROUND REFLECTION                                     -->
+  <!-- ======================================================== -->
+  <g id="gp-reflection" transform="translate(0, 760) scale(1, -1)">
+    <use href="#gp-wheels" class="gp-refl" />
+    <path d="M 772,185 L 752,204 L 726,196 C 712,186 690,174 676,170 L 652,144 L 642,174 C 616,190 574,204 538,220 L 512,266 L 476,316 L 522,342 L 620,352 L 678,332 L 704,280" class="gp-refl" />
+  </g>
+</svg>

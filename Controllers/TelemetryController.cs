@@ -396,6 +396,65 @@ public class TelemetryController : Controller
         return RedirectToAction("Index", new { vehicleId, trackId });
     }
 
+    [HttpGet("/api/telemetry/session/{sessionId:int}")]
+    public IActionResult GetSessionTelemetry(int sessionId)
+    {
+        var session = _context.Sessions
+            .Include(s => s.Laps)
+            .FirstOrDefault(s => s.SessionId == sessionId);
+
+        if (session == null || !session.Laps.Any())
+        {
+            return NotFound(new { success = false, message = "Session not found." });
+        }
+
+        var allLaps = session.Laps.OrderBy(l => l.LapNumber).ToList();
+        var lapIds = allLaps.Select(l => l.LapId).ToList();
+        var lapNumDict = allLaps.ToDictionary(l => l.LapId, l => l.LapNumber);
+
+        using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
+        var rawTelemetry = _context.TelemetryPoints
+            .AsNoTracking()
+            .Where(t => lapIds.Contains(t.LapId))
+            .ToList();
+        transaction.Commit();
+
+        var orderedTelemetry = rawTelemetry
+            .OrderBy(t => lapNumDict.TryGetValue(t.LapId, out int ln) ? ln : 0)
+            .ThenBy(t => t.Timestamp)
+            .ToList();
+
+        var data = orderedTelemetry.Select(t => new
+        {
+            lap = lapNumDict.TryGetValue(t.LapId, out int ln) ? ln : 1,
+            lapId = t.LapId,
+            lapDist = t.Distance,
+            speed = t.Speed,
+            rpm = t.RPM,
+            gear = t.Gear,
+            thr = t.Throttle,
+            brk = t.Brake,
+            steer = t.Steering ?? (t.LeanAngle ?? 0.0),
+            t = Math.Round(t.Timestamp.TotalSeconds, 3),
+            gLat = t.GLat,
+            gLon = t.GLon,
+            gVert = t.GVert,
+            suspFL = t.SuspensionFL,
+            suspFR = t.SuspensionFR,
+            suspRL = t.SuspensionRL,
+            suspRR = t.SuspensionRR
+        }).ToList();
+
+        var laps = allLaps.Select(l => new
+        {
+            lap = l.LapNumber,
+            lapId = l.LapId,
+            lapTime = l.LapTime.ToString(@"mm\:ss\.fff")
+        }).ToList();
+
+        return Json(new { success = true, data, laps });
+    }
+
     [HttpGet]
     public IActionResult ImportProgress(string token)
     {

@@ -3,31 +3,34 @@
     ViewData["Title"] = "Add Track";
 }
 
-<div class="add-track-container mx-auto" style="max-width: 600px; margin-top: 40px;">
-    <h1 class="page-title text-center mb-4">ADD <span class="text-orange">TRACK</span></h1>
+<div class="add-track-container mx-auto">
+    <div class="text-center mb-4">
+        <h1 class="page-title">ADD <span class="text-orange">TRACK</span></h1>
+        <p class="page-subtitle">CONFIGURE CIRCUIT SPECIFICATIONS AND TELEMETRY PARAMETERS</p>
+    </div>
     
-    <div class="card p-4 form-card">
+    <div class="rta-card form-card">
         <form asp-action="AddTrack" asp-route-vehicleId="@ViewBag.VehicleId" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
             
             <div class="mb-3">
                 <label asp-for="Name" class="form-label">TRACK NAME</label>
-                <input asp-for="Name" class="form-control" required />
+                <input asp-for="Name" class="form-control" placeholder="e.g. Monza Circuit" required />
             </div>
             
             <div class="mb-3">
                 <label asp-for="Country" class="form-label">LOCATION / COUNTRY</label>
-                <input asp-for="Country" class="form-control" required />
+                <input asp-for="Country" class="form-control" placeholder="e.g. Italy" required />
             </div>
             
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="Length" class="form-label">TRACK LENGTH (KM)</label>
-                    <input asp-for="Length" type="number" step="0.001" min="0.1" class="form-control" required />
+                    <input asp-for="Length" type="number" step="0.001" min="0.1" class="form-control" placeholder="5.793" required />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="NumberOfTurns" class="form-label">NUMBER OF TURNS</label>
-                    <input asp-for="NumberOfTurns" type="number" min="1" class="form-control" required />
+                    <input asp-for="NumberOfTurns" type="number" min="1" class="form-control" placeholder="11" required />
                 </div>
             </div>
 
@@ -45,84 +48,142 @@
 
             <div class="mb-3">
                 <label for="Description" class="form-label">DESCRIPTION (OPTIONAL)</label>
-                <textarea id="Description" name="Description" class="form-control" rows="3"></textarea>
+                <textarea id="Description" name="Description" class="form-control" rows="3" placeholder="High speed circuit with long straights and heavy braking zones..."></textarea>
             </div>
 
             <div class="mb-4">
                 <label for="ImageFile" class="form-label">TRACK IMAGE (OPTIONAL)</label>
                 <input type="file" id="ImageFile" name="ImageFile" class="form-control file-input" accept="image/*" />
+                <div class="form-text">Recommended format: PNG or JPG with transparent or dark background.</div>
             </div>
             
-            <div class="d-flex justify-content-between mt-4">
-                <a href="/Track?vehicleId=@ViewBag.VehicleId" class="btn-cancel">CANCEL</a>
-                <button type="submit" class="btn-save">SAVE TRACK</button>
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top-subtle">
+                <a href="/Track?vehicleId=@ViewBag.VehicleId" class="rta-btn-secondary">CANCEL</a>
+                <button type="submit" class="rta-btn-primary">SAVE TRACK</button>
             </div>
         </form>
     </div>
 </div>
 
 <style>
-    body { background-color: #0a0a0c; color: #fff; }
-    .page-title { font-weight: 800; letter-spacing: 3px; font-size: 2rem; }
-    .text-orange { color: #ff4500; }
+    .add-track-container {
+        max-width: 620px;
+        margin-top: 40px;
+        margin-bottom: 60px;
+        padding: 0 15px;
+    }
+
+    .page-title {
+        font-family: var(--rta-font-ui);
+        font-weight: 800;
+        letter-spacing: 3px;
+        font-size: 2rem;
+        color: var(--rta-text-primary);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+        font-family: var(--rta-font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 1.5px;
+        color: var(--rta-text-muted);
+        text-transform: uppercase;
+        margin-bottom: 0;
+    }
+
+    .text-orange {
+        color: var(--rta-orange);
+    }
     
     .form-card {
-        background-color: #111116;
-        border: 1px solid #333;
-        border-radius: 8px;
+        background-color: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
+        border-radius: var(--rta-radius-lg);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), var(--rta-shadow-card);
+        padding: 2rem;
+        transition: border-color var(--rta-duration-fast) ease, box-shadow var(--rta-duration-fast) ease;
+    }
+    .form-card:hover {
+        transform: none;
+        border-color: var(--rta-border-medium);
     }
 
     .form-label {
-        font-size: 0.85rem;
-        color: #00ffcc;
-        letter-spacing: 1px;
-        font-weight: bold;
+        display: block;
+        font-family: var(--rta-font-ui);
+        font-size: 0.78rem;
+        color: var(--rta-cyan);
+        letter-spacing: 1.2px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 6px;
     }
 
     .form-control, .form-select {
-        background-color: #1a1a24;
-        border: 1px solid #333;
-        color: #fff;
+        background-color: var(--rta-bg-inset);
+        border: 1px solid var(--rta-border-subtle);
+        border-radius: var(--rta-radius-sm);
+        color: var(--rta-text-primary);
+        font-family: var(--rta-font-ui);
+        font-size: 0.9rem;
+        padding: 10px 14px;
+        transition: border-color var(--rta-duration-quick) ease, box-shadow var(--rta-duration-quick) ease, background-color var(--rta-duration-quick) ease;
     }
     .form-control:focus, .form-select:focus {
-        background-color: #222230;
-        border-color: #ff4500;
-        color: #fff;
-        box-shadow: 0 0 8px rgba(255,69,0,0.3);
+        background-color: var(--rta-bg-surface-2);
+        border-color: var(--rta-orange);
+        color: var(--rta-text-primary);
+        box-shadow: 0 0 0 2px var(--rta-orange-subtle), 0 0 10px var(--rta-orange-glow);
+        outline: none;
+    }
+    .form-control::placeholder {
+        color: var(--rta-text-muted);
+        opacity: 0.8;
+    }
+    .form-select option {
+        background-color: var(--rta-bg-surface-1);
+        color: var(--rta-text-primary);
     }
     
     .file-input {
-        color: #888;
+        color: var(--rta-text-secondary);
+        padding: 8px 12px;
     }
-    
-    .btn-save {
-        background: #ff4500;
-        border: none;
-        color: #fff;
-        padding: 10px 24px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        border-radius: 4px;
-        transition: all 0.3s;
+    .file-input::file-selector-button {
+        background: var(--rta-bg-surface-2);
+        color: var(--rta-text-primary);
+        border: 1px solid var(--rta-border-medium);
+        border-radius: var(--rta-radius-sm);
+        padding: 5px 14px;
+        margin-right: 12px;
+        font-family: var(--rta-font-ui);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all var(--rta-duration-quick) ease;
     }
-    .btn-save:hover {
-        background: #e03e00;
-        box-shadow: 0 0 15px rgba(255,69,0,0.4);
+    .file-input::file-selector-button:hover {
+        background: var(--rta-bg-surface-hover);
+        border-color: var(--rta-orange);
+        color: var(--rta-orange);
     }
 
-    .btn-cancel {
-        background: transparent;
-        border: 1px solid #555;
-        color: #aaa;
-        padding: 10px 24px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        border-radius: 4px;
-        transition: all 0.3s;
-        text-decoration: none;
+    .form-text {
+        font-size: 0.75rem;
+        color: var(--rta-text-muted);
+        margin-top: 6px;
     }
-    .btn-cancel:hover {
-        border-color: #fff;
-        color: #fff;
+
+    .border-top-subtle {
+        border-top: 1px solid var(--rta-border-subtle);
+    }
+
+    .text-danger {
+        color: var(--rta-red) !important;
+        font-size: 0.85rem;
+        font-family: var(--rta-font-ui);
     }
 </style>

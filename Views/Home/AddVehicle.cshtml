@@ -1,66 +1,334 @@
 @{
-    ViewData["Title"] = "Add Vehicle";
+    ViewData["Title"] = "Add Vehicle Specification";
 }
 
-<div class="container mt-5">
-    <h2 style="color: #ff4500; text-transform: uppercase; letter-spacing: 2px;">Add New Vehicle</h2>
-    <hr style="border-color: #333;" />
-
-    <form action="/Home/AddVehicle" method="post" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">Vehicle Name</label>
-                <input type="text" name="Name" class="form-control bg-dark text-light border-secondary" placeholder="e.g. ASTON MARTIN VANTAGE GT3" required>
+<div class="container py-4 py-md-5">
+    <div class="rta-spec-card">
+        <!-- CARD HEADER / MOTORSPORT TAG -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="rta-mono" style="color: var(--rta-orange); font-size: 0.8rem; font-weight: 700; letter-spacing: 2px;">// 01</span>
+                <span class="rta-badge rta-badge-orange">CHASSIS REGISTRATION</span>
             </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">Manufacturer</label>
-                <input type="text" name="Manufacturer" class="form-control bg-dark text-light border-secondary" placeholder="e.g. Aston Martin" required>
-            </div>
+            <span class="rta-mono" style="color: var(--rta-text-muted); font-size: 0.75rem; letter-spacing: 1px;">SPEC // A-01</span>
         </div>
 
-        <div class="row">
-            <div class="col-md-3 mb-3">
-                <label class="form-label text-muted">Vehicle Type</label>
-                <select name="VehicleType" class="form-select bg-dark text-light border-secondary">
-                    <option value="Car">Car</option>
-                    <option value="Bike">Bike</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label text-muted">Category</label>
-                <select name="VehicleCategory" class="form-select bg-dark text-light border-secondary">
-                    <option value="Race">Race</option>
-                    <option value="Production">Production</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label text-muted">Class</label>
-                <input type="text" name="Class" class="form-control bg-dark text-light border-secondary" placeholder="e.g. GT3, Hypercar">
-            </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label text-muted">Power (HP)</label>
-                <input type="number" name="Power" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 500">
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">Weight (KG)</label>
-                <input type="number" name="Weight" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 1250">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">Top Speed (KM/H)</label>
-                <input type="number" name="TopSpeed" class="form-control bg-dark text-light border-secondary" placeholder="e.g. 290">
-            </div>
-        </div>
+        <h1 class="h3 fw-bold text-uppercase m-0" style="letter-spacing: 2px; color: var(--rta-text-primary);">
+            ADD NEW <span style="color: var(--rta-orange);">VEHICLE</span>
+        </h1>
+        <p class="mt-1 mb-0" style="color: var(--rta-text-secondary); font-size: 0.85rem;">
+            Configure technical telemetry parameters, powertrain classification, and telemetry profiles.
+        </p>
 
-        <div class="mb-4">
-            <label class="form-label text-muted">Upload Vehicle Image</label>
-            <input type="file" name="ImageFile" accept="image/*" class="form-control bg-dark text-light border-secondary">
-            <small class="text-muted d-block mt-1">Leave blank to use a default image. Image can be at any angle. It is not used for technical diagrams.</small>
-        </div>
+        <div class="rta-header-divider"></div>
 
-        <button type="submit" class="btn btn-lg w-100" style="background-color: #ff4500; color: white; letter-spacing: 2px; font-weight: bold;">SAVE VEHICLE</button>
-    </form>
+        <form action="/Home/AddVehicle" method="post" enctype="multipart/form-data">
+            <!-- SECTION 1: IDENTIFICATION -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="rta-section-indicator"></div>
+                    <span class="rta-section-tag">// IDENTIFICATION & CHASSIS</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="Name" class="rta-label">
+                            Vehicle Name <span style="color: var(--rta-orange);">*</span>
+                        </label>
+                        <input type="text" id="Name" name="Name" class="form-control rta-form-input" placeholder="e.g. ASTON MARTIN VANTAGE GT3" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="Manufacturer" class="rta-label">
+                            Manufacturer <span style="color: var(--rta-orange);">*</span>
+                        </label>
+                        <input type="text" id="Manufacturer" name="Manufacturer" class="form-control rta-form-input" placeholder="e.g. Aston Martin" required autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: CLASSIFICATION & POWERTRAIN -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="rta-section-indicator"></div>
+                    <span class="rta-section-tag">// CLASSIFICATION & POWERTRAIN</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <label for="VehicleType" class="rta-label">Vehicle Type</label>
+                        <select id="VehicleType" name="VehicleType" class="form-select rta-form-input">
+                            <option value="Car">Car</option>
+                            <option value="Bike">Bike</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label for="VehicleCategory" class="rta-label">Category</label>
+                        <select id="VehicleCategory" name="VehicleCategory" class="form-select rta-form-input">
+                            <option value="Race">Race</option>
+                            <option value="Production">Production</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label for="Class" class="rta-label">Class</label>
+                        <input type="text" id="Class" name="Class" class="form-control rta-form-input" placeholder="e.g. GT3, Hypercar">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label for="Power" class="rta-label">Power (HP)</label>
+                        <input type="number" id="Power" name="Power" class="form-control rta-form-input rta-mono" placeholder="e.g. 500" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: DYNAMICS & PERFORMANCE -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="rta-section-indicator"></div>
+                    <span class="rta-section-tag">// DYNAMICS & PERFORMANCE</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="Weight" class="rta-label">Weight (KG)</label>
+                        <input type="number" id="Weight" name="Weight" class="form-control rta-form-input rta-mono" placeholder="e.g. 1250" min="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="TopSpeed" class="rta-label">Top Speed (KM/H)</label>
+                        <input type="number" id="TopSpeed" name="TopSpeed" class="form-control rta-form-input rta-mono" placeholder="e.g. 290" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: TELEMETRY ASSET -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="rta-section-indicator"></div>
+                    <span class="rta-section-tag">// ASSET SPECIFICATION</span>
+                </div>
+
+                <div>
+                    <label for="ImageFile" class="rta-label">Upload Vehicle Image</label>
+                    <input type="file" id="ImageFile" name="ImageFile" accept="image/*" class="form-control rta-form-input rta-file-input">
+                    <small class="d-block mt-2" style="color: var(--rta-text-muted); font-size: 0.75rem; line-height: 1.5;">
+                        Leave blank to use a default image. Image can be at any angle. It will be displayed in the garage hero view and vehicle selection cards.
+                    </small>
+
+                    <!-- Dynamic Image Preview Container -->
+                    <div id="imagePreviewContainer" class="rta-image-preview-box d-none mt-3">
+                        <img id="imagePreview" src="#" alt="Vehicle Preview" class="rta-preview-img" />
+                        <div class="rta-preview-meta">
+                            <span class="rta-badge rta-badge-cyan">IMAGE READY</span>
+                            <span id="previewFilename" class="rta-mono" style="font-size: 0.75rem; color: var(--rta-text-secondary);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM ACTIONS FOOTER -->
+            <div class="rta-actions-bar">
+                <a href="/Home/Index" class="rta-btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    CANCEL &amp; RETURN
+                </a>
+                <button type="submit" class="rta-btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    SAVE VEHICLE
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<style>
+    .rta-spec-card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
+        border-radius: var(--rta-radius-lg);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), var(--rta-shadow-card);
+        padding: 2.25rem;
+        position: relative;
+    }
+
+    @@media (max-width: 576px) {
+        .rta-spec-card {
+            padding: 1.5rem 1.25rem;
+        }
+    }
+
+    .rta-header-divider {
+        height: 1px;
+        background: linear-gradient(90deg, var(--rta-orange) 0%, var(--rta-border-subtle) 50%, transparent 100%);
+        margin: 1.25rem 0 1.75rem 0;
+    }
+
+    .rta-section-indicator {
+        width: 3px;
+        height: 12px;
+        background: var(--rta-cyan);
+        border-radius: 1px;
+    }
+
+    .rta-section-tag {
+        font-family: var(--rta-font-mono);
+        font-size: 0.72rem;
+        color: var(--rta-cyan);
+        letter-spacing: 1.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    /* Labels */
+    .rta-label {
+        display: block;
+        font-family: var(--rta-font-ui);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--rta-cyan);
+        margin-bottom: 6px;
+    }
+
+    /* Form Controls & Inputs */
+    .rta-form-input {
+        background-color: var(--rta-bg-inset) !important;
+        border: 1px solid var(--rta-border-subtle) !important;
+        border-radius: var(--rta-radius-sm) !important;
+        color: var(--rta-text-primary) !important;
+        font-family: var(--rta-font-ui);
+        font-size: 0.88rem;
+        padding: 9px 12px;
+        transition: border-color var(--rta-duration-quick) ease, box-shadow var(--rta-duration-quick) ease, background-color var(--rta-duration-quick) ease;
+    }
+
+    .rta-form-input:focus {
+        outline: none !important;
+        border-color: var(--rta-orange) !important;
+        box-shadow: 0 0 0 2px var(--rta-orange-subtle), 0 0 12px rgba(255, 90, 31, 0.20) !important;
+        background-color: var(--rta-bg-surface-1) !important;
+        color: #ffffff !important;
+    }
+
+    .rta-form-input::placeholder {
+        color: var(--rta-text-muted) !important;
+    }
+
+    /* Select option styling */
+    .rta-form-input option {
+        background-color: var(--rta-bg-surface-1);
+        color: var(--rta-text-primary);
+    }
+
+    /* File Input Styling */
+    .rta-file-input {
+        padding: 6px 10px;
+    }
+
+    .rta-file-input::file-selector-button {
+        background: var(--rta-bg-surface-2);
+        color: var(--rta-text-secondary);
+        border: 1px solid var(--rta-border-medium);
+        border-radius: var(--rta-radius-sm);
+        padding: 6px 14px;
+        margin-right: 12px;
+        font-family: var(--rta-font-ui);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all var(--rta-duration-quick) ease;
+    }
+
+    .rta-file-input::file-selector-button:hover {
+        background: var(--rta-orange-subtle);
+        color: var(--rta-orange);
+        border-color: var(--rta-orange);
+    }
+
+    /* Image Preview Container */
+    .rta-image-preview-box {
+        background: var(--rta-bg-inset);
+        border: 1px dashed var(--rta-border-medium);
+        border-radius: var(--rta-radius-sm);
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .rta-preview-img {
+        width: 96px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: var(--rta-radius-sm);
+        border: 1px solid var(--rta-border-subtle);
+    }
+
+    .rta-preview-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Actions Bar */
+    .rta-actions-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--rta-border-subtle);
+    }
+
+    @@media (max-width: 576px) {
+        .rta-actions-bar {
+            flex-direction: column-reverse;
+            align-items: stretch;
+        }
+        .rta-actions-bar > * {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var fileInput = document.getElementById('ImageFile');
+            var previewContainer = document.getElementById('imagePreviewContainer');
+            var previewImg = document.getElementById('imagePreview');
+            var previewFilename = document.getElementById('previewFilename');
+
+            if (fileInput && previewContainer && previewImg) {
+                fileInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (file) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewImg.src = e.target.result;
+                            var sizeKb = (file.size / 1024).toFixed(1);
+                            previewFilename.textContent = file.name + ' (' + sizeKb + ' KB)';
+                            previewContainer.classList.remove('d-none');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        previewContainer.classList.add('d-none');
+                        previewImg.src = '#';
+                        previewFilename.textContent = '';
+                    }
+                });
+            }
+        });
+    </script>
+}

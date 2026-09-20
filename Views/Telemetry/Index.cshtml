@@ -193,9 +193,9 @@
                                  onerror="this.onerror=null; this.src='@(isBike ? "/images/placeholder_bike.png" : "/images/placeholder_car.png")';" />
                         </div>
                         <div class="vehicle-meta">
-                            <h3 class="vehicle-name">@(vehicle?.Name?.ToUpper() ?? "FERRARI 499P")</h3>
+                            <h3 class="vehicle-name">@(vehicle?.Name?.ToUpper() ?? "CADILLAC V-SERIES.R")</h3>
                             <div class="d-flex align-items-center gap-2 mt-1">
-                                <span class="vehicle-class-badge">@(vehicle?.Class?.ToUpper() ?? "HYPERCAR")</span>
+                                <span class="vehicle-class-badge">@(vehicle?.Class?.ToUpper() ?? "GTP / LMDh")</span>
                                 <span class="badge @(isBike ? "bg-info" : "bg-warning") text-dark fw-bold" style="font-size: 0.65rem;">@(isBike ? "BIKE" : "CAR")</span>
                             </div>
                         </div>
@@ -391,7 +391,7 @@
                         <!-- Mode Switch & Window Distance Selector -->
                         <div class="d-flex align-items-center gap-2">
                             <button id="btnViewMode" class="btn-mode-toggle active" onclick="toggleViewMode()" title="Toggle between Rolling Viewport and Full Overview">
-                                <i class="fas fa-satellite-dish me-1"></i> <span id="modeText">ROLLING VIEWPORT</span>
+                                <span style="font-size: 1.1em; margin-right: 4px;">📡</span> <span id="modeText">ROLLING VIEWPORT</span>
                             </button>
                             <select id="windowSizeSelect" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 105px; font-size: 0.72rem; padding: 2px 6px;" onchange="changeWindowSize(this.value)">
                                 <option value="500">500 m</option>
@@ -733,28 +733,28 @@
             </div>
 
             <!-- BRAKING & THROTTLE METRICS -->
-            <div class="dash-card">
+            <div class="dash-card braking-throttle-card">
                 <div class="card-section-title">BRAKING & THROTTLE</div>
-                <div class="d-flex flex-column justify-content-around h-100 gap-2 py-1">
-                    @{
-                        var brakeResult = results?.FirstOrDefault(r => r.RecommendationType == "Braking");
-                        var throttleResult = results?.FirstOrDefault(r => r.RecommendationType == "Throttle");
-                    }
-                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
-                        <span class="text-muted small">BRAKING PEAK</span>
-                        <span class="text-red font-monospace fw-bold">@(brakeResult != null ? Math.Round(brakeResult.BrakingPercentage) + "%" : "85%")</span>
+                @{
+                    var brakeResult = results?.FirstOrDefault(r => r.RecommendationType == "Braking");
+                    var throttleResult = results?.FirstOrDefault(r => r.RecommendationType == "Throttle");
+                }
+                <div class="metrics-row-list">
+                    <div class="metric-data-row">
+                        <span class="metric-label">BRAKING PEAK</span>
+                        <span class="metric-value text-red">@(brakeResult != null ? Math.Round(brakeResult.BrakingPercentage) + "%" : "85%")</span>
                     </div>
-                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
-                        <span class="text-muted small">APEX MIN SPEED</span>
-                        <span class="text-white font-monospace fw-bold">@(brakeResult != null ? Math.Round(brakeResult.MinimumSpeed) + " KM/H" : "60 KM/H")</span>
+                    <div class="metric-data-row">
+                        <span class="metric-label">APEX MIN SPEED</span>
+                        <span class="metric-value text-white">@(brakeResult != null ? Math.Round(brakeResult.MinimumSpeed) + " KM/H" : "60 KM/H")</span>
                     </div>
-                    <div class="d-flex justify-content-between border-bottom border-dark pb-1">
-                        <span class="text-muted small">THROTTLE LATENCY</span>
-                        <span class="text-green font-monospace fw-bold">@(throttleResult != null ? Math.Round(throttleResult.ThrottleResponseTime * 1000) + " ms" : "250 ms")</span>
+                    <div class="metric-data-row">
+                        <span class="metric-label">THROTTLE LATENCY</span>
+                        <span class="metric-value text-green">@(throttleResult != null ? Math.Round(throttleResult.ThrottleResponseTime * 1000) + " ms" : "250 ms")</span>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted small">CORNER EXIT SPEED</span>
-                        <span class="text-cyan font-monospace fw-bold">@(throttleResult != null ? Math.Round(throttleResult.ExitSpeed) + " KM/H" : "253 KM/H")</span>
+                    <div class="metric-data-row">
+                        <span class="metric-label">CORNER EXIT SPEED</span>
+                        <span class="metric-value text-cyan">@(throttleResult != null ? Math.Round(throttleResult.ExitSpeed) + " KM/H" : "253 KM/H")</span>
                     </div>
                 </div>
             </div>
@@ -827,7 +827,7 @@
                     else
                     {
                         <div class="p-2 text-muted small">
-                            <i class="fas fa-check-circle text-success me-1"></i> Consistent telemetry profile. Minimal loss detected on sector transitions.
+                            <span style="color: var(--rta-green, #10b981); font-size: 1.1em; margin-right: 4px;">✓</span> Consistent telemetry profile. Minimal loss detected on sector transitions.
                         </div>
                     }
                 </div>
@@ -898,10 +898,25 @@
 
 <style>
     /* MOTORSPORT TELEMETRY DASHBOARD THEME STYLES */
+    :root {
+        --c-bg: var(--rta-bg-abyss);
+        --c-panel: var(--rta-bg-surface-1);
+        --c-panel-border: var(--rta-border-subtle);
+        --c-orange: var(--rta-orange);
+        --c-orange-glow: var(--rta-orange-glow);
+        --c-cyan: var(--rta-cyan);
+        --c-cyan-glow: var(--rta-cyan-glow);
+        --c-green: var(--rta-green);
+        --c-red: var(--rta-red);
+        --c-text: var(--rta-text-primary);
+        --c-muted: var(--rta-text-secondary);
+        --font-mono: var(--rta-font-mono);
+    }
+
     body {
-        background-color: #07070a !important;
+        background-color: var(--rta-bg-abyss) !important;
         color: #d1d5db;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: var(--rta-font-ui);
         margin: 0;
         padding: 0;
     }
@@ -921,11 +936,11 @@
     }
 
     .dash-card {
-        background: #0e0e14;
-        border: 1px solid #1a1a24;
-        border-radius: 4px;
+        background: var(--rta-bg-surface-1);
+        border: 1px solid var(--rta-border-subtle);
+        border-radius: var(--rta-radius-md);
         padding: 10px 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), var(--rta-shadow-card);
     }
 
     .card-section-title {
@@ -990,7 +1005,7 @@
         transition: all 0.15s ease;
     }
     .lap-item:hover { background: #1c1c28; color: #fff; }
-    .lap-item.active { background: rgba(162, 0, 255, 0.18); border-left: 2px solid #a200ff; color: #fff; }
+    .lap-item.active { background: rgba(168, 85, 247, 0.16); border-left: 2px solid var(--rta-purple); color: #fff; }
     .lap-item.fastest { border-left: 2px solid #a200ff; }
     .fastest-indicator { color: #a200ff; font-size: 0.8rem; }
 
@@ -1015,8 +1030,8 @@
         color: #9ca3af;
         font-size: 0.72rem;
         font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 3px;
+        padding: 3px 10px;
+        border-radius: 9999px; /* pill shape */
         display: inline-flex;
         align-items: center;
         gap: 5px;
@@ -1031,7 +1046,7 @@
     .channel-toggles .ch-btn.active.ch-brake { border-color: #ff0000; color: #ff0000; background: rgba(255,0,0,0.08); }
     .channel-toggles .ch-btn.active.ch-steering { border-color: #ff00ff; color: #ff00ff; background: rgba(255,0,255,0.08); }
     .channel-toggles .ch-btn.disabled-ch { opacity: 0.35; text-decoration: line-through; background: #0f0f14; border-color: #1a1a24; }
-    .ch-dot { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+    .ch-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
     .btn-mode-toggle {
         background: #15151e;
@@ -1208,30 +1223,30 @@
 
     /* REPLAY CONTROL BAR */
     .replay-control-bar {
-        background: #111118;
-        border: 1px solid #1e1e28;
-        border-radius: 4px;
-        padding: 6px 12px;
+        background: var(--rta-bg-surface-2, #111118);
+        border: 1px solid var(--rta-border-subtle, #1e1e28);
+        border-radius: var(--rta-radius-md, 4px);
+        padding: 8px 14px;
         margin-top: 8px;
     }
     .btn-replay {
         background: #1c1c28;
         border: 1px solid #323246;
         color: #e5e7eb;
-        border-radius: 4px;
-        padding: 4px 10px;
+        border-radius: var(--rta-radius-sm, 4px);
+        padding: 5px 12px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 5px;
-        font-size: 0.75rem;
+        gap: 6px;
+        font-size: 0.8rem;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all 0.2s ease;
         user-select: none;
     }
-    .btn-replay:hover { background: #28283a; border-color: #ff5a1f; color: #fff; }
-    .btn-replay.active { background: #ff5a1f !important; border-color: #ff5a1f !important; color: #fff !important; box-shadow: 0 0 10px rgba(255, 90, 31, 0.6); }
+    .btn-replay:hover { background: #28283a; border-color: var(--rta-orange); color: #fff; box-shadow: 0 0 8px var(--rta-orange-glow); }
+    .btn-replay.active { background: var(--rta-orange) !important; border-color: var(--rta-orange) !important; color: #fff !important; box-shadow: 0 0 12px var(--rta-orange-glow); }
 
     .btn-speed-mult {
         background: #15151e;
@@ -1406,6 +1421,49 @@
     /* BOTTOM GRID */
     .bottom-analysis-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr; gap: 10px; }
 
+    /* BRAKING & THROTTLE METRICS CARD ALIGNMENT */
+    .braking-throttle-card {
+        display: flex;
+        flex-direction: column;
+    }
+    .metrics-row-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        flex-grow: 1;
+        padding: 4px 0 2px 0;
+    }
+    .metric-data-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        min-height: 38px;
+    }
+    .metric-data-row:last-child {
+        border-bottom: none;
+        padding-bottom: 2px;
+    }
+    .metric-data-row .metric-label {
+        font-size: 0.74rem;
+        color: var(--rta-text-secondary, #9ca3af);
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        white-space: nowrap;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+    .metric-data-row .metric-value {
+        font-family: var(--rta-font-mono, monospace);
+        font-weight: 700;
+        font-size: 0.84rem;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        text-align: right;
+        line-height: 1.2;
+    }
+
     /* Tooltip */
     .custom-tooltip {
         position: absolute;
@@ -1442,7 +1500,7 @@
 @section Scripts {
     @if (ViewBag.NoData != true)
     {
-        var activeLapPointsList = (ViewBag.SelectedLapTelemetry as IEnumerable<TelemetryPoint> ?? telemetry ?? new List<TelemetryPoint>()).ToList();
+        var allSessionTelemetryList = (telemetry ?? ViewBag.SelectedLapTelemetry as IEnumerable<TelemetryPoint> ?? new List<TelemetryPoint>()).ToList();
         <script>
             const isBike = @isBike.ToString().ToLower();
             const currentSessionId = @(session?.SessionId ?? 0);
@@ -1452,8 +1510,8 @@
         @{
             var lapLookup = allLaps.ToDictionary(l => l.LapId, l => l.LapNumber);
         }
-        // 1. INITIAL TELEMETRY FOR ACTIVE LAP (FAST INITIAL PAINT < 50ms)
-        const initialTelemetry = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activeLapPointsList.Select(t => {
+        // 1. ORDERED COMPLETE SESSION TELEMETRY (CONTINUOUS CHRONOLOGICAL REPLAY)
+        const initialTelemetry = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allSessionTelemetryList.Select(t => {
             int ln = lapLookup.TryGetValue(t.LapId, out int val) ? val : (selectedLap?.LapNumber ?? 1);
             return new {
                 lap = ln,
@@ -1485,25 +1543,50 @@
         let availableLapNumbers = availableLaps.map(l => l.lap);
         let telemetryData = initialTelemetry;
 
-        // Function to compute continuous cumulative distance across all laps
-        function computeCumulativeDistances() {
+        // Function to compute continuous cumulative distance and continuous session time across all laps
+        function computeCumulativeMetrics() {
             let cumDist = 0;
             let prevLapId = null;
             let lapStartCumDist = 0;
             let maxLapDistSeen = 0;
+
+            // Check if timestamps are already strictly continuous session-wide or per-lap
+            let isContinuousTimestamps = true;
+            for (let i = 1; i < telemetryData.length; i++) {
+                if (telemetryData[i].t < telemetryData[i - 1].t) {
+                    isContinuousTimestamps = false;
+                    break;
+                }
+            }
+
+            let cumTimeOffset = 0;
+            let prevLapMaxTime = 0;
+
             for (let i = 0; i < telemetryData.length; i++) {
                 const pt = telemetryData[i];
                 if (prevLapId !== null && pt.lapId !== prevLapId) {
                     cumDist += maxLapDistSeen > 0 ? maxLapDistSeen : 3570;
                     lapStartCumDist = cumDist;
                     maxLapDistSeen = 0;
+
+                    if (!isContinuousTimestamps) {
+                        cumTimeOffset += prevLapMaxTime;
+                        prevLapMaxTime = 0;
+                    }
                 }
                 prevLapId = pt.lapId;
                 if (pt.lapDist > maxLapDistSeen) maxLapDistSeen = pt.lapDist;
                 pt.cumDist = lapStartCumDist + pt.lapDist;
+
+                if (!isContinuousTimestamps) {
+                    if (pt.t > prevLapMaxTime) prevLapMaxTime = pt.t;
+                    pt.sessionT = Math.round((cumTimeOffset + pt.t) * 1000) / 1000;
+                } else {
+                    pt.sessionT = pt.t;
+                }
             }
         }
-        computeCumulativeDistances();
+        computeCumulativeMetrics();
 
         // Background fetch for complete session dataset (allows seamless 10-lap replay without slowing down initial page render)
         if (currentSessionId > 0) {
@@ -1520,7 +1603,7 @@
                             }));
                             availableLapNumbers = availableLaps.map(l => l.lap);
                         }
-                        computeCumulativeDistances();
+                        computeCumulativeMetrics();
                         if (slider) {
                             slider.max = Math.max(1, telemetryData.length - 1);
                         }
@@ -1612,9 +1695,16 @@
                 slider.value = currentTelemetryIndex;
             }
 
-            const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
-            if (timeDisplayEl && lapMeta) {
-                timeDisplayEl.textContent = '00:00.000 / ' + lapMeta.lapTime;
+            const sessionStartPt = telemetryData[0];
+            const sessionEndPt = telemetryData[telemetryData.length - 1];
+            const currentPt = telemetryData[currentTelemetryIndex] || sessionStartPt;
+            const startT = sessionStartPt ? (sessionStartPt.sessionT !== undefined ? sessionStartPt.sessionT : sessionStartPt.t) : 0;
+            const endT = sessionEndPt ? (sessionEndPt.sessionT !== undefined ? sessionEndPt.sessionT : sessionEndPt.t) : 0;
+            const curT = currentPt ? (currentPt.sessionT !== undefined ? currentPt.sessionT : currentPt.t) : 0;
+            const sessionElapsedSec = Math.max(0, curT - startT);
+            const sessionTotalSec = Math.max(0, endT - startT);
+            if (timeDisplayEl) {
+                timeDisplayEl.textContent = formatSeconds(sessionElapsedSec) + ' / ' + formatSeconds(sessionTotalSec);
             }
             if (lapEl) {
                 lapEl.textContent = currentSelectedLap;
@@ -1879,12 +1969,15 @@
             if (lapEl) lapEl.textContent = currentSelectedLap;
             if (distEl) distEl.textContent = Math.round(readoutPt.lapDist).toLocaleString() + ' m / ' + Math.round(lapTotalDistance).toLocaleString() + ' m';
             if (speedEl) speedEl.textContent = Math.round(readoutPt.speed) + ' KM/H';
-            if (timeDisplayEl && readoutPt.t != null) {
-                const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
-                const lapDuration = lapMeta ? lapMeta.lapTime : '@ViewBag.CurrentLapTime';
-                const lapStartPt = activeLapPoints[0];
-                const lapElapsedSec = Math.max(0, readoutPt.t - (lapStartPt ? lapStartPt.t : 0));
-                timeDisplayEl.textContent = formatSeconds(lapElapsedSec) + ' / ' + lapDuration;
+            if (timeDisplayEl && readoutPt) {
+                const sessionStartPt = telemetryData[0];
+                const sessionEndPt = telemetryData[telemetryData.length - 1];
+                const startT = sessionStartPt ? (sessionStartPt.sessionT !== undefined ? sessionStartPt.sessionT : sessionStartPt.t) : 0;
+                const endT = sessionEndPt ? (sessionEndPt.sessionT !== undefined ? sessionEndPt.sessionT : sessionEndPt.t) : 0;
+                const curT = readoutPt.sessionT !== undefined ? readoutPt.sessionT : (readoutPt.t || 0);
+                const sessionElapsedSec = Math.max(0, curT - startT);
+                const sessionTotalSec = Math.max(0, endT - startT);
+                timeDisplayEl.textContent = formatSeconds(sessionElapsedSec) + ' / ' + formatSeconds(sessionTotalSec);
             }
 
             updateGForce(readoutPt);
@@ -1991,8 +2084,17 @@
             const dt = Math.min(0.1, (now - lastFrameTime) / 1000.0);
             lastFrameTime = now;
 
-            // Natural 1x playback pace: ~20 telemetry samples per second * playbackRate
-            const deltaPoints = dt * playbackRate * 20.0;
+            // Natural 1x playback pace dynamically matching dataset sample rate
+            const sessionStartPt = telemetryData[0];
+            const sessionEndPt = telemetryData[telemetryData.length - 1];
+            const startT = sessionStartPt ? (sessionStartPt.sessionT !== undefined ? sessionStartPt.sessionT : sessionStartPt.t) : 0;
+            const endT = sessionEndPt ? (sessionEndPt.sessionT !== undefined ? sessionEndPt.sessionT : sessionEndPt.t) : 0;
+            const totalDurationSec = Math.max(1, endT - startT);
+            const avgSampleRate = (telemetryData.length > 1 && totalDurationSec > 0)
+                ? (telemetryData.length - 1) / totalDurationSec
+                : 50.0;
+
+            const deltaPoints = dt * playbackRate * avgSampleRate;
             playbackFractionalIndex += deltaPoints;
             currentTelemetryIndex = Math.floor(playbackFractionalIndex);
 
@@ -2149,11 +2251,6 @@
 
             if (slider) slider.value = currentTelemetryIndex;
             if (lapEl) lapEl.textContent = currentSelectedLap;
-
-            const lapMeta = availableLaps.find(l => l.lap === currentSelectedLap);
-            if (timeDisplayEl && lapMeta) {
-                timeDisplayEl.textContent = '00:00.000 / ' + lapMeta.lapTime;
-            }
 
             // Highlight active items
             document.querySelectorAll('.lap-item').forEach(item => {

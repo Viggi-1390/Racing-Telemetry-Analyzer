@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+227f0fbea4194d703a37ba9a01d39c0e24ee5223")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa6a6edeaebd090a0ba1e535f58d04b48a5d0624")]
 [assembly: System.Reflection.AssemblyProductAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RacingTelemetryAnalyzer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
