@@ -32,7 +32,7 @@ public class TelemetryController : Controller
         {
             // If vehicleId was 2029 or 2032 or not found, check if Audi R8 exists
             vehicle = _context.Vehicles.FirstOrDefault(v => v.Name.Contains("R8") || v.Manufacturer.Contains("Audi")) 
-                      ?? _context.Vehicles.FirstOrDefault();
+                    ?? _context.Vehicles.FirstOrDefault();
         }
         if (vehicle == null) return RedirectToAction("Index", "Home");
         vehicleId = vehicle.VehicleId;
@@ -110,7 +110,7 @@ public class TelemetryController : Controller
 
         var allLaps = session.Laps.OrderBy(l => l.LapNumber).ToList();
         var selectedLap = (lapId.HasValue ? allLaps.FirstOrDefault(l => l.LapId == lapId.Value) : null) 
-                          ?? allLaps.FirstOrDefault();
+                        ?? allLaps.FirstOrDefault();
         
         var telemetryPoints = new List<TelemetryPoint>();
         var analysisResults = new List<AnalysisResult>();

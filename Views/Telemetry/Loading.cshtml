@@ -1,3 +1,4 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
 @{
     Layout = null;
     var vehicle = ViewBag.Vehicle as RacingTelemetryAnalyzer.Models.Vehicle;
@@ -8,6 +9,15 @@
     var vehicleId = vehicle?.VehicleId ?? 1;
     var trackName = track?.Name ?? "MONZA";
     var trackId = track?.TrackId ?? 1;
+
+    // Load universal category SVG directly from wwwroot for guaranteed in-DOM vector animation
+    var svgFileName = isBike ? "motogp-racing-loader.svg" : "gt3-racing-loader.svg";
+    var svgFilePath = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "images", "loading", svgFileName);
+    var rawSvg = System.IO.File.Exists(svgFilePath) ? System.IO.File.ReadAllText(svgFilePath) : "";
+
+    // Prefix IDs in the dormant layer to eliminate DOM ID collisions
+    var dormantSvg = rawSvg.Replace("id=\"", "id=\"dormant-").Replace("url(#", "url(#dormant-").Replace("href=\"#", "href=\"#dormant-");
+    var activeSvg = rawSvg;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -32,11 +42,8 @@
             --rta-text-primary:     #f4f4f5;
             --rta-text-secondary:   #8e95a5;
             --rta-text-muted:       #4b5263;
-            --rta-border-subtle:    rgba(0, 210, 255, 0.14);
-            --rta-border-medium:    rgba(0, 210, 255, 0.30);
             --rta-font-ui:          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --rta-font-mono:        'JetBrains Mono', 'Consolas', 'SF Mono', monospace;
-            --scan-progress:        0%;
         }
 
         * {
@@ -168,13 +175,13 @@
         .hero-stage-container {
             position: relative;
             width: 100%;
-            max-width: 920px;
-            height: 420px;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.05) 0%, rgba(8, 10, 15, 0.82) 80%);
-            border: 1px solid rgba(0, 210, 255, 0.18);
+            max-width: 940px;
+            height: 430px;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.06) 0%, rgba(8, 10, 15, 0.85) 80%);
+            border: 1px solid rgba(0, 210, 255, 0.20);
             border-radius: 8px;
             box-shadow: 
-                inset 0 0 35px rgba(0, 210, 255, 0.04),
+                inset 0 0 35px rgba(0, 210, 255, 0.05),
                 0 16px 45px rgba(0, 0, 0, 0.65);
             display: flex;
             align-items: center;
@@ -199,103 +206,196 @@
         .bracket-bl { bottom: 12px; left: 14px; border-width: 0 0 2.5px 2.5px; }
         .bracket-br { bottom: 12px; right: 14px; border-width: 0 2.5px 2.5px 0; }
 
-        /* Vehicle Viewport & Dual-Layer SVG Stack */
+        /* Vehicle Viewport */
         .vehicle-viewport {
             position: relative;
-            width: 92%;
-            height: 90%;
+            width: 94%;
+            height: 92%;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
-        /* Base Layer: Dormant Wireframe (12% opacity) */
-        .silhouette-layer-base {
+        /* ======================================================== */
+        /* PHASE 1: DORMANT WIREFRAME LAYER (0.0s - 0.6s)          */
+        /* Faint 12% opacity outline visible from initial render    */
+        /* ======================================================== */
+        .layer-dormant {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            opacity: 0.14;
-            filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.3));
+            opacity: 0.12;
+            filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.25));
             pointer-events: none;
-            transition: opacity 0.5s ease;
+            z-index: 5;
         }
 
-        /* Active Layer: Illuminated Vector Line-Art (revealed by Laser Scanline) */
-        .silhouette-layer-active {
+        /* ======================================================== */
+        /* PHASE 2: ACTIVE RECONSTRUCTION (0.6s - 2.0s)             */
+        /* Laser scan sweeps from left to right via clip-path       */
+        /* ======================================================== */
+        .layer-active {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            opacity: 1;
+            pointer-events: none;
+            z-index: 6;
             filter: 
                 drop-shadow(0 0 8px rgba(0, 210, 255, 0.75)) 
                 drop-shadow(0 0 20px rgba(0, 210, 255, 0.40));
-            clip-path: inset(0 calc(100% - var(--scan-progress, 0%)) 0 0);
-            pointer-events: none;
-            transition: filter 0.4s ease;
+            /* Start fully clipped from right edge */
+            clip-path: inset(0% 100% 0% 0%);
+            /* Hardware-accelerated sweep reveal timed at 0.6s - 2.0s */
+            animation: 
+                sweepReveal 1.4s linear 0.6s both,
+                vectorLockGlow 0.5s ease-out 2.0s forwards;
         }
 
-        /* Vector Lock State: full glowing illumination locked across entire vehicle */
-        .hero-stage-container.vector-locked .silhouette-layer-active {
-            filter: 
-                drop-shadow(0 0 10px rgba(0, 210, 255, 0.85)) 
-                drop-shadow(0 0 24px rgba(0, 210, 255, 0.50));
+        @@keyframes sweepReveal {
+            0% {
+                clip-path: inset(0% 100% 0% 0%);
+            }
+            100% {
+                clip-path: inset(0% 0% 0% 0%);
+            }
+        }
+
+        @@keyframes vectorLockGlow {
+            0% {
+                filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.75)) drop-shadow(0 0 20px rgba(0, 210, 255, 0.40));
+            }
+            50% {
+                filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 34px rgba(0, 210, 255, 0.60));
+            }
+            100% {
+                filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.85)) drop-shadow(0 0 24px rgba(0, 210, 255, 0.45));
+            }
+        }
+
+        /* SVG Path Stroke Drawing Animation */
+        .layer-active .stroke-animate {
+            stroke-dasharray: 1;
+            stroke-dashoffset: 1;
+            animation: drawStroke 1.3s ease-out 0.6s forwards;
+        }
+
+        @@keyframes drawStroke {
+            0% {
+                stroke-dashoffset: 1;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
         }
 
         /* ======================================================== */
-        /* INTENSE CYAN LASER SCANLINE EMITTER                     */
+        /* HIGH-VISIBILITY CYAN LASER SCAN BEAM                    */
+        /* Crosses smoothly from left to right (0.6s - 2.0s)        */
         /* ======================================================== */
-        .laser-scan-emitter {
+        .scan-laser-beam {
             position: absolute;
-            top: 4%;
-            bottom: 4%;
-            left: var(--scan-progress, 0%);
-            width: 3px;
-            background: #ffffff;
-            box-shadow: 
-                0 0 6px #ffffff,
-                0 0 14px var(--rta-cyan, #00d2ff),
-                0 0 28px var(--rta-cyan, #00d2ff),
-                0 0 45px rgba(0, 210, 255, 0.9);
+            top: 4px;
+            bottom: 4px;
+            width: 4px;
+            left: 0;
+            opacity: 0;
             transform: translateX(-50%);
             pointer-events: none;
-            z-index: 15;
-            opacity: 0;
-            transition: opacity 0.25s ease;
+            z-index: 25;
+            background: #ffffff;
+            box-shadow: 
+                0 0 4px #ffffff,
+                0 0 12px #00f0ff,
+                0 0 24px #00d2ff,
+                0 0 40px rgba(0, 210, 255, 0.95),
+                0 0 70px rgba(0, 210, 255, 0.60);
+            animation: laserSweep 1.4s linear 0.6s both;
         }
 
-        .laser-scan-emitter::before,
-        .laser-scan-emitter::after {
+        .scan-laser-beam::before,
+        .scan-laser-beam::after {
             content: '';
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 12px #00d2ff, 0 0 20px #00d2ff;
+            box-shadow: 0 0 10px #ffffff, 0 0 20px #00f0ff, 0 0 30px #00d2ff;
         }
-        .laser-scan-emitter::before { top: 0; }
-        .laser-scan-emitter::after { bottom: 0; }
+        .scan-laser-beam::before { top: -2px; }
+        .scan-laser-beam::after { bottom: -2px; }
 
-        /* Subtle Trailing Scan Glow */
-        .laser-trailing-glow {
+        .laser-trail {
             position: absolute;
-            top: 4%;
-            bottom: 4%;
-            right: calc(100% - var(--scan-progress, 0%));
-            width: 80px;
-            background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.04), rgba(0, 210, 255, 0.22));
+            top: 0;
+            bottom: 0;
+            right: 100%;
+            width: 120px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 210, 255, 0.04) 40%, rgba(0, 210, 255, 0.32) 100%);
             pointer-events: none;
-            z-index: 14;
-            opacity: 0;
-            transition: opacity 0.25s ease;
+        }
+
+        @@keyframes laserSweep {
+            0% {
+                left: 0%;
+                opacity: 0;
+            }
+            1% {
+                opacity: 1;
+            }
+            99% {
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
         }
 
         /* ======================================================== */
-        /* 3. DIAGNOSTICS TERMINAL & SYSTEM READY                  */
+        /* PHASE 3: VECTOR LOCK PULSES (1.8s - 2.6s)                */
+        /* Wheel hubs pulse, aero pulses, ground line activates     */
+        /* ======================================================== */
+        .layer-active .gt3-wheel-group,
+        .layer-active .gp-wheel-group {
+            animation: wheelPulse 0.5s ease-out 2.0s forwards;
+        }
+
+        @@keyframes wheelPulse {
+            0% { filter: drop-shadow(0 0 4px #00d2ff); }
+            50% { filter: drop-shadow(0 0 18px #00f0ff) drop-shadow(0 0 28px #00d2ff); transform: scale(1.02); }
+            100% { filter: drop-shadow(0 0 6px #00d2ff); transform: scale(1); }
+        }
+
+        .layer-active .gt3-aero-group,
+        .layer-active .gp-aero-group {
+            animation: aeroPulse 0.5s ease-out 2.0s forwards;
+        }
+
+        @@keyframes aeroPulse {
+            0% { opacity: 0.85; }
+            50% { opacity: 1; filter: drop-shadow(0 0 16px #00f0ff); }
+            100% { opacity: 1; filter: drop-shadow(0 0 8px #00d2ff); }
+        }
+
+        .layer-active .ground-stroke {
+            animation: groundSurge 0.5s ease-out 2.0s forwards;
+        }
+
+        @@keyframes groundSurge {
+            0% { stroke-width: 1.8; opacity: 0.8; }
+            50% { stroke-width: 3.0; opacity: 1; filter: drop-shadow(0 0 14px #00f0ff); }
+            100% { stroke-width: 1.8; opacity: 0.8; }
+        }
+
+        /* ======================================================== */
+        /* PHASE 4: DIAGNOSTICS TERMINAL (2.4s - 3.2s)              */
+        /* Sequential reveal with subtle fade & status transition   */
         /* ======================================================== */
         .diagnostics-terminal {
             width: 380px;
@@ -313,16 +413,15 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            color: #4b5263;
-            transition: color 0.3s ease, transform 0.25s ease;
+            color: #3b4252;
+            opacity: 0.45;
+            transform: translateY(3px);
+            transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
         }
 
-        .diag-line.active {
-            color: var(--rta-orange, #ff5a1f);
-            animation: pulse-step 1s infinite ease-in-out;
-        }
-
-        .diag-line.completed {
+        .diag-line.revealed {
+            opacity: 1;
+            transform: translateY(0);
             color: #d1d5db;
         }
 
@@ -347,20 +446,17 @@
             color: #4b5263;
             min-width: 36px;
             text-align: right;
-            transition: all 0.25s ease;
+            transition: color 0.25s ease, text-shadow 0.25s ease;
         }
 
-        .diag-line.active .diag-status {
-            color: var(--rta-orange, #ff5a1f);
-            text-shadow: 0 0 8px rgba(255, 90, 31, 0.5);
-        }
-
-        .diag-line.completed .diag-status {
+        .diag-line.revealed .diag-status {
             color: var(--rta-cyan, #00d2ff);
             text-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
         }
 
-        /* System Ready Banner */
+        /* ======================================================== */
+        /* PHASE 5: SYSTEM READY BANNER (3.2s - 3.7s)               */
+        /* ======================================================== */
         .system-ready-banner {
             font-family: var(--rta-font-mono);
             font-size: 1.25rem;
@@ -369,8 +465,6 @@
             color: var(--rta-cyan, #00d2ff);
             opacity: 0;
             transform: translateY(6px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-            text-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 35px rgba(0, 210, 255, 0.4);
             min-height: 2rem;
             display: flex;
             align-items: center;
@@ -380,29 +474,30 @@
         .system-ready-banner.visible {
             opacity: 1;
             transform: translateY(0);
+            animation: readyGlowPulse 0.4s ease-out forwards;
         }
 
-        /* Keyframes */
-        @@keyframes pulse-step {
-            0%, 100% { opacity: 0.85; transform: translateX(0); }
-            50% { opacity: 1; transform: translateX(3px); text-shadow: 0 0 8px rgba(255, 90, 31, 0.5); }
+        @@keyframes readyGlowPulse {
+            0% {
+                opacity: 0;
+                transform: translateY(6px) scale(0.96);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(0) scale(1.03);
+                text-shadow: 0 0 25px rgba(0, 240, 255, 0.95), 0 0 45px rgba(0, 210, 255, 0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                text-shadow: 0 0 16px rgba(0, 210, 255, 0.8), 0 0 30px rgba(0, 210, 255, 0.4);
+            }
         }
 
         @@keyframes pulse-dot {
             0%, 100% { opacity: 0.5; transform: scale(0.9); }
             50% { opacity: 1; transform: scale(1.2); }
-        }
-
-        /* Accessibility: Reduced Motion */
-        @@media (prefers-reduced-motion: reduce) {
-            .laser-scan-emitter, .laser-trailing-glow { display: none !important; }
-            .silhouette-layer-active { clip-path: none !important; opacity: 1 !important; }
-            .system-ready-banner { opacity: 1 !important; transform: none !important; }
-            .diag-line { color: #d1d5db !important; }
-            .diag-status { color: var(--rta-cyan, #00d2ff) !important; text-shadow: none !important; }
-        }
-
-        /* Responsive Scaling for 1600x900 & 1366x768 */
+        /* Responsive Scaling */
         @@media (max-width: 1400px) {
             .hero-stage-container { height: 380px; max-width: 860px; }
             .vehicle-title { font-size: 1.9rem; }
@@ -438,28 +533,22 @@
             <div class="corner-bracket bracket-bl"></div>
             <div class="corner-bracket bracket-br"></div>
 
-            <!-- Laser Scanline & Follow Glow -->
-            <div class="laser-trailing-glow" id="laserGlow"></div>
-            <div class="laser-scan-emitter" id="laserEmitter"></div>
-
-            <!-- Dual-Layer Vehicle Vector Line-Art -->
+            <!-- Vehicle Viewport & Dual-Layer In-DOM SVG Stack -->
             <div class="vehicle-viewport">
-                @if (isBike)
-                {
-                    <!-- DORMANT WIREFRAME LAYER (14% Opacity) -->
-                    <img src="/images/loading/motogp-racing-loader.svg" alt="MotoGP Prototype Silhouette Base" class="silhouette-layer-base" />
+                <!-- PHASE 1: DORMANT WIREFRAME LAYER (12% Opacity, visible from t=0.0s) -->
+                <div class="layer-dormant">
+                    @Html.Raw(dormantSvg)
+                </div>
 
-                    <!-- ACTIVE RECONSTRUCTED LAYER (Revealed by Laser Scanline) -->
-                    <img src="/images/loading/motogp-racing-loader.svg" alt="MotoGP Prototype Silhouette Reconstructed" class="silhouette-layer-active" id="activeSil" />
-                }
-                else
-                {
-                    <!-- DORMANT WIREFRAME LAYER (14% Opacity) -->
-                    <img src="/images/loading/gt3-racing-loader.svg" alt="GT3 Racing Car Silhouette Base" class="silhouette-layer-base" />
+                <!-- PHASE 2: ACTIVE RECONSTRUCTION (Progressively revealed by CSS sweepReveal) -->
+                <div class="layer-active" id="activeLayer">
+                    @Html.Raw(activeSvg)
+                </div>
 
-                    <!-- ACTIVE RECONSTRUCTED LAYER (Revealed by Laser Scanline) -->
-                    <img src="/images/loading/gt3-racing-loader.svg" alt="GT3 Racing Car Silhouette Reconstructed" class="silhouette-layer-active" id="activeSil" />
-                }
+                <!-- HIGH-VISIBILITY LASER SCAN BEAM (Sweeps left-to-right 0.6s - 2.0s) -->
+                <div class="scan-laser-beam" id="scanBeam">
+                    <div class="laser-trail"></div>
+                </div>
             </div>
         </div>
 
@@ -495,106 +584,58 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- MEASURED 6-PHASE MOTORSPORT ANIMATION SEQUENCE           -->
+    <!-- LIGHTWEIGHT TIMELINE ORCHESTRATION SCRIPT                -->
+    <!-- No RAF loops — pure CSS controls the visual rendering   -->
     <!-- ======================================================== -->
     <script>
-        const heroStage = document.getElementById('heroStage');
-        const laserEmitter = document.getElementById('laserEmitter');
-        const laserGlow = document.getElementById('laserGlow');
-        const readyBanner = document.getElementById('readyBanner');
-
         const vehicleId = '@vehicleId';
         const trackId = '@trackId';
+        const readyBanner = document.getElementById('readyBanner');
 
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Robust animation guarantee: if OS reduced-motion collapsed CSS duration to <100ms, run via WAAPI
+        const beamEl = document.getElementById('scanBeam');
+        const activeEl = document.getElementById('activeLayer');
+        const beamAnims = beamEl?.getAnimations();
+        if (beamAnims && beamAnims.length > 0 && (beamAnims[0].effect?.getTiming()?.duration || 0) < 100) {
+            beamEl.animate([
+                { left: '0%', opacity: 0 },
+                { opacity: 1, offset: 0.01 },
+                { opacity: 1, offset: 0.99 },
+                { left: '100%', opacity: 0 }
+            ], { duration: 1400, delay: 600, fill: 'both', easing: 'linear' });
 
-        if (prefersReducedMotion) {
-            document.documentElement.style.setProperty('--scan-progress', '100%');
-            ['status-0', 'status-1', 'status-2', 'status-3'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) { el.textContent = 'OK'; el.parentElement.classList.add('completed'); }
-            });
-            if (readyBanner) readyBanner.classList.add('visible');
-            setTimeout(() => {
-                window.location.href = '/Telemetry?vehicleId=' + vehicleId + '&trackId=' + trackId;
-            }, 1200);
-        } else {
-            // PHASE 1: INITIALIZATION (0ms - 600ms)
-            // Screen renders dark with wireframe vehicle outline at 14% opacity
-
-            // PHASE 2: LASER SCAN & PROGRESSIVE RECONSTRUCTION (600ms - 2100ms)
-            setTimeout(() => {
-                if (laserEmitter) laserEmitter.style.opacity = '1';
-                if (laserGlow) laserGlow.style.opacity = '1';
-
-                const scanStartTime = performance.now();
-                const scanDuration = 1500; // 1.5s smooth sweep across vehicle from left to right
-
-                function animateLaserScan(currentTime) {
-                    const elapsed = currentTime - scanStartTime;
-                    const progress = Math.min(1.0, elapsed / scanDuration);
-
-                    // Smooth easeInOutQuad curve
-                    const easeProgress = progress < 0.5
-                        ? 2 * progress * progress
-                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-                    const currentPct = (easeProgress * 100).toFixed(2);
-                    document.documentElement.style.setProperty('--scan-progress', currentPct + '%');
-
-                    if (progress < 1.0) {
-                        requestAnimationFrame(animateLaserScan);
-                    } else {
-                        // Scan reaches 100%
-                        document.documentElement.style.setProperty('--scan-progress', '100%');
-                        if (laserEmitter) laserEmitter.style.opacity = '0';
-                        if (laserGlow) laserGlow.style.opacity = '0';
-
-                        // PHASE 3: VECTOR LOCK (2100ms - 2400ms)
-                        if (heroStage) heroStage.classList.add('vector-locked');
-                    }
-                }
-
-                requestAnimationFrame(animateLaserScan);
-            }, 600);
-
-            // PHASE 4: SYSTEM DIAGNOSTICS SEQUENTIAL REVEAL (2400ms - 3400ms)
-            const stages = [
-                { lineId: 'diag-0', statusId: 'status-0', startAt: 2400, doneAt: 2700 },
-                { lineId: 'diag-1', statusId: 'status-1', startAt: 2700, doneAt: 3000 },
-                { lineId: 'diag-2', statusId: 'status-2', startAt: 3000, doneAt: 3300 },
-                { lineId: 'diag-3', statusId: 'status-3', startAt: 3300, doneAt: 3600 }
-            ];
-
-            stages.forEach(stage => {
-                setTimeout(() => {
-                    const line = document.getElementById(stage.lineId);
-                    const status = document.getElementById(stage.statusId);
-                    if (line) line.classList.add('active');
-                    if (status) status.textContent = '...';
-                }, stage.startAt);
-
-                setTimeout(() => {
-                    const line = document.getElementById(stage.lineId);
-                    const status = document.getElementById(stage.statusId);
-                    if (line) {
-                        line.classList.remove('active');
-                        line.classList.add('completed');
-                    }
-                    if (status) status.textContent = 'OK';
-                }, stage.doneAt);
-            });
-
-            // PHASE 5: TELEMETRY DATA LOCK & SYSTEM READY BANNER (3700ms)
-            setTimeout(() => {
-                if (readyBanner) readyBanner.classList.add('visible');
-            }, 3700);
-
-            // PHASE 6: SEAMLESS TRANSITION TO TELEMETRY WORKSTATION (4400ms)
-            setTimeout(() => {
-                window.location.href = '/Telemetry?vehicleId=' + vehicleId + '&trackId=' + trackId;
-            }, 4400);
+            activeEl?.animate([
+                { clipPath: 'inset(0% 100% 0% 0%)' },
+                { clipPath: 'inset(0% 0% 0% 0%)' }
+            ], { duration: 1400, delay: 600, fill: 'both', easing: 'linear' });
         }
+
+        // PHASE 4: DIAGNOSTICS SEQUENTIAL REVEAL (2.4s - 3.2s)
+        const diagSchedule = [
+            { id: 'diag-0', statusId: 'status-0', at: 2400 },
+            { id: 'diag-1', statusId: 'status-1', at: 2650 },
+            { id: 'diag-2', statusId: 'status-2', at: 2900 },
+            { id: 'diag-3', statusId: 'status-3', at: 3150 }
+        ];
+
+        diagSchedule.forEach(item => {
+            setTimeout(() => {
+                const row = document.getElementById(item.id);
+                const status = document.getElementById(item.statusId);
+                if (row) row.classList.add('revealed');
+                if (status) status.textContent = 'OK';
+            }, item.at);
+        });
+
+        // PHASE 5: SYSTEM READY (3.25s)
+        setTimeout(() => {
+            if (readyBanner) readyBanner.classList.add('visible');
+        }, 3250);
+
+        // PHASE 6: SEAMLESS TRANSITION TO WORKSTATION (3.75s)
+        setTimeout(() => {
+            window.location.href = '/Telemetry?vehicleId=' + vehicleId + '&trackId=' + trackId;
+        }, 3750);
     </script>
 </body>
 </html>

@@ -16,4 +16,11 @@
     <PackageReference Include="QuestPDF" Version="2026.8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="RacingTelemetryAnalyzer.Tests\**" />
+    <Content Remove="RacingTelemetryAnalyzer.Tests\**" />
+    <EmbeddedResource Remove="RacingTelemetryAnalyzer.Tests\**" />
+    <None Remove="RacingTelemetryAnalyzer.Tests\**" />
+  </ItemGroup>
+
 </Project>

@@ -27,137 +27,138 @@
   </defs>
 
   <style>
-    /* Multi-tier technical line-art styling */
+    /* Multi-tier technical line-art styling matching reference engineering scan */
     .gt3-primary { fill: none; stroke: #00d2ff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: url(#gt3-glow-core); }
-    .gt3-aero { fill: rgba(0, 210, 255, 0.18); stroke: #00e5ff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: url(#gt3-glow-soft); }
-    .gt3-body-secondary { fill: none; stroke: #00b4d8; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
-    .gt3-fine { fill: none; stroke: #0077b6; stroke-width: 1.0; stroke-linecap: round; opacity: 0.70; }
-    .gt3-subtle-lines { fill: none; stroke: #005f8a; stroke-width: 0.8; stroke-dasharray: 4 4; opacity: 0.45; }
+    .gt3-aero { fill: rgba(0, 210, 255, 0.16); stroke: #00f0ff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: url(#gt3-glow-soft); }
+    .gt3-body-secondary { fill: none; stroke: #00b4d8; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.88; }
+    .gt3-fine { fill: none; stroke: #0077b6; stroke-width: 1.0; stroke-linecap: round; opacity: 0.75; }
+    .gt3-subtle-lines { fill: none; stroke: #005f8a; stroke-width: 0.8; stroke-dasharray: 4 4; opacity: 0.50; }
     .gt3-glass { fill: rgba(0, 210, 255, 0.08); stroke: #00d2ff; stroke-width: 1.8; }
-    .gt3-ground { stroke: #00d2ff; stroke-width: 1.8; opacity: 0.75; filter: url(#gt3-glow-soft); }
+    .gt3-ground { stroke: #00d2ff; stroke-width: 1.8; opacity: 0.80; filter: url(#gt3-glow-soft); }
     .gt3-refl { stroke: url(#gt3-refl-grad); fill: none; stroke-width: 1.4; opacity: 0.35; }
   </style>
 
   <!-- ======================================================== -->
   <!-- 1. ENGINEERING BLUEPRINT CONSTRUCTION ARCS & AXES        -->
   <!-- ======================================================== -->
-  <g id="blueprint-guides">
+  <g id="gt3-blueprint-guides">
     <!-- Ground Datum Line -->
-    <line x1="50" y1="380" x2="950" y2="380" class="gt3-ground" />
-    <line x1="100" y1="386" x2="900" y2="386" class="gt3-fine" style="stroke-dasharray: 6 5;" />
+    <line pathLength="1" x1="50" y1="380" x2="950" y2="380" class="gt3-ground ground-stroke" />
+    <line pathLength="1" x1="100" y1="386" x2="900" y2="386" class="gt3-fine" style="stroke-dasharray: 6 5;" />
     
     <!-- Calibration Ticks along Ground Line -->
     <g class="gt3-fine">
-      <line x1="150" y1="380" x2="150" y2="385" />
-      <line x1="250" y1="380" x2="250" y2="385" />
-      <line x1="350" y1="380" x2="350" y2="385" />
-      <line x1="450" y1="380" x2="450" y2="385" />
-      <line x1="550" y1="380" x2="550" y2="385" />
-      <line x1="650" y1="380" x2="650" y2="385" />
-      <line x1="750" y1="380" x2="750" y2="385" />
-      <line x1="850" y1="380" x2="850" y2="385" />
+      <line pathLength="1" x1="150" y1="380" x2="150" y2="385" />
+      <line pathLength="1" x1="250" y1="380" x2="250" y2="385" />
+      <line pathLength="1" x1="350" y1="380" x2="350" y2="385" />
+      <line pathLength="1" x1="450" y1="380" x2="450" y2="385" />
+      <line pathLength="1" x1="550" y1="380" x2="550" y2="385" />
+      <line pathLength="1" x1="650" y1="380" x2="650" y2="385" />
+      <line pathLength="1" x1="750" y1="380" x2="750" y2="385" />
+      <line pathLength="1" x1="850" y1="380" x2="850" y2="385" />
     </g>
 
     <!-- Axle Datum Axes -->
-    <line x1="260" y1="140" x2="260" y2="400" class="gt3-subtle-lines" />
-    <line x1="750" y1="140" x2="750" y2="400" class="gt3-subtle-lines" />
-    <line x1="220" y1="335" x2="790" y2="335" class="gt3-subtle-lines" />
+    <line pathLength="1" x1="265" y1="130" x2="265" y2="400" class="gt3-subtle-lines" />
+    <line pathLength="1" x1="755" y1="130" x2="755" y2="400" class="gt3-subtle-lines" />
+    <line pathLength="1" x1="210" y1="335" x2="810" y2="335" class="gt3-subtle-lines" />
 
     <!-- Wheelbase Dimension Line with Arrows -->
-    <line x1="260" y1="410" x2="750" y2="410" class="gt3-fine" />
-    <polygon points="260,410 272,406 272,414" fill="#00d2ff" />
-    <polygon points="750,410 738,406 738,414" fill="#00d2ff" />
-    <text x="505" y="424" fill="#00b4d8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle" letter-spacing="2">WHEELBASE 2,510 mm</text>
+    <line pathLength="1" x1="265" y1="410" x2="755" y2="410" class="gt3-fine" />
+    <polygon points="265,410 277,406 277,414" fill="#00d2ff" />
+    <polygon points="755,410 743,406 743,414" fill="#00d2ff" />
+    <text x="510" y="424" fill="#00b4d8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle" letter-spacing="2">WHEELBASE 2,510 mm</text>
 
     <!-- Center of Gravity Marker -->
-    <circle cx="490" cy="275" r="7" class="gt3-fine" />
-    <line x1="480" y1="275" x2="500" y2="275" class="gt3-fine" />
-    <line x1="490" y1="265" x2="490" y2="285" class="gt3-fine" />
+    <circle cx="495" cy="275" r="7" class="gt3-fine" />
+    <line pathLength="1" x1="485" y1="275" x2="505" y2="275" class="gt3-fine" />
+    <line pathLength="1" x1="495" y1="265" x2="495" y2="285" class="gt3-fine" />
 
-    <!-- Aerodynamic Downforce Flow Arcs -->
-    <path d="M 180,95 C 320,80 580,90 770,220" class="gt3-subtle-lines" />
-    <path d="M 100,380 C 110,260 180,160 260,145" class="gt3-subtle-lines" />
-    <path d="M 640,140 C 720,160 840,220 900,340" class="gt3-subtle-lines" />
+    <!-- Aerodynamic Downforce Flow Arcs matching Reference Scan -->
+    <path pathLength="1" d="M 180,95 C 320,75 580,85 780,220" class="gt3-subtle-lines" />
+    <path pathLength="1" d="M 95,380 C 110,250 180,150 265,135" class="gt3-subtle-lines" />
+    <path pathLength="1" d="M 640,140 C 720,160 840,220 910,340" class="gt3-subtle-lines" />
+    <path pathLength="1" d="M 360,110 C 480,70 600,100 700,170" class="gt3-subtle-lines" />
   </g>
 
   <!-- ======================================================== -->
   <!-- 2. GT3 RACING WHEELS, CARBON ROTORS & MONOBLOC CALIPERS  -->
   <!-- ======================================================== -->
-  <g id="gt3-wheels">
-    <!-- REAR WHEEL ASSEMBLY (Center: 260, 335) -->
+  <g id="gt3-wheels" class="gt3-wheel-group">
+    <!-- REAR WHEEL ASSEMBLY (Center: 265, 335) -->
     <!-- Wide Racing Slick Tyre -->
-    <circle cx="260" cy="335" r="62" class="gt3-primary" />
-    <circle cx="260" cy="335" r="58" class="gt3-fine" />
+    <circle cx="265" cy="335" r="58" class="gt3-primary" />
+    <circle cx="265" cy="335" r="54" class="gt3-fine" />
     <!-- 18-inch GT3 Forged Rim Lip -->
-    <circle cx="260" cy="335" r="46" class="gt3-primary" />
-    <circle cx="260" cy="335" r="41" class="gt3-body-secondary" />
+    <circle cx="265" cy="335" r="44" class="gt3-primary" />
+    <circle cx="265" cy="335" r="39" class="gt3-body-secondary" />
     <!-- 380mm Cross-Drilled Ventilated Carbon-Steel Brake Rotor -->
-    <circle cx="260" cy="335" r="33" class="gt3-body-secondary" style="stroke-dasharray: 4 2;" />
-    <circle cx="260" cy="335" r="23" class="gt3-fine" />
+    <circle cx="265" cy="335" r="31" class="gt3-body-secondary" style="stroke-dasharray: 4 2;" />
+    <circle cx="265" cy="335" r="22" class="gt3-fine" />
     <!-- Brake Rotor Drill Hole Accents -->
-    <g class="gt3-fine" style="opacity: 0.6;">
-      <circle cx="245" cy="328" r="1.2" fill="#00d2ff" />
-      <circle cx="255" cy="318" r="1.2" fill="#00d2ff" />
-      <circle cx="268" cy="318" r="1.2" fill="#00d2ff" />
-      <circle cx="275" cy="328" r="1.2" fill="#00d2ff" />
-      <circle cx="275" cy="342" r="1.2" fill="#00d2ff" />
-      <circle cx="268" cy="352" r="1.2" fill="#00d2ff" />
-      <circle cx="255" cy="352" r="1.2" fill="#00d2ff" />
-      <circle cx="245" cy="342" r="1.2" fill="#00d2ff" />
+    <g class="gt3-fine" style="opacity: 0.7;">
+      <circle cx="250" cy="328" r="1.2" fill="#00d2ff" />
+      <circle cx="260" cy="318" r="1.2" fill="#00d2ff" />
+      <circle cx="273" cy="318" r="1.2" fill="#00d2ff" />
+      <circle cx="280" cy="328" r="1.2" fill="#00d2ff" />
+      <circle cx="280" cy="342" r="1.2" fill="#00d2ff" />
+      <circle cx="273" cy="352" r="1.2" fill="#00d2ff" />
+      <circle cx="260" cy="352" r="1.2" fill="#00d2ff" />
+      <circle cx="250" cy="342" r="1.2" fill="#00d2ff" />
     </g>
-    <!-- Rear Brembo Monobloc Caliper (Trailing) -->
-    <path d="M 228,320 C 226,335 228,350 233,360 L 241,357 C 238,348 237,337 239,325 Z" fill="rgba(0, 210, 255, 0.3)" stroke="#00e5ff" stroke-width="1.6" />
+    <!-- Rear Brembo Monobloc Caliper (Trailing Edge: 9 o'clock) -->
+    <path pathLength="1" d="M 234,320 C 232,335 234,350 239,360 L 247,357 C 244,348 243,337 245,325 Z" fill="rgba(0, 210, 255, 0.35)" stroke="#00f0ff" stroke-width="1.6" />
     <!-- Motorsport Center-Lock Wheel Nut -->
-    <circle cx="260" cy="335" r="10" class="gt3-primary" />
-    <polygon points="260,328 266,332 266,338 260,342 254,338 254,332" fill="#00d2ff" stroke="#ffffff" stroke-width="0.8" />
+    <circle cx="265" cy="335" r="9" class="gt3-primary" />
+    <polygon points="265,329 270,332 270,338 265,341 260,338 260,332" fill="#00d2ff" stroke="#ffffff" stroke-width="0.8" />
     <!-- Multi-Spoke GT3 Magnesium Rim Pattern -->
     <g class="gt3-fine">
-      <line x1="260" y1="289" x2="260" y2="381" />
-      <line x1="214" y1="335" x2="306" y2="335" />
-      <line x1="227" y1="302" x2="293" y2="368" />
-      <line x1="227" y1="368" x2="293" y2="302" />
-      <line x1="242" y1="293" x2="278" y2="377" />
-      <line x1="278" y1="293" x2="242" y2="377" />
-      <line x1="218" y1="317" x2="302" y2="353" />
-      <line x1="218" y1="353" x2="302" y2="317" />
+      <line pathLength="1" x1="265" y1="291" x2="265" y2="379" />
+      <line pathLength="1" x1="221" y1="335" x2="309" y2="335" />
+      <line pathLength="1" x1="234" y1="304" x2="296" y2="366" />
+      <line pathLength="1" x1="234" y1="366" x2="296" y2="304" />
+      <line pathLength="1" x1="248" y1="295" x2="282" y2="375" />
+      <line pathLength="1" x1="282" y1="295" x2="248" y2="375" />
+      <line pathLength="1" x1="225" y1="318" x2="305" y2="352" />
+      <line pathLength="1" x1="225" y1="352" x2="305" y2="318" />
     </g>
 
-    <!-- FRONT WHEEL ASSEMBLY (Center: 750, 335) -->
+    <!-- FRONT WHEEL ASSEMBLY (Center: 755, 335) -->
     <!-- Wide Racing Slick Tyre -->
-    <circle cx="750" cy="335" r="62" class="gt3-primary" />
-    <circle cx="750" cy="335" r="58" class="gt3-fine" />
+    <circle cx="755" cy="335" r="58" class="gt3-primary" />
+    <circle cx="755" cy="335" r="54" class="gt3-fine" />
     <!-- 18-inch GT3 Forged Rim Lip -->
-    <circle cx="750" cy="335" r="46" class="gt3-primary" />
-    <circle cx="750" cy="335" r="41" class="gt3-body-secondary" />
+    <circle cx="755" cy="335" r="44" class="gt3-primary" />
+    <circle cx="755" cy="335" r="39" class="gt3-body-secondary" />
     <!-- 390mm Massive Front Carbon-Steel Brake Rotor -->
-    <circle cx="750" cy="335" r="35" class="gt3-body-secondary" style="stroke-dasharray: 4 2;" />
-    <circle cx="750" cy="335" r="24" class="gt3-fine" />
+    <circle cx="755" cy="335" r="33" class="gt3-body-secondary" style="stroke-dasharray: 4 2;" />
+    <circle cx="755" cy="335" r="23" class="gt3-fine" />
     <!-- Drill Holes Pattern -->
-    <g class="gt3-fine" style="opacity: 0.6;">
-      <circle cx="735" cy="328" r="1.2" fill="#00d2ff" />
-      <circle cx="745" cy="318" r="1.2" fill="#00d2ff" />
-      <circle cx="758" cy="318" r="1.2" fill="#00d2ff" />
-      <circle cx="765" cy="328" r="1.2" fill="#00d2ff" />
-      <circle cx="765" cy="342" r="1.2" fill="#00d2ff" />
-      <circle cx="758" cy="352" r="1.2" fill="#00d2ff" />
-      <circle cx="745" cy="352" r="1.2" fill="#00d2ff" />
-      <circle cx="735" cy="342" r="1.2" fill="#00d2ff" />
+    <g class="gt3-fine" style="opacity: 0.7;">
+      <circle cx="740" cy="328" r="1.2" fill="#00d2ff" />
+      <circle cx="750" cy="318" r="1.2" fill="#00d2ff" />
+      <circle cx="763" cy="318" r="1.2" fill="#00d2ff" />
+      <circle cx="770" cy="328" r="1.2" fill="#00d2ff" />
+      <circle cx="770" cy="342" r="1.2" fill="#00d2ff" />
+      <circle cx="763" cy="352" r="1.2" fill="#00d2ff" />
+      <circle cx="750" cy="352" r="1.2" fill="#00d2ff" />
+      <circle cx="740" cy="342" r="1.2" fill="#00d2ff" />
     </g>
-    <!-- Massive Front 6-Piston Monobloc Caliper (Leading Edge) -->
-    <path d="M 780,318 C 785,334 785,350 780,362 L 771,358 C 775,349 775,337 772,323 Z" fill="rgba(0, 210, 255, 0.3)" stroke="#00e5ff" stroke-width="1.6" />
+    <!-- Massive Front 6-Piston Monobloc Caliper (Trailing Edge: 9 o'clock) -->
+    <path pathLength="1" d="M 724,320 C 722,335 724,350 729,360 L 737,357 C 734,348 733,337 735,325 Z" fill="rgba(0, 210, 255, 0.35)" stroke="#00f0ff" stroke-width="1.6" />
     <!-- Center-Lock Wheel Nut -->
-    <circle cx="750" cy="335" r="10" class="gt3-primary" />
-    <polygon points="750,328 756,332 756,338 750,342 744,338 744,332" fill="#00d2ff" stroke="#ffffff" stroke-width="0.8" />
+    <circle cx="755" cy="335" r="9" class="gt3-primary" />
+    <polygon points="755,329 760,332 760,338 755,341 750,338 750,332" fill="#00d2ff" stroke="#ffffff" stroke-width="0.8" />
     <!-- Multi-Spoke GT3 Magnesium Rim Pattern -->
     <g class="gt3-fine">
-      <line x1="750" y1="289" x2="750" y2="381" />
-      <line x1="704" y1="335" x2="796" y2="335" />
-      <line x1="717" y1="302" x2="783" y2="368" />
-      <line x1="717" y1="368" x2="783" y2="302" />
-      <line x1="732" y1="293" x2="768" y2="377" />
-      <line x1="768" y1="293" x2="732" y2="377" />
-      <line x1="708" y1="317" x2="792" y2="353" />
-      <line x1="708" y1="353" x2="792" y2="317" />
+      <line pathLength="1" x1="755" y1="291" x2="755" y2="379" />
+      <line pathLength="1" x1="711" y1="335" x2="799" y2="335" />
+      <line pathLength="1" x1="724" y1="304" x2="786" y2="366" />
+      <line pathLength="1" x1="724" y1="366" x2="786" y2="304" />
+      <line pathLength="1" x1="738" y1="295" x2="772" y2="375" />
+      <line pathLength="1" x1="772" y1="295" x2="738" y2="375" />
+      <line pathLength="1" x1="715" y1="318" x2="795" y2="352" />
+      <line pathLength="1" x1="715" y1="352" x2="795" y2="318" />
     </g>
   </g>
 
@@ -165,29 +166,30 @@
   <!-- 3. MAIN GT3 RACING BODYWORK, COCKPIT & SPLITTER          -->
   <!-- ======================================================== -->
   <g id="gt3-bodywork">
-    <!-- Unmistakable Aggressive GT3 Silhouette Line (Nose to Tail) -->
-    <path d="M 945,376
-             L 915,376
-             L 905,366
-             C 892,342 878,328 852,320
-             L 830,314
-             C 824,286 806,260 782,248
-             C 756,238 718,238 688,252
-             C 670,260 658,276 652,295
-             L 650,295
-             L 645,274
-             C 630,228 596,176 558,152
-             C 522,130 478,126 422,136
-             C 368,145 320,180 286,238
-             L 280,250
-             C 256,246 226,252 202,270
-             C 180,285 168,310 166,338
-             L 165,342
-             L 130,342
-             C 124,354 118,368 115,376
+    <!-- Authentic GT3 Silhouette Line matching Reference Image with pathLength for animation -->
+    <path pathLength="1" 
+          d="M 948,376
+             L 920,376
+             L 910,366
+             C 898,342 884,328 858,320
+             L 834,314
+             C 828,284 810,256 786,246
+             C 760,236 722,236 692,250
+             C 674,258 662,274 656,295
+             L 654,295
+             L 648,272
+             C 632,224 598,172 560,148
+             C 524,126 478,122 422,132
+             C 368,142 320,178 286,236
+             L 282,248
+             C 258,244 228,250 204,268
+             C 182,283 170,308 168,336
+             L 166,342
+             L 132,342
+             C 126,354 120,368 116,376
              L 95,376
-             L 92,366
-             L 112,362
+             L 92,364
+             L 112,360
              L 116,345
              C 122,322 136,304 158,288
              L 168,274
@@ -195,59 +197,60 @@
              L 252,230
              C 260,210 274,192 295,176
              L 302,170
-             C 336,145 378,126 428,118
-             C 480,110 534,114 582,138
-             C 626,162 658,202 680,244
-             L 745,270
-             C 776,284 802,298 845,314
-             C 876,325 904,342 920,364
-             L 932,374
-             L 945,376 Z" 
-          class="gt3-primary" />
+             C 336,145 378,126 428,116
+             C 480,108 534,112 584,136
+             C 628,160 660,200 682,242
+             L 748,268
+             C 778,282 804,296 848,312
+             C 880,323 908,340 924,362
+             L 936,372
+             L 948,376 Z" 
+          class="gt3-primary stroke-animate outline-stroke" />
 
     <!-- Extended Carbon Front Splitter with Vertical Endplate -->
-    <path d="M 885,380 L 955,380 L 960,366 L 948,366 L 942,374 L 880,374 Z" class="gt3-aero" />
-    <line x1="950" y1="368" x2="950" y2="378" class="gt3-primary" />
+    <path pathLength="1" d="M 885,380 L 958,380 L 964,364 L 950,364 L 944,374 L 880,374 Z" class="gt3-aero stroke-animate" />
+    <line pathLength="1" x1="952" y1="366" x2="952" y2="378" class="gt3-primary" />
 
-    <!-- Dual Aerodynamic Dive Planes / Canards -->
+    <!-- Dual Aerodynamic Dive Planes / Canards on Bumper Cheek -->
     <!-- Lower Canard -->
-    <path d="M 888,354 C 910,351 928,357 938,364 L 934,367 C 922,360 906,356 886,358 Z" class="gt3-aero" />
+    <path pathLength="1" d="M 890,354 C 912,351 930,357 940,364 L 936,367 C 924,360 908,356 888,358 Z" class="gt3-aero" />
     <!-- Upper Canard -->
-    <path d="M 876,336 C 896,333 914,339 922,346 L 918,349 C 908,343 892,338 874,341 Z" class="gt3-aero" />
+    <path pathLength="1" d="M 878,336 C 898,333 916,339 924,346 L 920,349 C 910,343 894,338 876,341 Z" class="gt3-aero" />
 
-    <!-- Front Bumper Radiator Duct & Headlight Enclosure -->
-    <path d="M 845,308 C 872,306 900,318 915,338 L 896,340 C 884,326 864,318 844,318 Z" class="gt3-glass" />
-    <circle cx="886" cy="328" r="4.5" fill="#00d2ff" />
-    <circle cx="900" cy="334" r="3" fill="#ffffff" />
-    <path d="M 890,345 L 860,345 L 852,368 L 898,368 Z" fill="rgba(0, 210, 255, 0.12)" stroke="#00b4d8" stroke-width="1.2" />
+    <!-- Front Bumper Radiator Duct & Slanted GT3 Headlight Cluster -->
+    <path pathLength="1" d="M 848,306 C 876,304 904,316 918,336 L 900,338 C 888,324 868,316 846,316 Z" class="gt3-glass" />
+    <circle cx="890" cy="326" r="4.5" fill="#00d2ff" />
+    <circle cx="904" cy="332" r="3" fill="#ffffff" />
+    <path pathLength="1" d="M 894,345 L 864,345 L 856,368 L 902,368 Z" fill="rgba(0, 210, 255, 0.12)" stroke="#00b4d8" stroke-width="1.2" />
 
     <!-- Front Fender Top Louvres / Wheel Arch Air Relief Vents -->
     <g class="gt3-body-secondary">
-      <line x1="738" y1="248" x2="764" y2="246" />
-      <line x1="734" y1="254" x2="768" y2="252" />
-      <line x1="730" y1="260" x2="772" y2="258" />
-      <line x1="728" y1="266" x2="770" y2="264" />
+      <line pathLength="1" x1="742" y1="246" x2="768" y2="244" />
+      <line pathLength="1" x1="738" y1="252" x2="772" y2="250" />
+      <line pathLength="1" x1="734" y1="258" x2="776" y2="256" />
+      <line pathLength="1" x1="732" y1="264" x2="774" y2="262" />
     </g>
 
     <!-- Hood Heat Extractor Ducts -->
-    <path d="M 685,248 C 715,246 750,256 775,268" class="gt3-body-secondary" />
-    <line x1="700" y1="254" x2="745" y2="266" class="gt3-fine" />
+    <path pathLength="1" d="M 690,246 C 720,244 755,254 780,266" class="gt3-body-secondary" />
+    <line pathLength="1" x1="705" y1="252" x2="750" y2="264" class="gt3-fine" />
 
     <!-- Low GT3 Aerodynamic Side Skirt / Underfloor Rocker -->
-    <path d="M 324,370 L 688,370 L 690,378 L 322,378 Z" class="gt3-aero" />
-    <line x1="326" y1="374" x2="686" y2="374" class="gt3-fine" />
-    <!-- Rear Brake Cooling Air Intake Scoop on Rear Fender -->
-    <path d="M 350,314 C 364,316 384,330 380,358 L 368,360 C 368,338 354,328 344,326 Z" class="gt3-aero" />
+    <path pathLength="1" d="M 328,370 L 694,370 L 696,378 L 326,378 Z" class="gt3-aero" />
+    <line pathLength="1" x1="330" y1="374" x2="692" y2="374" class="gt3-fine" />
+
+    <!-- Rear Flank Radiator Cooling Intake Scoop ahead of Rear Wheel -->
+    <path pathLength="1" d="M 354,312 C 368,314 388,328 384,356 L 372,358 C 372,336 358,326 348,324 Z" class="gt3-aero" />
 
     <!-- Massive Rear Diffuser with 4 Vertical Aero Strakes -->
-    <path d="M 95,378 L 165,378 L 175,370 L 110,370 Z" class="gt3-aero" />
-    <line x1="100" y1="366" x2="110" y2="384" class="gt3-primary" />
-    <line x1="116" y1="366" x2="126" y2="384" class="gt3-primary" />
-    <line x1="132" y1="366" x2="142" y2="384" class="gt3-primary" />
-    <line x1="148" y1="366" x2="158" y2="384" class="gt3-primary" />
+    <path pathLength="1" d="M 95,378 L 165,378 L 175,368 L 110,368 Z" class="gt3-aero" />
+    <line pathLength="1" x1="100" y1="364" x2="110" y2="384" class="gt3-primary" />
+    <line pathLength="1" x1="116" y1="364" x2="126" y2="384" class="gt3-primary" />
+    <line pathLength="1" x1="132" y1="364" x2="142" y2="384" class="gt3-primary" />
+    <line pathLength="1" x1="148" y1="364" x2="158" y2="384" class="gt3-primary" />
     <!-- Dual Exhaust Pipes -->
-    <circle cx="120" cy="358" r="4.5" fill="#060709" stroke="#00e5ff" stroke-width="1.6" />
-    <circle cx="134" cy="358" r="4.5" fill="#060709" stroke="#00e5ff" stroke-width="1.6" />
+    <circle cx="120" cy="356" r="4.5" fill="#060709" stroke="#00f0ff" stroke-width="1.6" />
+    <circle cx="134" cy="356" r="4.5" fill="#060709" stroke="#00f0ff" stroke-width="1.6" />
   </g>
 
   <!-- ======================================================== -->
@@ -255,66 +258,67 @@
   <!-- ======================================================== -->
   <g id="gt3-cockpit">
     <!-- Greenhouse Window Outline -->
-    <path d="M 645,260 
-             C 628,218 598,180 560,158 
-             C 528,140 484,136 442,146 
-             C 396,156 356,184 326,232 
-             L 312,254 
-             L 645,260 Z" 
-          class="gt3-glass" />
+    <path pathLength="1" 
+          d="M 648,258 
+             C 630,216 600,178 562,156 
+             C 530,138 486,134 444,144 
+             C 398,154 358,182 328,230 
+             L 314,252 
+             L 648,258 Z" 
+          class="gt3-glass stroke-animate" />
 
     <!-- A-Pillar & B-Pillar Frames -->
-    <line x1="560" y1="158" x2="645" y2="260" class="gt3-primary" />
-    <line x1="450" y1="144" x2="446" y2="260" class="gt3-body-secondary" />
+    <line pathLength="1" x1="562" y1="156" x2="648" y2="258" class="gt3-primary" />
+    <line pathLength="1" x1="452" y1="142" x2="448" y2="258" class="gt3-body-secondary" />
 
     <!-- Polycarbonate Sliding Inspection Vent -->
-    <rect x="490" y="210" width="34" height="22" rx="2" class="gt3-fine" />
-    <line x1="507" y1="210" x2="507" y2="232" class="gt3-fine" />
+    <rect x="492" y="208" width="34" height="22" rx="2" class="gt3-fine" />
+    <line pathLength="1" x1="509" y1="208" x2="509" y2="230" class="gt3-fine" />
 
     <!-- Visible GT3 FIA Roll Cage Geometry (X-Braces & Main Hoop) -->
     <g class="gt3-fine" style="stroke-dasharray: 6 3; stroke-width: 1.4;">
       <!-- Main Roll Hoop -->
-      <line x1="438" y1="148" x2="432" y2="260" />
+      <line pathLength="1" x1="440" y1="146" x2="434" y2="258" />
       <!-- Rear Diagonal Strut -->
-      <line x1="440" y1="150" x2="328" y2="255" />
+      <line pathLength="1" x1="442" y1="148" x2="330" y2="253" />
       <!-- A-Pillar Reinforcement Bar -->
-      <line x1="550" y1="162" x2="628" y2="260" />
+      <line pathLength="1" x1="552" y1="160" x2="630" y2="258" />
       <!-- Door Intrusion X-Bracing -->
-      <line x1="446" y1="198" x2="615" y2="258" />
-      <line x1="446" y1="258" x2="615" y2="198" />
+      <line pathLength="1" x1="448" y1="196" x2="618" y2="256" />
+      <line pathLength="1" x1="448" y1="256" x2="618" y2="196" />
     </g>
 
     <!-- Aerodynamic Carbon Side View Mirror (Twin Stalk) -->
-    <path d="M 618,242 C 615,230 626,225 638,225 C 648,225 654,232 652,242 C 646,248 626,250 618,242 Z" class="gt3-aero" />
-    <line x1="622" y1="246" x2="626" y2="258" class="gt3-primary" />
-    <line x1="630" y1="246" x2="634" y2="258" class="gt3-primary" />
+    <path pathLength="1" d="M 622,240 C 618,228 630,223 642,223 C 652,223 658,230 656,240 C 650,246 630,248 622,240 Z" class="gt3-aero" />
+    <line pathLength="1" x1="626" y1="244" x2="630" y2="256" class="gt3-primary" />
+    <line pathLength="1" x1="634" y1="244" x2="638" y2="256" class="gt3-primary" />
 
     <!-- Door Shutline -->
-    <path d="M 444,260 L 438,368" class="gt3-body-secondary" />
-    <path d="M 652,268 L 644,368" class="gt3-body-secondary" />
-    <rect x="466" y="272" width="18" height="5" rx="2" class="gt3-fine" />
+    <path pathLength="1" d="M 446,258 L 440,368" class="gt3-body-secondary" />
+    <path pathLength="1" d="M 654,266 L 646,368" class="gt3-body-secondary" />
+    <rect x="468" y="270" width="18" height="5" rx="2" class="gt3-fine" />
   </g>
 
   <!-- ======================================================== -->
   <!-- 5. PROMINENT GT3 SWAN-NECK REAR WING ASSEMBLY            -->
   <!-- ======================================================== -->
-  <g id="gt3-swan-neck-wing">
+  <g id="gt3-swan-neck-wing" class="gt3-aero-group">
     <!-- Top-Mount Swan-Neck Pylons (Curving from Deck OVER to Wing Top) -->
     <!-- Forward Pylon -->
-    <path d="M 225,235 C 216,190 190,146 158,105 L 168,103 C 202,142 228,186 236,235 Z" class="gt3-aero" />
+    <path pathLength="1" d="M 230,235 C 220,188 194,144 162,103 L 172,101 C 206,140 232,184 240,235 Z" class="gt3-aero stroke-animate" />
     <!-- Aft Pylon -->
-    <path d="M 245,235 C 238,198 216,158 190,118 L 198,116 C 224,154 246,194 254,235 Z" class="gt3-aero" />
+    <path pathLength="1" d="M 250,235 C 242,196 220,156 194,116 L 202,114 C 228,152 250,192 258,235 Z" class="gt3-aero stroke-animate" />
 
     <!-- Massive GT3 Aerodynamic Vertical Endplate -->
-    <polygon points="100,90 205,96 200,172 125,170 95,135" class="gt3-aero" style="stroke-width: 2.6;" />
-    <line x1="110" y1="105" x2="195" y2="110" class="gt3-fine" />
-    <circle cx="125" cy="120" r="2.5" fill="#00d2ff" />
-    <circle cx="175" cy="125" r="2.5" fill="#00d2ff" />
+    <polygon points="100,88 210,94 205,170 128,168 95,133" class="gt3-aero" style="stroke-width: 2.6;" />
+    <line pathLength="1" x1="110" y1="103" x2="198" y2="108" class="gt3-fine" />
+    <circle cx="125" cy="118" r="2.5" fill="#00d2ff" />
+    <circle cx="178" cy="123" r="2.5" fill="#00d2ff" />
 
     <!-- Dual-Element Aerofoil Profile -->
-    <path d="M 100,105 C 135,103 170,107 206,116 L 205,122 C 170,114 135,110 100,112 Z" fill="#00e5ff" stroke="#ffffff" stroke-width="1.4" />
+    <path pathLength="1" d="M 100,103 C 135,101 172,105 210,114 L 208,120 C 172,112 135,108 100,110 Z" fill="#00f0ff" stroke="#ffffff" stroke-width="1.4" class="stroke-animate" />
     <!-- Gurney Flap on Trailing Edge -->
-    <path d="M 204,114 L 208,104 L 211,104 L 206,116 Z" fill="#ffffff" />
+    <path pathLength="1" d="M 208,112 L 212,102 L 215,102 L 210,114 Z" fill="#ffffff" />
   </g>
 
   <!-- ======================================================== -->
@@ -322,6 +326,6 @@
   <!-- ======================================================== -->
   <g id="gt3-reflection" transform="translate(0, 760) scale(1, -1)">
     <use href="#gt3-wheels" class="gt3-refl" />
-    <path d="M 945,376 L 915,376 L 905,366 C 892,342 878,328 852,320 L 830,314 C 824,286 806,260 782,248 C 756,238 718,238 688,252 C 670,260 658,276 652,295 L 650,295 L 645,274 C 630,228 596,176 558,152 C 522,130 478,126 422,136 C 368,145 320,180 286,238 L 280,250 C 256,246 226,252 202,270 C 180,285 168,310 166,338 L 130,342" class="gt3-refl" />
+    <path pathLength="1" d="M 948,376 L 920,376 L 910,366 C 898,342 884,328 858,320 L 834,314 C 828,284 810,256 786,246 C 760,236 722,236 692,250 C 674,258 662,274 656,295 L 654,295 L 648,272 C 632,224 598,172 560,148 C 524,126 478,122 422,132 C 368,142 320,178 286,236 L 282,248 C 258,244 228,250 204,268 C 182,283 170,308 168,336 L 132,342" class="gt3-refl" />
   </g>
 </svg>
