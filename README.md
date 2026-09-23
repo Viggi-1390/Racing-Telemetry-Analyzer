@@ -1,458 +1,362 @@
-🏁 Racing Telemetry Analyzer
+# 🏁 Racing Telemetry Analyzer
+
+**A pit-lane engineering workstation for motorsport telemetry analysis** — built with ASP.NET Core MVC (.NET 8), C#, SQL Server, and Entity Framework Core.
+
+Transform raw telemetry into actionable performance insights. Analyze lap data, replay sessions, compare braking zones, and optimize your racing line—all in one unified dashboard.
+
+---
+
+## 🚗 What's In The Garage?
+
+### Vehicle Management
+- **Multi-platform support** — Cars (4-wheel suspension, steering) and motorcycles (lean angle, dual braking)
+- **Race & Production vehicles** — Separate specs for track machines and road cars
+- **Custom images** — Upload vehicle liveries and reference photos
+- **CRUD operations** — Add, edit, delete with right-click context menu
+- **Vehicle-specific telemetry isolation** — No cross-contamination between different vehicles
+
+### 🏁 Track Management
+- **Track registry** — Name, country, length, corner count, track maps
+- **Track sections** — Break circuits into analyzable segments
+- **CRUD operations** — Right-click context menu for quick edits
+- **Session linkage** — Telemetry tied directly to track configuration
+
+### 📊 Telemetry Import (The Pit Telemetry Feed)
+CSV import supports **all critical channels**:
+- Timestamp, lap distance, speed, RPM, gear
+- Throttle %, brake %, steering angle
+- **Car-specific:** Suspension (FL/FR/RL/RR), steering, lateral/longitudinal/vertical G-force, position (X/Z)
+- **Bike-specific:** Lean angle, front/rear brake %, front/rear suspension
+- **Batch processing** for datasets up to 250 MB (original telemetry points retained)
+
+**Real-world test dataset:** Audi R8 LMS GT3 @ Laguna Seca — 63,000 telemetry points across 10 laps (speed, RPM, gear, throttle, brake, steering, suspension, G-force).
+
+### 🔄 Motorsport Sessions
+Fully-modeled race calendar:
+- Practice 1, 2, 3 → Qualifying → Sprint Qualifying → Sprint Race → Race
+- Multiple sessions per vehicle (no auto-generation)
+- Session selection without overwriting existing data
+
+### 📈 Telemetry Workstation
+Your digital engineer's console includes:
+- **Interactive telemetry graph** — Real-time channel visualization (speed, RPM, throttle, brake, steering)
+- **Lap list & analysis** — Best lap, lap deltas, comparative performance
+- **Session replay** — Chronological playback from Lap 1 through final lap
+- **Performance breakdown** — Braking behavior, throttle response, suspension movement, G-force loads
+- **Tyre information** — Temperature, pressure, wear percentage, status alerts
+- **Session notes** — Annotate findings lap-by-lap or by track section
+
+### ▶️ Replay (The Onboard Camera Feed)
+- Chronological session progression: Lap 1 → 2 → 3 → ... → Final Lap
+- Automatic lap continuation
+- Stops at checkered flag
+- Full telemetry sync during playback
+
+### 🛞 Car vs Motorcycle Separation
+**Cars:**
+- Four-wheel suspension mapping (FL, FR, RL, RR)
+- Steering angle telemetry
+- Four-corner G-force & position tracking
+
+**Motorcycles:**
+- Front/rear suspension only
+- Lean angle & banking data
+- Dual braking system (front/rear)
+- Two-wheel contact analysis
+
+UI automatically switches layout based on vehicle type.
+
+### 🔬 Performance Analysis (V1 Engine)
+Current analysis suite:
+- **Lap metrics** — Lap times, best lap, consistency
+- **Sector breakdown** — Sector 1/2/3 performance
+- **Braking analysis** — Braking point consistency, brake pressure curves, trail-braking effectiveness
+- **Throttle application** — Response time, application smoothness, wheel spin indicators
+- **Suspension behavior** — Bump compliance, roll rates, damping characteristics
+- **G-force analysis** — Longitudinal, lateral, vertical loads across track sections
+- **Delta information** — Comparison against best lap or reference baseline
+
+*V1 uses deterministic C# calculations and rule-based analysis. AI/ML "race engineer" features reserved for future iterations.*
+
+### 🚦 Loading Screen
+Universal motorsport silhouettes (vehicle-type independent):
+- **GT3 racing car** — All cars render the same motorsport technical silhouette
+- **MotoGP racing bike** — All motorcycles render the same motorsport technical silhouette
+
+This design decouples loading visuals from database vehicle images, preventing incorrect silhouettes.
+
+### 🎨 Motorsport UI / UX
+Unified dark-mode engineering aesthetic:
+- Dark technical surfaces with matte finishes
+- **Cyan telemetry accents** (data highlights)
+- **Orange racing accents** (interactive elements, warnings)
+- Technical grid/HUD styling with metric typography
+- Motorsport-specific context menus and cards
+- Responsive layouts (desktop/tablet)
+- Subtle transitions and motion queues
+
+Design inspiration: Animos, Godly.design, Transitions.dev, Backgrounds Supply (visual direction only—no branding/layout reproduction).
+
+---
+
+## 🗄️ Database Architecture
 
-A motorsport-focused telemetry analysis web application built with ASP.NET Core MVC (.NET 8), C#, SQL Server, Entity Framework Core, HTML/CSS/JavaScript, and CSV telemetry data.
+**SQL Server + Entity Framework Core** with these core entities:
 
-Racing Telemetry Analyzer is designed as a digital motorsport engineering workstation for organizing vehicles and tracks, importing telemetry, analyzing laps, replaying sessions, and inspecting performance data.
-
-Project: TYBSc IT Semester Project
-Academic Year: 2026–2027
-
-🚗 Core Features
-
-Vehicle Management
-
-Cars and motorcycles
-
-Race and production vehicles
-
-Vehicle specifications and custom images
-
-Add, edit and delete vehicles
-
-Right-click vehicle context menu
-
-Vehicle-specific telemetry separation
-
-Adding a vehicle does not automatically create telemetry
-
-🏁 Track Management
-
-Track name, country, length and turn count
-
-Track images/maps
-
-Add, edit and delete tracks
-
-Right-click track context menu
-
-Track selection connected to telemetry sessions
-
-📊 Telemetry Import
-
-CSV telemetry import supports channels including:
-
-Timestamp and distance
-
-Speed, RPM and gear
-
-Throttle and brake
-
-Steering
-
-Car suspension FL/FR/RL/RR
-
-Longitudinal, lateral and vertical G-force
-
-Lap number
-
-Large datasets are processed in batches while retaining the original telemetry points.
-
-🏎️ Real Telemetry Testing
-
-A major regression dataset is Audi R8 LMS GT3 Laguna Seca telemetry, containing approximately 63,000 points across 10 laps with rich speed, RPM, gear, throttle, brake, steering, suspension and G-force data.
-
-It is used to verify the complete pipeline from CSV import → database → API → graph → replay → analysis.
-
-🔄 Motorsport Sessions
-
-Supported session types:
-
-Practice 1
-
-Practice 2
-
-Practice 3
-
-Qualifying
-
-Sprint Qualifying
-
-Sprint Race
-
-Race
-
-Multiple sessions can exist for a vehicle, and existing sessions can be selected without generating new telemetry.
-
-📈 Telemetry Workstation
-
-The Telemetry page includes:
-
-Interactive telemetry graph
-
-Speed, RPM, throttle, brake and steering channels
-
-Lap list and lap analysis
-
-Session information and session selection
-
-Replay controls
-
-G-force information
-
-Suspension information
-
-Braking and throttle analysis
-
-Telemetry import
-
-▶️ Replay
-
-Replay follows the complete chronological session:
-
-Lap 1 → Lap 2 → Lap 3 → ... → Final Lap
-
-An intermediate lap ending should automatically continue into the next lap. Replay stops at the end of the final lap.
-
-🛞 Car vs Motorcycle Telemetry
-
-Cars can use four-corner suspension, steering and four-wheel information.
-
-Motorcycles can use front/rear suspension, lean angle, front/rear braking and two-wheel information.
-
-The motorcycle interface does not use a four-wheel car layout.
-
-🔬 Performance Analysis
-
-Current V1 analysis includes:
-
-Lap times and best lap
-
-Lap-by-lap telemetry
-
-Delta information
-
-Braking behaviour
-
-Throttle application
-
-Suspension behaviour
-
-Longitudinal/lateral/vertical G-force
-
-V1 primarily uses deterministic C# calculations and rule-based analysis. AI/ML race-engineer features are future scope.
-
-🚦 Loading Screen
-
-The loading screen uses two universal motorsport category silhouettes:
-
-GT3 Racing Car
-
-All cars use the same universal GT3-style technical silhouette.
-
-Audi R8 LMS
-Cadillac V-Series.R
-Ferrari 499P
-BMW M Hybrid V8
-Future cars
-      ↓
-Universal GT3 Loading Silhouette
-
-MotoGP Racing Bike
-
-All motorcycles use the same universal MotoGP-style technical silhouette.
-
-Any motorcycle
-      ↓
-Universal MotoGP Loading Silhouette
-
-The selected vehicle's database/custom image is not used as the loading silhouette.
-
-Loading assets are stored in:
-
-wwwroot/images/loading/
-
-🎨 Motorsport UI / UX
-
-The project uses a unified dark motorsport engineering visual language:
-
-Dark technical surfaces
-
-Cyan telemetry accents
-
-Orange racing accents
-
-Technical grid/HUD styling
-
-Motorsport cards and context menus
-
-Responsive layouts
-
-Subtle transitions and motion
-
-Design inspiration comes from Animos, Godly.design, Transitions.dev, and Backgrounds Supply. These are references for visual and interaction direction, not copied branding or proprietary layouts.
-
-🗄️ Database Model
-
-The project uses SQL Server with Entity Framework Core.
-
-Core entities include:
-
+```
 Vehicle
-Track
-Session
-Lap
-TelemetryPoint
-TrackSection
-VehicleSetup
-SessionCondition
-AnalysisResult
-PersonalRecord
-SessionNote
-AnalysisSnapshot
-
-High-level relationship:
-
-Vehicle
-   │
-   └── Sessions
-          │
-          └── Laps
-                 │
-                 ├── Telemetry Points
-                 └── Analysis Results
+  └── Sessions
+       ├── Lap (LapNumber, LapTime, Sector1-3, IsValid)
+       │    ├── TelemetryPoint (Timestamp, Speed, RPM, Throttle, Brake, Steering, G-force, etc.)
+       │    └── AnalysisResult (EntrySpeed, MinSpeed, ExitSpeed, Recommendations)
+       ├── VehicleSetup (FrontWing, RearWing, RideHeight, BrakeBias)
+       ├── SessionCondition (AirTemp, TrackTemp, Weather, WindSpeed, TrackCondition)
+       └── SessionNote (Lap-specific or Section-specific annotations)
 
 Track
-   │
-   └── Track Sections
+  └── TrackSection (StartDistance, EndDistance, Name)
+```
 
-🧩 Main Services
+**High-volume data handling:**
+- Telemetry batching for large imports (250 MB server limits configured)
+- Database indices optimized for lap/sector queries
+- Efficient foreign key relationships (no data duplication)
 
-TelemetryImportService — CSV ingestion, validation, batching and persistence
+---
 
-TelemetryAnalysisService — telemetry/performance calculations
+## 🧩 Architecture & Services
 
-TelemetryReplayService — chronological replay
+| Service | Purpose |
+|---------|---------|
+| **TelemetryImportService** | CSV parsing, validation, batching, database persistence |
+| **TelemetryAnalysisService** | Lap metrics, sector performance, consistency calculations |
+| **DataGeneratorService** | Demo telemetry generation for testing |
+| **CsvImportService** | File handling, channel mapping, data cleaning |
 
-LapComparisonService — lap comparison and delta calculations
+**API Endpoints:**
+- `/api/telemetry` — Query telemetry points by lap/session
+- `/api/sessions` — CRUD operations on sessions
+- `/api/analysis` — Retrieve performance analysis results
 
-SuspensionAnalysisService — suspension analysis
+**CORS enabled** for cross-origin requests (dev/testing).
 
-BrakingAnalysisService — braking analysis
+---
 
-ThrottleAnalysisService — throttle analysis
+## 🛠️ Technology Stack
 
-TrackAnalysisService — track analysis
+| Layer | Technology |
+|-------|-----------|
+| **Language** | C# 12 |
+| **Framework** | ASP.NET Core MVC (.NET 8) |
+| **Database** | SQL Server + Entity Framework Core 8.0 |
+| **Frontend** | HTML5, CSS3, JavaScript (Canvas for graphs) |
+| **Data Format** | CSV (import), JSON (API responses) |
+| **Testing** | MSTest |
+| **IDE** | Visual Studio 2026 / VS Code |
+| **OS** | Windows 10/11 |
+| **VCS** | Git + GitHub |
 
-DeltaCalculationService — delta calculations
+---
 
-🛠️ Technology Stack
+## 📁 Project Structure
 
-Area
-
-Technology
-
-Language
-
-C#
-
-Framework
-
-ASP.NET Core MVC
-
-Target
-
-.NET 8
-
-ORM
-
-Entity Framework Core
-
-Database
-
-Microsoft SQL Server
-
-Frontend
-
-HTML5, CSS3, JavaScript
-
-Telemetry Visualization
-
-HTML Canvas / JavaScript
-
-Data Import
-
-CSV
-
-IDE
-
-Visual Studio 2026 / VS Code
-
-OS
-
-Windows 10/11
-
-Version Control
-
-Git + GitHub
-
-📁 Project Structure
-
+```
 Racing-Telemetry-Analyzer/
-├── Controllers/
-├── Services/
-├── Models/
-├── Data/
-├── Views/
-├── wwwroot/
-│   ├── css/
-│   ├── js/
-│   └── images/
-│       ├── cars/
-│       ├── bikes/
-│       ├── tracks/
-│       └── loading/
-├── Migrations/
-├── RacingTelemetryAnalyzer.Tests/
-└── README.md
+├── Controllers/                    # MVC route handlers
+│   ├── HomeController.cs
+│   ├── TelemetryController.cs
+│   ├── TelemetryApiController.cs
+│   └── TrackController.cs
+├── Services/                       # Business logic
+│   ├── TelemetryImportService.cs
+│   ├── TelemetryAnalysisService.cs
+│   ├── CsvImportService.cs
+│   └── DataGeneratorService.cs
+├── Models/                         # Domain entities
+│   ├── DomainModels.cs             # Vehicle, Track, Session, Lap, TelemetryPoint, etc.
+│   └── ErrorViewModel.cs
+├── Data/                           # EF Core context
+│   └── ApplicationDbContext.cs
+├── Views/                          # Razor views
+│   ├── Home/
+│   ├── Telemetry/
+│   ├── Track/
+│   └── Shared/
+├── Components/
+│   └── TelemetryRollingGraph.razor # Blazor telemetry visualization
+├── wwwroot/                        # Static assets
+│   ├── css/                        # Motorsport styling
+│   ├── js/                         # Client-side logic
+│   ├── images/
+│   │   ├── cars/
+│   │   ├── bikes/
+│   │   ├── tracks/
+│   │   └── loading/                # GT3/MotoGP silhouettes
+│   └── svg/                        # Inline SVG assets
+├── Migrations/                     # EF Core schema versions
+├── RacingTelemetryAnalyzer.Tests/  # Unit tests
+├── appsettings.json                # Configuration
+└── README.md                       # You are here
+```
 
-🚀 Getting Started
+---
 
-Prerequisites
+## 🚀 Quick Start
 
-.NET 8 SDK
+### Prerequisites
+- **.NET 8 SDK** (or later)
+- **SQL Server** (or SQL Server LocalDB)
+- **Visual Studio 2026** or **VS Code**
+- **Windows 10/11** (recommended)
 
-SQL Server or SQL Server LocalDB
-
-Visual Studio 2026 or VS Code
-
-Windows 10/11 recommended
-
-Clone
-
+### Clone & Setup
+```bash
 git clone https://github.com/Viggi-1390/Racing-Telemetry-Analyzer.git
 cd Racing-Telemetry-Analyzer
+```
 
-Restore
-
+### Restore Dependencies
+```bash
 dotnet restore
+```
 
-Configure SQL Server
+### Configure SQL Server
+Edit `appsettings.json` with your connection string:
 
-Set the connection string in appsettings.json.
-
-Example:
-
+```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Server=YOUR_SERVER;Database=RacingTelemetry;Trusted_Connection=True;TrustServerCertificate=True;"
   }
 }
+```
 
-Apply Migrations
+**Local development example** (SQL Server LocalDB):
+```
+Server=(localdb)\\mssqllocaldb;Database=RacingTelemetry;Trusted_Connection=True;
+```
 
+### Apply Database Migrations
+```bash
 dotnet ef database update
+```
 
-Build and Run
-
+### Build & Run
+```bash
 dotnet build
 dotnet run
+```
 
-Open the local URL shown by ASP.NET Core.
+Open the local URL (typically `https://localhost:7000`).
 
-📥 Telemetry Workflow
+---
 
-Select Vehicle
-      ↓
-Select Track
-      ↓
-Select Session Type
-      ↓
-Import CSV / Generate Demo Data
-      ↓
-Validate Telemetry
-      ↓
-Create Session
-      ↓
-Create Laps
-      ↓
-Store Telemetry Points
-      ↓
-Open Telemetry Workstation
-      ↓
-Analyze / Replay
+## 📥 Telemetry Workflow (The Pit Strategy)
 
-🧪 Testing
+```
+1. Select Vehicle (car or bike)
+       ↓
+2. Select Track (and review track sections)
+       ↓
+3. Choose Session Type (Practice, Qualifying, Race, etc.)
+       ↓
+4. Import Telemetry
+       • CSV upload → validation → batch ingestion
+       • OR generate demo data for testing
+       ↓
+5. Create Session
+       • Name, date, condition logging
+       ↓
+6. Build Lap Structure
+       • Parse telemetry into laps
+       • Validate lap boundaries
+       ↓
+7. Store Telemetry Points
+       • Speed, RPM, throttle, brake, suspension, G-force, etc.
+       ↓
+8. Open Telemetry Workstation
+       • Interactive graphs, lap list, session info
+       ↓
+9. Analyze & Replay
+       • Review performance, spot patterns
+       • Replay session chronologically
+       • Annotate findings
+```
 
-The repository contains:
+---
 
-RacingTelemetryAnalyzer.Tests/
+## 🧪 Testing
 
-Run:
-
+### Run Test Suite
+```bash
 dotnet build
 dotnet test
+```
 
-Important regression areas include vehicle/track CRUD, CSV import, large telemetry imports, multi-lap sessions, replay progression, session selection, car/bike telemetry, R8 LMS telemetry, visualization, and loading-screen selection.
+### Regression Test Areas
+- Vehicle/Track CRUD (create, read, update, delete)
+- CSV import validation and batch processing
+- Large telemetry import (63k+ points)
+- Multi-lap session handling
+- Replay progression (Lap 1 → Final Lap)
+- Session selection (no data overwrites)
+- Car vs. motorcycle telemetry separation
+- **Real data:** Audi R8 LMS @ Laguna Seca (10 laps, 63k points)
+- Visualization rendering and interactivity
+- Loading screen silhouette selection
 
-🔒 Data Safety Rules
+---
 
-Adding a vehicle must not automatically create telemetry.
+## 🔒 Data Safety Rules (Pit Lane Protocols)
 
-Telemetry belongs to a specific session and vehicle.
+✅ **Must enforce:**
+1. Adding a vehicle does NOT automatically create telemetry
+2. Telemetry is strictly scoped to a specific session + vehicle
+3. Adding unrelated vehicles must NOT mutate existing telemetry
+4. Loading-screen visuals are independent of database vehicle images
+5. Cars ALWAYS render GT3 silhouette (regardless of actual vehicle)
+6. Bikes ALWAYS render MotoGP silhouette (regardless of actual bike)
 
-Existing telemetry should not be changed when adding unrelated vehicles.
+---
 
-Loading-screen visuals are independent of database vehicle images.
+## 🔮 Future Scope (The Upgrade Garage)
 
-Cars always use the universal GT3 loading silhouette.
+Planned features for future iterations:
+- **AI Race Engineer** — Automated performance coaching and optimization hints
+- **Anomaly Detection** — Automatically flag unusual behavior (spins, lock-ups, etc.)
+- **Performance Prediction** — Estimate lap time based on setup changes
+- **Driver Comparison** — Head-to-head lap analysis
+- **Real-Time Telemetry** — Live streaming from trackside
+- **Simulator Integration** — Import telemetry from iRacing, Assetto Corsa, etc.
+- **CAN/OBD-II Integration** — Direct vehicle data feeds
+- **Advanced Tyre Modelling** — Temperature, compound, degradation analysis
+- **Fuel, ERS, DRS Analysis** — Hybrid/electric/DRS energy management
+- **3D Visualization** — Vehicle and track 3D rendering
+- **Cloud Storage** — Sync sessions across devices
+- **Automated Reports** — PDF/HTML engineering documentation
 
-Bikes always use the universal MotoGP loading silhouette.
+*These are aspirational and not required for V1.*
 
-🔮 Future Scope
+---
 
-Possible future versions may include:
+## 👨‍💻 Project Information
 
-AI race-engineer analysis
+| Field | Value |
+|-------|-------|
+| **Project Name** | Racing Telemetry Analyzer |
+| **Developer** | Vighnesh (Viggi) |
+| **Repository** | [GitHub](https://github.com/Viggi-1390/Racing-Telemetry-Analyzer) |
 
-AI anomaly detection
+---
 
-Performance prediction
+## 🏁 Mission
 
-Driver comparison/coaching
+> **Turn raw telemetry into engineering insight.**
 
-Real-time telemetry
+Built for motorsport enthusiasts and engineers who demand precision. Whether you're analyzing track days, sim racing, or developing racing software—this workstation gives you the tools to understand your data, replay your sessions, and improve your craft.
 
-Simulator integrations
+**Analyze. Replay. Understand. Improve. 🏎️**
 
-OBD-II/CAN integration
+---
 
-Advanced tyre modelling
-
-Engine/tyre temperature analysis
-
-Fuel, ERS and DRS analysis
-
-Advanced suspension analysis
-
-3D vehicle/track visualization
-
-Cloud session storage
-
-Automated engineering reports
-
-These are future extensions and are not required for the current V1 implementation.
-
-👨‍💻 Project Information
-
-Project: Racing Telemetry Analyzer
-Student: Vighnesh (Viggi)
-Course: TYBSc IT
-Academic Year: 2026–2027
-
-🏁 Mission
-
-Turn raw telemetry into engineering insight.
-
-Built for motorsport analysis and developed as a college project.
-
-🏎️ Analyze. Replay. Understand. Improve.
+*Last Updated: September 2026*
