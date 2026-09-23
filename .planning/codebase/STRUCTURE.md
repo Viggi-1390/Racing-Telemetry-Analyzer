@@ -15,7 +15,6 @@ RacingTelemetryAnalyzer/
 │   ├── CsvImportService.cs   # Streaming CSV parser with batch commits
 │   ├── DataGeneratorService.cs # Synthetic telemetry data generator
 │   ├── ITelemetryAnalysisService.cs # Contract for telemetry analyzers
-│   ├── ReportService.cs      # QuestPDF telemetry report builder
 │   └── TelemetryAnalysisService.cs # Rule-based driving advice engine
 ├── Models/                   # Domain entities and view models
 │   ├── DomainModels.cs       # Vehicle, Track, Session, Lap, TelemetryPoint
@@ -55,7 +54,7 @@ RacingTelemetryAnalyzer/
 
 **`Services/`:**
 - Purpose: Core application business logic, telemetry algorithms, and stream processing.
-- Key files: `TelemetryAnalysisService.cs`, `CsvImportService.cs`, `DataGeneratorService.cs`, `ReportService.cs`.
+- Key files: `TelemetryAnalysisService.cs`, `CsvImportService.cs`, `DataGeneratorService.cs`.
 
 **`Models/`:**
 - Purpose: Entity models representing the motorsport domain and view data transfer objects.

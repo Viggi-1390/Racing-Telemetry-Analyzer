@@ -8,7 +8,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ITelemetryAnalysisService, TelemetryAnalysisService>();
-builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<DataGeneratorService>();
 builder.Services.AddScoped<CsvImportService>();
 

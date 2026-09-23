@@ -10,11 +10,6 @@
 - Processing Strategy: 1,000-row batch commits, periodic ChangeTracker clearing, non-blocking asynchronous progress reporting
 - Endpoint: `/Telemetry/ImportCsv`
 
-**PDF Export Engine:**
-- QuestPDF fluent layout engine (Community license)
-- Used for generating standalone A4 PDF telemetry debrief sheets and driver recommendations
-- Service: `Services/ReportService.cs`
-
 ## Data Storage
 
 **Databases:**

@@ -37,7 +37,7 @@
 - Order:
   1. System namespaces (`System`, `System.Collections.Generic`, `System.Linq`, `System.Threading.Tasks`)
   2. Microsoft framework namespaces (`Microsoft.AspNetCore.Mvc`, `Microsoft.EntityFrameworkCore`)
-  3. Third-party packages (`CsvHelper`, `QuestPDF.Fluent`)
+  3. Third-party packages (`CsvHelper`)
   4. Project namespaces (`RacingTelemetryAnalyzer.Data`, `RacingTelemetryAnalyzer.Models`, `RacingTelemetryAnalyzer.Services`)
 
 ## Architectural & Design Patterns

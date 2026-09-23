@@ -7,7 +7,7 @@
 **Pattern:** Layered ASP.NET Core MVC with Repository/DbContext Data Access and Dedicated Domain Services
 
 - **Presentation Layer:** ASP.NET Core MVC Controllers (`Controllers/`) returning Razor Views (`Views/`) and high-throughput JSON API endpoints (`Controllers/TelemetryApiController.cs`).
-- **Domain & Analytics Layer:** Scoped services (`Services/`) managing telemetry physics calculations, heuristic recommendations, streaming CSV ingestion, and PDF generation.
+- **Domain & Analytics Layer:** Scoped services (`Services/`) managing telemetry physics calculations, heuristic recommendations, and streaming CSV ingestion.
 - **Data Access Layer:** Entity Framework Core (`Data/ApplicationDbContext.cs`) utilizing code-first migrations and domain models (`Models/DomainModels.cs`).
 
 ## Component Boundaries
@@ -22,7 +22,6 @@
 - `TelemetryAnalysisService.cs` (`ITelemetryAnalysisService`): Deterministic driving analysis (peak braking pressure, apex minimum speed, throttle response time, motorcycle lean angle thresholding).
 - `CsvImportService.cs`: High-performance streaming parser processing large datasets (80MB+, 63,000+ points) line-by-line with 1,000-point batching to prevent memory overflow and timeouts.
 - `DataGeneratorService.cs`: Generates synthetic telemetry points for demonstration sessions across multiple vehicle categories (GT3, LMDh, MotoGP).
-- `ReportService.cs`: Compiles lap metrics and recommendations into QuestPDF documents.
 
 **Data & Models (`Data/`, `Models/`):**
 - `DomainModels.cs`: Unified motorsport entity hierarchy (`Vehicle` -> `Session` -> `Lap` -> `TelemetryPoint`), supporting car telemetry (steering, 4-wheel suspension travel, 3-axis G-forces) and motorcycle telemetry (lean angle, dual brakes, fork/shock stroke).

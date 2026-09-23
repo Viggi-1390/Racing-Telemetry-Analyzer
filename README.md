@@ -1,4 +1,4 @@
-﻿# 🏁 Racing Telemetry Analyzer
+# 🏁 Racing Telemetry Analyzer
 
 A high-performance ASP.NET Core application for capturing, analyzing, and optimizing motorsport telemetry data. Think of it as your pit crew chief in digital form—extracting actionable performance insights from every lap.
 
@@ -47,8 +47,7 @@ Racing Telemetry Analyzer
 ├── Services/            # Performance engineering team
 │   ├── TelemetryAnalysisService    # Lap analysis & metrics
 │   ├── CsvImportService            # Telemetry data upload
-│   ├── DataGeneratorService        # Simulator/test data
-│   └── ReportService               # PDF generation
+│   └── DataGeneratorService        # Simulator/test data
 ├── Models/              # Vehicle setup specs
 │   └── DomainModels.cs  # Vehicle, Track, Session, Lap, Telemetry data
 ├── Views/               # Driver display screens
@@ -106,9 +105,8 @@ Real-time tyre health monitoring:
 - **Status indicators**: Optimal, Warning, Critical
 - **Smart detection**: Automatically adapts for bikes (2 tyres) vs cars (4 tyres)
 
-### Data Import & Export
+### Data Import & Management
 - **CSV import**: Upload telemetry logs from data acquisition systems
-- **PDF reports**: Generate professional performance reports
 - **Session notes**: Attach driver/engineer feedback to sessions or laps
 
 ---
@@ -123,7 +121,6 @@ Real-time tyre health monitoring:
 | **Frontend** | HTML5, CSS3, JavaScript | |
 | **Interactive UI** | Razor Components (Blazor) | |
 | **Data Parsing** | CsvHelper | 33.1.0+ |
-| **PDF Generation** | QuestPDF | 2026.8.0+ |
 
 ---
 
@@ -161,12 +158,6 @@ Ingests telemetry from common data acquisition formats and maps them to the tele
 
 ### DataGeneratorService
 Generates synthetic race data for testing and demos—useful for continuous integration or sandbox environments.
-
-### ReportService
-Exports session data into professional PDF reports with:
-- Lap-by-lap breakdowns
-- Performance trends
-- Comparative analysis
 
 ---
 
@@ -222,8 +213,7 @@ Endpoints for:
   ├─ ITelemetryAnalysisService.cs → Interface for analysis
   ├─ TelemetryAnalysisService.cs   → Core analysis logic
   ├─ CsvImportService.cs           → CSV parsing & import
-  ├─ DataGeneratorService.cs       → Test data generation
-  └─ ReportService.cs              → PDF export
+  └─ DataGeneratorService.cs       → Test data generation
 
 /Models
   └─ DomainModels.cs    → All entity classes (Vehicle, Track, Session, Lap, etc.)
@@ -319,7 +309,6 @@ AnalysisResult → Performance metrics
 4. Input vehicle setup (wing angles, brake bias, etc.)
 5. Record lap data (manual or CSV import)
 6. System auto-generates sector analysis & recommendations
-7. Export PDF report for debrief
 
 ### Scenario 2: Analyze Telemetry Post-Session
 1. Browse completed sessions
@@ -327,7 +316,6 @@ AnalysisResult → Performance metrics
 3. Compare best lap vs. current lap
 4. Identify problem corners (high-speed understeer at Turn 7?)
 5. Review AI recommendations for setup tweaks
-6. Export findings as PDF
 
 ### Scenario 3: Track Development
 1. Add new circuit to the database
@@ -388,7 +376,6 @@ Built with ❤️ and caffeine. 🏁☕
 - [ASP.NET Core Docs](https://docs.microsoft.com/en-us/aspnet/core)
 - [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core)
 - [CsvHelper Documentation](https://joshclose.github.io/CsvHelper)
-- [QuestPDF](https://www.questpdf.com)
 
 ---
 

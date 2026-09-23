@@ -5,7 +5,7 @@
 ## Languages
 
 **Primary:**
-- C# (.NET 8.0) - Backend MVC controllers, services, EF Core data access, QuestPDF reporting
+- C# (.NET 8.0) - Backend MVC controllers, services, EF Core data access
 - JavaScript (ES6+) - Frontend telemetry visualization, replay canvas loop, Chart.js graphs, streaming upload monitor
 
 **Secondary:**
@@ -37,7 +37,6 @@
 
 **Critical:**
 - `CsvHelper` (33.1.0) - High-throughput CSV parsing and fallback import
-- `QuestPDF` (2026.8.0) - High-performance PDF generation for telemetry lap reports
 - `Microsoft.EntityFrameworkCore.SqlServer` (8.0.26) - Database provider for Microsoft SQL Server
 
 **Infrastructure:**

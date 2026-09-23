@@ -41,8 +41,8 @@
 ## Test Coverage Gaps
 
 **Untested Services:**
-- What's not tested: `CsvImportService`, `DataGeneratorService`, `ReportService`, MVC Controllers.
-- Files: `Services/CsvImportService.cs`, `Services/DataGeneratorService.cs`, `Services/ReportService.cs`
+- What's not tested: `CsvImportService`, `DataGeneratorService`, MVC Controllers.
+- Files: `Services/CsvImportService.cs`, `Services/DataGeneratorService.cs`
 - Risk: Regressions in CSV streaming or calculation formulas could occur unnoticed.
 - Priority: Medium
 

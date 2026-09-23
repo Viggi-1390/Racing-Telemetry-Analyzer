@@ -69,7 +69,6 @@ public void AnalyzeLap_WithConservativeBraking_ReturnsBrakingRecommendation()
   - `CsvImportService`: Needs integration tests with sample CSV files and progress tracking tokens.
   - `DataGeneratorService`: Needs tests verifying generated lap timestamps and telemetry ranges.
   - `TelemetryApiController`: Needs API integration tests for `/api/telemetry/session/{id}` and `/api/telemetry/latest`.
-  - `ReportService`: Needs PDF layout output byte-stream validation.
 
 ---
 
