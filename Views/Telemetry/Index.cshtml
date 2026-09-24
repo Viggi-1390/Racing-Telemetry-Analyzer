@@ -38,13 +38,13 @@
                         @(vehicle?.Manufacturer?.ToUpper()) &bull; @(vehicle?.Class?.ToUpper() ?? "UNCLASSIFIED") &bull; @(vehicle?.Power) HP
                     </span>
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-3">
                     @if (allVehicles != null && allVehicles.Any())
                     {
                         <div class="d-flex flex-column align-items-end gap-1">
                             <label class="text-muted small" style="font-size: 0.72rem; letter-spacing: 0.5px;">SWITCH VEHICLE</label>
-                            <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 200px;"
-                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value;">
+                            <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 180px;"
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value + '&trackId=@(track?.TrackId)';">
                                 @foreach (var v in allVehicles)
                                 {
                                     if (v.VehicleId == vehicle?.VehicleId)
@@ -59,16 +59,39 @@
                             </select>
                         </div>
                     }
+                    @if (ViewBag.AllTracks is IEnumerable<RacingTelemetryAnalyzer.Models.Track> noDataTracks && noDataTracks.Any())
+                    {
+                        <div class="d-flex flex-column align-items-end gap-1">
+                            <label class="text-muted small" style="font-size: 0.72rem; letter-spacing: 0.5px;">SWITCH TRACK</label>
+                            <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 160px;"
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&trackId=' + this.value;">
+                                @foreach (var t in noDataTracks)
+                                {
+                                    if (t.TrackId == track?.TrackId)
+                                    {
+                                        <option value="@t.TrackId" selected>@t.Name.ToUpper()</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@t.TrackId">@t.Name.ToUpper()</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
                 </div>
             </div>
 
             <!-- Empty State Notice -->
             <div class="my-4 py-2">
-                <div class="display-6 text-orange mb-3" style="font-weight: 800; letter-spacing: 2px;">
+                <div class="display-6 text-orange mb-2" style="font-weight: 800; letter-spacing: 2px;">
                     NO TELEMETRY DATA AVAILABLE
                 </div>
+                <div class="text-cyan small fw-bold font-monospace text-uppercase mb-3" style="letter-spacing: 1.5px;">
+                    // @(vehicle?.Name?.ToUpper()) &bull; @(track?.Name?.ToUpper())
+                </div>
                 <p class="text-muted mx-auto" style="max-width: 580px; font-size: 0.95rem; line-height: 1.6;">
-                    This vehicle was created without telemetry records. In accordance with the motorsport architecture, telemetry is kept strictly decoupled from vehicle registration and is only attached when explicitly imported or generated.
+                    No telemetry sessions exist for this vehicle at @(track?.Name ?? "this track"). Telemetry is strictly isolated by vehicle, track, and session. Upload a CSV log or generate demonstration telemetry below to begin analysis.
                 </p>
             </div>
 
@@ -136,7 +159,7 @@
                             <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
                             <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
                             <input type="hidden" name="sessionType" id="noDataGenerateSessionType" value="PRACTICE 1" />
-                            <div class="text-muted small py-1">Target Track: <strong class="text-light">@(track?.Name ?? "MONZA")</strong></div>
+                            <div class="text-muted small py-1">Target Track: <strong class="text-light">@(track?.Name?.ToUpper() ?? "SELECTED TRACK")</strong></div>
                             <button type="submit" class="btn btn-orange-primary w-100 py-2" style="background:#ff5a1f; color:#fff; font-weight:700; letter-spacing:1px; border:none;">
                                 ⚡ GENERATE DEMO SESSION
                             </button>
@@ -170,7 +193,7 @@
                         @if (allVehicles != null && allVehicles.Any())
                         {
                             <select class="form-select form-select-sm vehicle-quick-select" 
-                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value;">
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value + '&trackId=@(track?.TrackId)';">
                                 @foreach (var v in allVehicles)
                                 {
                                     if (v.VehicleId == vehicle?.VehicleId)
@@ -206,12 +229,12 @@
                 <div class="dash-card session-card">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="card-section-title mb-0" style="font-size: 0.68rem; color: #ff5a1f;">SESSION INFO</span>
-                        @if (allSessions != null && allSessions.Count() > 1)
+                        @if (allSessions != null && allSessions.Any())
                         {
                             <select class="form-select form-select-sm vehicle-quick-select" 
                                     style="max-width: 150px; font-size: 0.72rem;"
                                     title="Switch Session"
-                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&sessionId=' + this.value;">
+                                    onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&trackId=@(track?.TrackId)&sessionId=' + this.value;">
                                 @foreach (var s in allSessions)
                                 {
                                     if (s.SessionId == session?.SessionId)
@@ -229,7 +252,29 @@
                     <div class="info-rows">
                         <div class="info-row">
                             <span class="info-label">Track</span>
-                            <span class="info-val">@(track?.Name ?? "Monza")</span>
+                            @if (ViewBag.AllTracks is IEnumerable<RacingTelemetryAnalyzer.Models.Track> workstationTracks && workstationTracks.Any())
+                            {
+                                <select class="form-select form-select-sm border-0 bg-transparent text-end text-light p-0 pe-2 fw-semibold font-monospace"
+                                        style="max-width: 150px; font-size: 0.78rem; cursor: pointer;"
+                                        title="Switch Track"
+                                        onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&trackId=' + this.value;">
+                                    @foreach (var t in workstationTracks)
+                                    {
+                                        if (t.TrackId == track?.TrackId)
+                                        {
+                                            <option value="@t.TrackId" class="bg-dark text-light" selected>@t.Name.ToUpper()</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@t.TrackId" class="bg-dark text-light">@t.Name.ToUpper()</option>
+                                        }
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <span class="info-val">@(track?.Name?.ToUpper() ?? "MONZA")</span>
+                            }
                         </div>
                         <div class="info-row">
                             <span class="info-label">Session</span>
@@ -1588,15 +1633,23 @@
         }
         computeCumulativeMetrics();
 
-        // Background fetch for complete session dataset (allows seamless 10-lap replay without slowing down initial page render)
+        // Background fetch for complete session dataset (strictly validated by vehicleId & trackId)
         if (currentSessionId > 0) {
-            fetch('/api/telemetry/session/' + currentSessionId)
-                .then(r => r.json())
+            const apiUrl = '/api/telemetry/session/' + currentSessionId + '?vehicleId=' + currentVehicleId + '&trackId=' + currentTrackId;
+            fetch(apiUrl)
+                .then(r => {
+                    if (!r.ok) {
+                        console.warn("Telemetry API returned " + r.status + " for " + apiUrl);
+                        return null;
+                    }
+                    return r.json();
+                })
                 .then(payload => {
-                    if (payload && payload.data && payload.data.length > 0) {
-                        telemetryData = payload.data;
-                        if (payload.laps && payload.laps.length > 0) {
-                            availableLaps = payload.laps.map(l => ({
+                    if (payload && (payload.data || payload.Data) && (payload.data || payload.Data).length > 0) {
+                        telemetryData = payload.data || payload.Data;
+                        const lapsSource = payload.laps || payload.Laps;
+                        if (lapsSource && lapsSource.length > 0) {
+                            availableLaps = lapsSource.map(l => ({
                                 lap: l.lapNumber ?? l.lap,
                                 lapId: l.lapId,
                                 lapTime: l.lapTime

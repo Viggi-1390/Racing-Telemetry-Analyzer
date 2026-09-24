@@ -23,9 +23,10 @@ namespace RacingTelemetryAnalyzer.Controllers
 
         /// <summary>
         /// Loads ALL telemetry data upfront into memory for a given session.
+        /// Strictly validates vehicleId and trackId if provided to prevent cross-vehicle/cross-track leaks.
         /// </summary>
-        [HttpGet("session/{sessionId}")]
-        public async Task<IActionResult> GetSessionTelemetry(int sessionId)
+        [HttpGet("session/{sessionId:int}")]
+        public async Task<IActionResult> GetSessionTelemetry(int sessionId, [FromQuery] int? vehicleId = null, [FromQuery] int? trackId = null)
         {
             var session = await _context.Sessions
                 .Include(s => s.Vehicle)
@@ -34,17 +35,27 @@ namespace RacingTelemetryAnalyzer.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
-            if (session == null)
+            if (session == null || !session.Laps.Any())
             {
-                return NotFound(new { message = $"Session ID {sessionId} not found." });
+                return NotFound(new { success = false, message = $"Session ID {sessionId} not found or contains no laps." });
+            }
+
+            if (vehicleId.HasValue && session.VehicleId != vehicleId.Value)
+            {
+                return NotFound(new { success = false, message = $"Session {sessionId} does not belong to vehicle {vehicleId.Value}." });
+            }
+
+            if (trackId.HasValue && session.TrackId != trackId.Value)
+            {
+                return NotFound(new { success = false, message = $"Session {sessionId} does not belong to track {trackId.Value}." });
             }
 
             return await BuildTelemetryResponse(session);
         }
 
         /// <summary>
-        /// Loads latest telemetry session for a vehicle/track.
-        /// Handles Audi R8 aliases (e.g. 2029 or 2032) and Monza track aliases (Track 1 or 5).
+        /// Loads latest telemetry session strictly for a specific vehicle and/or track.
+        /// Data-driven without vehicle or track specific aliases.
         /// </summary>
         [HttpGet("latest")]
         public async Task<IActionResult> GetLatestTelemetry([FromQuery] int? vehicleId = null, [FromQuery] int? trackId = null)
@@ -57,33 +68,12 @@ namespace RacingTelemetryAnalyzer.Controllers
 
             if (vehicleId.HasValue)
             {
-                var v = await _context.Vehicles.FirstOrDefaultAsync(x => x.VehicleId == vehicleId.Value);
-                if (v != null && (v.Name.Contains("R8") || v.Manufacturer.Contains("Audi")))
-                {
-                    var r8Ids = await _context.Vehicles
-                        .Where(x => x.Name.Contains("R8") || x.Manufacturer.Contains("Audi"))
-                        .Select(x => x.VehicleId)
-                        .ToListAsync();
-                    query = query.Where(s => r8Ids.Contains(s.VehicleId));
-                }
-                else
-                {
-                    query = query.Where(s => s.VehicleId == vehicleId.Value);
-                }
+                query = query.Where(s => s.VehicleId == vehicleId.Value);
             }
 
             if (trackId.HasValue)
             {
-                var trk = await _context.Tracks.FirstOrDefaultAsync(t => t.TrackId == trackId.Value);
-                if (trk != null && trk.Name.ToUpper().Contains("MONZA"))
-                {
-                    var monzaIds = await _context.Tracks.Where(t => t.Name.ToUpper().Contains("MONZA")).Select(t => t.TrackId).ToListAsync();
-                    query = query.Where(s => monzaIds.Contains(s.TrackId));
-                }
-                else
-                {
-                    query = query.Where(s => s.TrackId == trackId.Value);
-                }
+                query = query.Where(s => s.TrackId == trackId.Value);
             }
 
             var session = await query
@@ -93,7 +83,7 @@ namespace RacingTelemetryAnalyzer.Controllers
 
             if (session == null)
             {
-                return NotFound(new { message = "No telemetry session found." });
+                return NotFound(new { success = false, message = "No telemetry session found for the requested vehicle and track." });
             }
 
             return await BuildTelemetryResponse(session);
@@ -104,11 +94,11 @@ namespace RacingTelemetryAnalyzer.Controllers
             var lapDict = session.Laps.ToDictionary(l => l.LapId, l => l.LapNumber);
             var lapIds = lapDict.Keys.ToList();
 
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadUncommitted);
+
             var rawPoints = await _context.TelemetryPoints
                 .AsNoTracking()
                 .Where(t => lapIds.Contains(t.LapId))
-                .OrderBy(t => t.LapId)
-                .ThenBy(t => t.Timestamp)
                 .Select(t => new
                 {
                     t.TelemetryPointId,
@@ -130,6 +120,8 @@ namespace RacingTelemetryAnalyzer.Controllers
                     GVert = t.GVert
                 })
                 .ToListAsync();
+
+            await transaction.CommitAsync();
 
             var orderedLaps = session.Laps.OrderBy(l => l.LapNumber).Select(l => new
             {
@@ -170,14 +162,15 @@ namespace RacingTelemetryAnalyzer.Controllers
 
             return Ok(new
             {
-                SessionId = session.SessionId,
-                SessionName = session.Name,
-                Vehicle = new { session.Vehicle?.VehicleId, session.Vehicle?.Name, session.Vehicle?.Manufacturer, session.Vehicle?.Class, session.Vehicle?.VehicleType },
-                Track = new { session.Track?.TrackId, session.Track?.Name, session.Track?.Length },
-                TotalLaps = orderedLaps.Count,
-                TotalPoints = telemetryData.Count,
-                Laps = orderedLaps,
-                Data = telemetryData
+                success = true,
+                sessionId = session.SessionId,
+                sessionName = session.Name,
+                vehicle = new { session.Vehicle?.VehicleId, session.Vehicle?.Name, session.Vehicle?.Manufacturer, session.Vehicle?.Class, session.Vehicle?.VehicleType },
+                track = new { session.Track?.TrackId, session.Track?.Name, session.Track?.Length },
+                totalLaps = orderedLaps.Count,
+                totalPoints = telemetryData.Count,
+                laps = orderedLaps,
+                data = telemetryData
             });
         }
     }
