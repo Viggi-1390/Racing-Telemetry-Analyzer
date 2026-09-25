@@ -6,20 +6,33 @@ Transform raw telemetry into actionable performance insights. Analyze lap data, 
 
 ---
 
+## 🏁 Mission
+
+> **Turn raw telemetry into engineering insight.**
+
+Built for motorsport enthusiasts and engineers who demand precision. Whether you're analyzing track days, sim racing, or developing racing software—this workstation gives you the tools to understand your data, replay your sessions, and improve your craft.
+
+**Analyze. Replay. Understand. Improve. 🏎️**
+
+---
+
 ## 🚗 What's In The Garage?
 
 ### Vehicle Management
 - **Multi-platform support** — Cars (4-wheel suspension, steering) and motorcycles (lean angle, dual braking)
-- **Race & Production vehicles** — Separate specs for track machines and road cars
+- **Vehicle categories** — GT3 Racing, GTP-LMDh, Formula 1, Motorcycle, Production, and All Machines
 - **Custom images** — Upload vehicle liveries and reference photos
 - **CRUD operations** — Add, edit, delete with right-click context menu
-- **Vehicle-specific telemetry isolation** — No cross-contamination between different vehicles
+- **Vehicle-specific telemetry isolation** — Telemetry is strictly isolated by VehicleId, TrackId, and SessionId
+- **No automatic telemetry creation** — Adding a vehicle creates the vehicle only; telemetry is imported or explicitly generated
 
 ### 🏁 Track Management
 - **Track registry** — Name, country, length, corner count, track maps
 - **Track sections** — Break circuits into analyzable segments
 - **CRUD operations** — Right-click context menu for quick edits
-- **Session linkage** — Telemetry tied directly to track configuration
+- **Session linkage** — Telemetry tied directly to the selected track
+- **Track-specific telemetry isolation** — Switching tracks never falls back to another track's session
+- **Track selection UI** — Dedicated track selection flow integrated with the red/black cinematic visual system
 
 ### 📊 Telemetry Import (The Pit Telemetry Feed)
 CSV import supports **all critical channels**:
@@ -39,12 +52,14 @@ Fully-modeled race calendar:
 
 ### 📈 Telemetry Workstation
 Your digital engineer's console includes:
-- **Interactive telemetry graph** — Real-time channel visualization (speed, RPM, throttle, brake, steering)
+- **Interactive telemetry graph** — Speed, RPM, throttle, brake, steering and other available channels
+- **Responsive engineering dashboard** — Large-screen 16:9 layout that expands into the available viewport
 - **Lap list & analysis** — Best lap, lap deltas, comparative performance
 - **Session replay** — Chronological playback from Lap 1 through final lap
 - **Performance breakdown** — Braking behavior, throttle response, suspension movement, G-force loads
 - **Tyre information** — Temperature, pressure, wear percentage, status alerts
-- **Session notes** — Annotate findings lap-by-lap or by track section
+- **Track map & weather** — Session-specific track and condition information
+- **No-data state** — Clearly identifies when the selected vehicle/track has no telemetry instead of loading unrelated data
 
 ### ▶️ Replay (The Onboard Camera Feed)
 - Chronological session progression: Lap 1 → 2 → 3 → ... → Final Lap
@@ -64,36 +79,31 @@ Your digital engineer's console includes:
 - Dual braking system (front/rear)
 - Two-wheel contact analysis
 
-UI automatically switches layout based on vehicle type.
+UI automatically switches layout and tyre-status presentation based on vehicle type.
 
 ### 🔬 Performance Analysis (V1 Engine)
 Current analysis suite:
 - **Lap metrics** — Lap times, best lap, consistency
-- **Sector breakdown** — Sector 1/2/3 performance
 - **Braking analysis** — Braking point consistency, brake pressure curves, trail-braking effectiveness
 - **Throttle application** — Response time, application smoothness, wheel spin indicators
 - **Suspension behavior** — Bump compliance, roll rates, damping characteristics
 - **G-force analysis** — Longitudinal, lateral, vertical loads across track sections
 - **Delta information** — Comparison against best lap or reference baseline
+- **Replay synchronization** — Graph cursor, lap progression, and playback remain synchronized across the complete session
 
-*V1 uses deterministic C# calculations and rule-based analysis. AI/ML "race engineer" features reserved for future iterations.*
-
-### 🚦 Loading Screen
-Universal motorsport silhouettes (vehicle-type independent):
-- **GT3 racing car** — All cars render the same motorsport technical silhouette
-- **MotoGP racing bike** — All motorcycles render the same motorsport technical silhouette
-
-This design decouples loading visuals from database vehicle images, preventing incorrect silhouettes.
+*V1 uses deterministic C# calculations and rule-based analysis. AI/ML "race engineer" features are reserved for future iterations.*
 
 ### 🎨 Motorsport UI / UX
-Unified dark-mode engineering aesthetic:
+Unified cinematic red/black engineering aesthetic:
 - Dark technical surfaces with matte finishes
-- **Cyan telemetry accents** (data highlights)
-- **Orange racing accents** (interactive elements, warnings)
+- **Red and black visual identity** across Garage, Track Selection, Loading, and Telemetry
+- **Cyan telemetry accents** for engineering data
+- Red/orange racing accents for actions and warnings
 - Technical grid/HUD styling with metric typography
-- Motorsport-specific context menus and cards
-- Responsive layouts (desktop/tablet)
-- Subtle transitions and motion queues
+- Motorsport-specific cards, selectors, context menus, and status panels
+- Responsive desktop layouts designed around 16:9 / 1920×1080 workstations
+- **No unnecessary loading-screen transitions or animations**
+- Fast loading flow with only a short intentional visual display time
 
 Design inspiration: Animos, Godly.design, Transitions.dev, Backgrounds Supply (visual direction only—no branding/layout reproduction).
 
@@ -106,7 +116,7 @@ Design inspiration: Animos, Godly.design, Transitions.dev, Backgrounds Supply (v
 ```
 Vehicle
   └── Sessions
-       ├── Lap (LapNumber, LapTime, Sector1-3, IsValid)
+       ├── Lap (LapNumber, LapTime, IsValid)
        │    ├── TelemetryPoint (Timestamp, Speed, RPM, Throttle, Brake, Steering, G-force, etc.)
        │    └── AnalysisResult (EntrySpeed, MinSpeed, ExitSpeed, Recommendations)
        ├── VehicleSetup (FrontWing, RearWing, RideHeight, BrakeBias)
@@ -119,8 +129,10 @@ Track
 
 **High-volume data handling:**
 - Telemetry batching for large imports (250 MB server limits configured)
-- Database indices optimized for lap/sector queries
+- Database indices optimized for telemetry/session queries
 - Efficient foreign key relationships (no data duplication)
+- Large datasets are rendered efficiently while retaining the original telemetry data
+- Session/vehicle/track filtering prevents unrelated telemetry from being loaded
 
 ---
 
@@ -151,7 +163,6 @@ Track
 | **Database** | SQL Server + Entity Framework Core 8.0 |
 | **Frontend** | HTML5, CSS3, JavaScript (Canvas for graphs) |
 | **Data Format** | CSV (import), JSON (API responses) |
-| **Testing** | MSTest |
 | **IDE** | Visual Studio 2026 / VS Code |
 | **OS** | Windows 10/11 |
 | **VCS** | Git + GitHub |
@@ -183,7 +194,7 @@ Racing-Telemetry-Analyzer/
 │   ├── Track/
 │   └── Shared/
 ├── Components/
-│   └── TelemetryRollingGraph.razor # Blazor telemetry visualization
+│   └── Canvas-based telemetry visualization in JavaScript
 ├── wwwroot/                        # Static assets
 │   ├── css/                        # Motorsport styling
 │   ├── js/                         # Client-side logic
@@ -191,7 +202,7 @@ Racing-Telemetry-Analyzer/
 │   │   ├── cars/
 │   │   ├── bikes/
 │   │   ├── tracks/
-│   │   └── loading/                # GT3/MotoGP silhouettes
+│   │   └── loading/                # Cinematic loading-screen assets
 │   └── svg/                        # Inline SVG assets
 ├── Migrations/                     # EF Core schema versions
 ├── RacingTelemetryAnalyzer.Tests/  # Unit tests
@@ -300,10 +311,13 @@ dotnet test
 - Multi-lap session handling
 - Replay progression (Lap 1 → Final Lap)
 - Session selection (no data overwrites)
+- Vehicle + Track + Session isolation
+- No-data state for a vehicle/track combination
 - Car vs. motorcycle telemetry separation
 - **Real data:** Audi R8 LMS @ Laguna Seca (10 laps, 63k points)
 - Visualization rendering and interactivity
-- Loading screen silhouette selection
+- Responsive telemetry layout at desktop resolutions and browser zoom levels
+- Dynamic selected-vehicle loading screen
 
 ---
 
@@ -311,11 +325,13 @@ dotnet test
 
 ✅ **Must enforce:**
 1. Adding a vehicle does NOT automatically create telemetry
-2. Telemetry is strictly scoped to a specific session + vehicle
+2. Telemetry is strictly scoped to the exact **VehicleId + TrackId + SessionId**
 3. Adding unrelated vehicles must NOT mutate existing telemetry
-4. Loading-screen visuals are independent of database vehicle images
-5. Cars ALWAYS render GT3 silhouette (regardless of actual vehicle)
-6. Bikes ALWAYS render MotoGP silhouette (regardless of actual bike)
+4. A selected vehicle/track with no telemetry must show a no-data state rather than falling back to another session
+5. The application must NEVER silently switch to another vehicle or track to populate telemetry
+6. Loading-screen visuals use the currently selected vehicle image and must not trigger unnecessary telemetry loading
+7. Existing telemetry import and session data must remain isolated when new vehicles or tracks are added
+8. Vehicle type controls the appropriate car/bike telemetry and status presentation
 
 ---
 
@@ -333,7 +349,7 @@ Planned features for future iterations:
 - **Fuel, ERS, DRS Analysis** — Hybrid/electric/DRS energy management
 - **3D Visualization** — Vehicle and track 3D rendering
 - **Cloud Storage** — Sync sessions across devices
-- **Automated Reports** — PDF/HTML engineering documentation
+- **Automated Reports** — Not part of the current V1 scope
 
 *These are aspirational and not required for V1.*
 
@@ -349,14 +365,4 @@ Planned features for future iterations:
 
 ---
 
-## 🏁 Mission
 
-> **Turn raw telemetry into engineering insight.**
-
-Built for motorsport enthusiasts and engineers who demand precision. Whether you're analyzing track days, sim racing, or developing racing software—this workstation gives you the tools to understand your data, replay your sessions, and improve your craft.
-
-**Analyze. Replay. Understand. Improve. 🏎️**
-
----
-
-*Last Updated: September 2026*
