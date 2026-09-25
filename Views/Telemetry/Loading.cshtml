@@ -4,46 +4,42 @@
     var vehicle = ViewBag.Vehicle as RacingTelemetryAnalyzer.Models.Vehicle;
     var track = ViewBag.Track as RacingTelemetryAnalyzer.Models.Track;
     var isBike = vehicle != null && vehicle.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Bike;
-    var vehicleName = vehicle?.Name ?? "UNKNOWN VEHICLE";
-    var vehicleClass = vehicle?.Class ?? "RACE";
+    var vehicleName = vehicle?.Name ?? "AUDI R8 LMS";
     var vehicleId = vehicle?.VehicleId ?? 1;
-    var trackName = track?.Name ?? "MONZA";
+    var trackName = track?.Name ?? "LAGUNA SECA";
     var trackId = track?.TrackId ?? 1;
+    var sessionId = ViewBag.SessionId as int?;
 
-    // Load universal category SVG directly from wwwroot for guaranteed in-DOM vector animation
-    var svgFileName = isBike ? "motogp-racing-loader.svg" : "gt3-racing-loader.svg";
-    var svgFilePath = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "images", "loading", svgFileName);
-    var rawSvg = System.IO.File.Exists(svgFilePath) ? System.IO.File.ReadAllText(svgFilePath) : "";
-
-    // Prefix IDs in the dormant layer to eliminate DOM ID collisions
-    var dormantSvg = rawSvg.Replace("id=\"", "id=\"dormant-").Replace("url(#", "url(#dormant-").Replace("href=\"#", "href=\"#dormant-");
-    var activeSvg = rawSvg;
+    // Determine vehicle image path with robust fallback priority
+    var imagePath = !string.IsNullOrEmpty(vehicle?.ImagePath) 
+        ? vehicle.ImagePath 
+        : (isBike ? "/images/bikes/MotoGPStudio.jpg" : "/images/cars/CadillacVSeriesR.jpg");
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Initializing Telemetry — @vehicleName</title>
+    <title>Loading Telemetry — @vehicleName</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/racing-design-system.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
-            --rta-bg-abyss:         #060709;
-            --rta-bg-surface-1:     #0d1017;
-            --rta-bg-surface-2:     #131722;
-            --rta-orange:           #ff5a1f;
-            --rta-orange-glow:      rgba(255, 90, 31, 0.40);
-            --rta-cyan:             #00d2ff;
-            --rta-cyan-bright:      #00f0ff;
-            --rta-cyan-glow:        rgba(0, 210, 255, 0.45);
-            --rta-text-primary:     #f4f4f5;
-            --rta-text-secondary:   #8e95a5;
-            --rta-text-muted:       #4b5263;
-            --rta-font-ui:          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            --rta-font-mono:        'JetBrains Mono', 'Consolas', 'SF Mono', monospace;
+            --rta-black:            #050608;
+            --rta-charcoal:         #0a0c10;
+            --rta-surface:          #10131a;
+            --rta-red:              #ff1f38;
+            --rta-red-bright:       #ff3b50;
+            --rta-red-glow:         rgba(255, 31, 56, 0.45);
+            --rta-red-deep-glow:    rgba(255, 31, 56, 0.18);
+            --rta-text-white:       #ffffff;
+            --rta-text-light:       #e2e5eb;
+            --rta-text-muted:       #7a8294;
+            --rta-text-dim:         #474e5d;
+            --rta-border:           rgba(255, 255, 255, 0.07);
+            --rta-font-main:        'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --rta-font-mono:        'JetBrains Mono', monospace;
         }
 
         * {
@@ -52,590 +48,677 @@
             box-sizing: border-box;
         }
 
-        body {
-            background-color: var(--rta-bg-abyss, #060709);
-            color: var(--rta-text-primary, #f4f4f5);
-            font-family: var(--rta-font-ui, sans-serif);
-            height: 100vh;
+        html, body {
             width: 100vw;
+            height: 100vh;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            background-color: var(--rta-black);
+            font-family: var(--rta-font-main);
+            color: var(--rta-text-white);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* 32px Technical CAD Coordinate Grid */
-        body::before {
-            content: '';
+        /* ======================================================== */
+        /* 1. CINEMATIC MOTORSPORT BACKGROUND ENVIRONMENT          */
+        /* ======================================================== */
+        .cinematic-bg {
             position: fixed;
             inset: 0;
-            background-image:
-                radial-gradient(circle at 1px 1px, rgba(0, 210, 255, 0.08) 1px, transparent 0),
-                linear-gradient(to right, rgba(0, 210, 255, 0.025) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 210, 255, 0.025) 1px, transparent 1px);
-            background-size: 32px 32px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Ambient Cyan Telemetry Spotlight */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at 50% 48%, rgba(0, 210, 255, 0.07) 0%, rgba(6, 7, 9, 0.88) 75%);
-            pointer-events: none;
+            background-image: url('/images/loading/pit-garage-background.jpg');
+            background-size: cover;
+            background-position: center 46%;
+            background-repeat: no-repeat;
             z-index: 1;
+            filter: brightness(0.92) contrast(1.08);
+        }
+
+        /* Ambient dark vignette & atmospheric contrast overlay */
+        .cinematic-overlay {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 50% 48%, rgba(5, 6, 8, 0.15) 0%, rgba(5, 6, 8, 0.65) 60%, rgba(5, 6, 8, 0.95) 100%),
+                linear-gradient(to bottom, rgba(5, 6, 8, 0.85) 0%, transparent 18%, transparent 72%, rgba(5, 6, 8, 0.92) 100%);
+            z-index: 2;
+            pointer-events: none;
         }
 
         /* ======================================================== */
-        /* CLEAN CENTERED RACING TELEMETRY ANALYZER LOADING STACK   */
+        /* 2. SIGNATURE RED VERTICAL NEON LIGHT BARS               */
         /* ======================================================== */
-        .loading-workstation {
+        .vertical-neon-bar {
+            position: fixed;
+            width: 4px;
+            top: 29%;
+            bottom: 39%;
+            background: #ff1f38;
+            border-radius: 2px;
+            z-index: 20;
+            box-shadow: 
+                0 0 4px #ffffff,
+                0 0 10px #ff1f38,
+                0 0 25px rgba(255, 31, 56, 0.85),
+                0 0 50px rgba(255, 31, 56, 0.45);
+        }
+        .neon-left { left: 32px; }
+        .neon-right { right: 32px; }
+
+        /* ======================================================== */
+        /* 3. MINIMAL TECHNICAL HEADER NAVIGATION                   */
+        /* ======================================================== */
+        .rta-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            padding: 0 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(8, 9, 13, 0.72);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--rta-border);
+            z-index: 50;
+        }
+
+        /* Brand Left */
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-logo-r {
+            width: 32px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            letter-spacing: 2.2px;
+            color: var(--rta-text-white);
+            text-transform: uppercase;
+        }
+
+        /* Nav Center */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            height: 100%;
+        }
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--rta-text-muted);
+            text-decoration: none;
+            height: 100%;
+            padding: 0 4px;
+        }
+        .nav-item:hover {
+            color: var(--rta-text-light);
+        }
+        .nav-item.active {
+            color: var(--rta-red);
+            font-weight: 600;
+        }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: -4px;
+            right: -4px;
+            height: 2px;
+            background: var(--rta-red);
+            box-shadow: 0 0 8px var(--rta-red);
+        }
+        .nav-icon {
+            width: 15px;
+            height: 15px;
+            fill: currentColor;
+            opacity: 0.85;
+        }
+
+        /* Selectors Right */
+        .selectors-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .selector-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(18, 21, 28, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--rta-text-light);
+            text-decoration: none;
+        }
+        .selector-pill:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(24, 28, 38, 0.8);
+        }
+        .selector-icon {
+            width: 14px;
+            height: 14px;
+            fill: #9ca3af;
+        }
+        .selector-caret {
+            width: 10px;
+            height: 10px;
+            fill: #6b7280;
+            margin-left: 2px;
+        }
+
+        /* ======================================================== */
+        /* 4. MAIN CENTRAL STAGE (DYNAMIC VEHICLE SHOWCASE)        */
+        /* ======================================================== */
+        .stage-container {
             position: relative;
             z-index: 10;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 24px;
+        }
+
+        /* Vehicle Showcase Frame */
+        .vehicle-hero-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        /* Central Staging Floor Light & Ground Shadow */
+        .vehicle-hero-wrap::before {
+            content: '';
+            position: absolute;
+            bottom: 24px;
+            width: 78%;
+            height: 46px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 75%);
+            filter: blur(12px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Floor Reflection Tint */
+        .vehicle-hero-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            width: 65%;
+            height: 38px;
+            background: radial-gradient(ellipse at center, rgba(255, 31, 56, 0.16) 0%, rgba(255, 31, 56, 0.05) 55%, transparent 75%);
+            filter: blur(10px);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Main Vehicle Hero Image */
+        .vehicle-hero-img {
+            position: relative;
+            z-index: 5;
+            max-width: 840px;
+            max-height: 400px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter: 
+                drop-shadow(0 0 35px rgba(255, 31, 56, 0.25)) 
+                drop-shadow(0 20px 40px rgba(0, 0, 0, 0.98))
+                contrast(1.08)
+                brightness(0.97);
+            opacity: 1;
+            transform: scale(1);
+            mask-image: radial-gradient(ellipse 72% 64% at 50% 50%, #000000 52%, rgba(0, 0, 0, 0.92) 70%, transparent 97%);
+            -webkit-mask-image: radial-gradient(ellipse 72% 64% at 50% 50%, #000000 52%, rgba(0, 0, 0, 0.92) 70%, transparent 97%);
+        }
+
+        /* Floor Mirror Reflection Layer */
+        .vehicle-floor-reflect-img {
+            position: absolute;
+            bottom: -32px;
+            max-width: 780px;
+            max-height: 180px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            transform: scaleY(-0.35) scaleX(0.96);
+            filter: blur(4px) brightness(0.6) contrast(1.1);
+            opacity: 0.28;
+            mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* ======================================================== */
+        /* 5. CENTER LOADING HUD OVERLAY                            */
+        /* ======================================================== */
+        .loading-hud-cluster {
+            position: relative;
+            z-index: 20;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            width: 100%;
-            max-width: 960px;
-            padding: 20px;
-            gap: 16px;
+            margin-top: -6px;
         }
 
-        /* 1. Header HUD Pill & Titles */
-        .hud-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--rta-font-mono);
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 2.5px;
-            color: var(--rta-cyan, #00d2ff);
-            background: rgba(0, 210, 255, 0.06);
-            border: 1px solid rgba(0, 210, 255, 0.22);
-            border-radius: 4px;
-            padding: 5px 14px;
-            text-transform: uppercase;
-            box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
+        /* Red Racing Logo Icon */
+        .center-racing-logo {
+            width: 36px;
+            height: 24px;
+            margin-bottom: 14px;
+            filter: drop-shadow(0 0 10px rgba(255, 31, 56, 0.75));
         }
 
-        .hud-status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--rta-cyan, #00d2ff);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--rta-cyan, #00d2ff);
-            animation: pulse-dot 1.4s infinite ease-in-out;
-        }
-
-        .vehicle-title {
-            font-family: var(--rta-font-ui);
-            font-size: 2.2rem;
+        /* LOADING TELEMETRY... Title */
+        .loading-title {
+            font-size: 1.28rem;
             font-weight: 800;
-            letter-spacing: 4px;
-            color: #ffffff;
+            letter-spacing: 3.5px;
+            color: var(--rta-text-white);
             text-transform: uppercase;
-            text-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
-            line-height: 1.1;
-            margin-top: 2px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
-        .session-subtitle {
-            font-family: var(--rta-font-mono);
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 2.5px;
-            color: var(--rta-orange, #ff5a1f);
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(255, 90, 31, 0.25);
+        /* Vehicle Name | Track Name Subtitle */
+        .loading-meta-subtitle {
+            font-size: 0.88rem;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            color: var(--rta-text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .meta-pipe {
+            color: var(--rta-red);
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(255, 31, 56, 0.8);
+        }
+
+        /* Vehicle Silhouette Contour Icon Above Bar */
+        .progress-vehicle-icon {
+            width: 82px;
+            height: 26px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            filter: drop-shadow(0 0 8px rgba(255, 31, 56, 0.35));
         }
 
-        .session-subtitle .divider {
-            color: var(--rta-text-muted, #4b5263);
-        }
-
-        .session-subtitle .track-tag {
-            color: var(--rta-cyan, #00d2ff);
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.35);
-        }
-
-        /* ======================================================== */
-        /* 2. HERO VEHICLE SHOWCASE STAGE (LARGE & CENTERED)       */
-        /* ======================================================== */
-        .hero-stage-container {
+        /* Red Progress Bar */
+        .progress-bar-track {
             position: relative;
-            width: 100%;
-            max-width: 940px;
-            height: 430px;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.06) 0%, rgba(8, 10, 15, 0.85) 80%);
-            border: 1px solid rgba(0, 210, 255, 0.20);
-            border-radius: 8px;
-            box-shadow: 
-                inset 0 0 35px rgba(0, 210, 255, 0.05),
-                0 16px 45px rgba(0, 0, 0, 0.65);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin: 6px 0;
+            width: 380px;
+            max-width: 85vw;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: visible;
+            margin-bottom: 14px;
         }
 
-        /* Corner Framing Brackets `[` and `]` matching RTA Identity */
-        .corner-bracket {
+        .progress-bar-fill {
             position: absolute;
-            width: 22px;
-            height: 22px;
-            border-color: var(--rta-cyan, #00d2ff);
-            border-style: solid;
-            pointer-events: none;
-            filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.8));
-            z-index: 10;
-        }
-        .bracket-tl { top: 12px; left: 14px; border-width: 2.5px 0 0 2.5px; }
-        .bracket-tr { top: 12px; right: 14px; border-width: 2.5px 2.5px 0 0; }
-        .bracket-bl { bottom: 12px; left: 14px; border-width: 0 0 2.5px 2.5px; }
-        .bracket-br { bottom: 12px; right: 14px; border-width: 0 2.5px 2.5px 0; }
-
-        /* Vehicle Viewport */
-        .vehicle-viewport {
-            position: relative;
-            width: 94%;
-            height: 92%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        /* ======================================================== */
-        /* PHASE 1: DORMANT WIREFRAME LAYER (0.0s - 0.6s)          */
-        /* Faint 12% opacity outline visible from initial render    */
-        /* ======================================================== */
-        .layer-dormant {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.12;
-            filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.25));
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        /* ======================================================== */
-        /* PHASE 2: ACTIVE RECONSTRUCTION (0.6s - 2.0s)             */
-        /* Laser scan sweeps from left to right via clip-path       */
-        /* ======================================================== */
-        .layer-active {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 6;
-            filter: 
-                drop-shadow(0 0 8px rgba(0, 210, 255, 0.75)) 
-                drop-shadow(0 0 20px rgba(0, 210, 255, 0.40));
-            /* Start fully clipped from right edge */
-            clip-path: inset(0% 100% 0% 0%);
-            /* Hardware-accelerated sweep reveal timed at 0.6s - 2.0s */
-            animation: 
-                sweepReveal 1.4s linear 0.6s both,
-                vectorLockGlow 0.5s ease-out 2.0s forwards;
-        }
-
-        @@keyframes sweepReveal {
-            0% {
-                clip-path: inset(0% 100% 0% 0%);
-            }
-            100% {
-                clip-path: inset(0% 0% 0% 0%);
-            }
-        }
-
-        @@keyframes vectorLockGlow {
-            0% {
-                filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.75)) drop-shadow(0 0 20px rgba(0, 210, 255, 0.40));
-            }
-            50% {
-                filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 34px rgba(0, 210, 255, 0.60));
-            }
-            100% {
-                filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.85)) drop-shadow(0 0 24px rgba(0, 210, 255, 0.45));
-            }
-        }
-
-        /* SVG Path Stroke Drawing Animation */
-        .layer-active .stroke-animate {
-            stroke-dasharray: 1;
-            stroke-dashoffset: 1;
-            animation: drawStroke 1.3s ease-out 0.6s forwards;
-        }
-
-        @@keyframes drawStroke {
-            0% {
-                stroke-dashoffset: 1;
-            }
-            100% {
-                stroke-dashoffset: 0;
-            }
-        }
-
-        /* ======================================================== */
-        /* HIGH-VISIBILITY CYAN LASER SCAN BEAM                    */
-        /* Crosses smoothly from left to right (0.6s - 2.0s)        */
-        /* ======================================================== */
-        .scan-laser-beam {
-            position: absolute;
-            top: 4px;
-            bottom: 4px;
-            width: 4px;
             left: 0;
-            opacity: 0;
-            transform: translateX(-50%);
-            pointer-events: none;
-            z-index: 25;
-            background: #ffffff;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background: var(--rta-red);
+            border-radius: 2px;
             box-shadow: 
-                0 0 4px #ffffff,
-                0 0 12px #00f0ff,
-                0 0 24px #00d2ff,
-                0 0 40px rgba(0, 210, 255, 0.95),
-                0 0 70px rgba(0, 210, 255, 0.60);
-            animation: laserSweep 1.4s linear 0.6s both;
+                0 0 6px var(--rta-red),
+                0 0 16px rgba(255, 31, 56, 0.85);
         }
 
-        .scan-laser-beam::before,
-        .scan-laser-beam::after {
+        /* Glowing leading edge head on progress line */
+        .progress-bar-fill::after {
             content: '';
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 10px;
-            height: 10px;
-            background: #ffffff;
+            right: -2px;
+            top: -2px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            box-shadow: 0 0 10px #ffffff, 0 0 20px #00f0ff, 0 0 30px #00d2ff;
-        }
-        .scan-laser-beam::before { top: -2px; }
-        .scan-laser-beam::after { bottom: -2px; }
-
-        .laser-trail {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            right: 100%;
-            width: 120px;
-            background: linear-gradient(90deg, transparent 0%, rgba(0, 210, 255, 0.04) 40%, rgba(0, 210, 255, 0.32) 100%);
-            pointer-events: none;
+            background: #ffffff;
+            box-shadow: 0 0 8px #ffffff, 0 0 14px var(--rta-red);
         }
 
-        @@keyframes laserSweep {
-            0% {
-                left: 0%;
-                opacity: 0;
-            }
-            1% {
-                opacity: 1;
-            }
-            99% {
-                opacity: 1;
-            }
-            100% {
-                left: 100%;
-                opacity: 0;
-            }
+        /* Status Text Below Bar */
+        .loading-step-status {
+            font-size: 0.82rem;
+            font-weight: 400;
+            letter-spacing: 0.8px;
+            color: var(--rta-text-dim);
+            min-height: 1.2rem;
         }
 
         /* ======================================================== */
-        /* PHASE 3: VECTOR LOCK PULSES (1.8s - 2.6s)                */
-        /* Wheel hubs pulse, aero pulses, ground line activates     */
+        /* 6. BOTTOM HUD CORNERS                                   */
         /* ======================================================== */
-        .layer-active .gt3-wheel-group,
-        .layer-active .gp-wheel-group {
-            animation: wheelPulse 0.5s ease-out 2.0s forwards;
+        .bottom-hud-card {
+            position: fixed;
+            bottom: 34px;
+            left: 42px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            background: rgba(14, 17, 24, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--rta-border);
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
         }
 
-        @@keyframes wheelPulse {
-            0% { filter: drop-shadow(0 0 4px #00d2ff); }
-            50% { filter: drop-shadow(0 0 18px #00f0ff) drop-shadow(0 0 28px #00d2ff); transform: scale(1.02); }
-            100% { filter: drop-shadow(0 0 6px #00d2ff); transform: scale(1); }
+        .spinner-ring {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 31, 56, 0.2);
+            border-top-color: var(--rta-red);
+            border-right-color: var(--rta-red-bright);
+            border-radius: 50%;
+            filter: drop-shadow(0 0 6px rgba(255, 31, 56, 0.65));
         }
 
-        .layer-active .gt3-aero-group,
-        .layer-active .gp-aero-group {
-            animation: aeroPulse 0.5s ease-out 2.0s forwards;
-        }
-
-        @@keyframes aeroPulse {
-            0% { opacity: 0.85; }
-            50% { opacity: 1; filter: drop-shadow(0 0 16px #00f0ff); }
-            100% { opacity: 1; filter: drop-shadow(0 0 8px #00d2ff); }
-        }
-
-        .layer-active .ground-stroke {
-            animation: groundSurge 0.5s ease-out 2.0s forwards;
-        }
-
-        @@keyframes groundSurge {
-            0% { stroke-width: 1.8; opacity: 0.8; }
-            50% { stroke-width: 3.0; opacity: 1; filter: drop-shadow(0 0 14px #00f0ff); }
-            100% { stroke-width: 1.8; opacity: 0.8; }
-        }
-
-        /* ======================================================== */
-        /* PHASE 4: DIAGNOSTICS TERMINAL (2.4s - 3.2s)              */
-        /* Sequential reveal with subtle fade & status transition   */
-        /* ======================================================== */
-        .diagnostics-terminal {
-            width: 380px;
-            max-width: 90vw;
+        .hud-text-stack {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            font-family: var(--rta-font-mono);
-            font-size: 0.85rem;
-            letter-spacing: 1.5px;
-            margin-top: 4px;
+            text-align: left;
+            gap: 2px;
+        }
+        .hud-text-primary {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--rta-text-light);
+            letter-spacing: 0.4px;
+        }
+        .hud-text-secondary {
+            font-size: 0.72rem;
+            color: var(--rta-text-dim);
+            letter-spacing: 0.2px;
         }
 
-        .diag-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #3b4252;
-            opacity: 0.45;
-            transform: translateY(3px);
-            transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
-        }
-
-        .diag-line.revealed {
-            opacity: 1;
-            transform: translateY(0);
-            color: #d1d5db;
-        }
-
-        .diag-label {
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .diag-dots {
-            flex-grow: 1;
-            overflow: hidden;
-            letter-spacing: 3px;
-            color: #272a38;
-            margin: 0 8px;
-            white-space: nowrap;
-        }
-
-        .diag-status {
-            font-weight: 800;
-            font-size: 0.85rem;
-            letter-spacing: 2px;
-            color: #4b5263;
-            min-width: 36px;
+        /* Bottom-Right Motorsport Quote */
+        .bottom-quote-wrap {
+            position: fixed;
+            bottom: 34px;
+            right: 42px;
+            z-index: 50;
             text-align: right;
-            transition: color 0.25s ease, text-shadow 0.25s ease;
-        }
-
-        .diag-line.revealed .diag-status {
-            color: var(--rta-cyan, #00d2ff);
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
-        }
-
-        /* ======================================================== */
-        /* PHASE 5: SYSTEM READY BANNER (3.2s - 3.7s)               */
-        /* ======================================================== */
-        .system-ready-banner {
-            font-family: var(--rta-font-mono);
-            font-size: 1.25rem;
-            font-weight: 800;
-            letter-spacing: 5px;
-            color: var(--rta-cyan, #00d2ff);
-            opacity: 0;
-            transform: translateY(6px);
-            min-height: 2rem;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
+            font-style: italic;
+        }
+        .quote-phrase {
+            font-size: 0.84rem;
+            color: #7b8396;
+            letter-spacing: 0.5px;
+        }
+        .quote-author {
+            font-size: 0.75rem;
+            color: #4b5262;
+            letter-spacing: 0.8px;
         }
 
-        .system-ready-banner.visible {
-            opacity: 1;
-            transform: translateY(0);
-            animation: readyGlowPulse 0.4s ease-out forwards;
-        }
-
-        @@keyframes readyGlowPulse {
-            0% {
-                opacity: 0;
-                transform: translateY(6px) scale(0.96);
-            }
-            50% {
-                opacity: 1;
-                transform: translateY(0) scale(1.03);
-                text-shadow: 0 0 25px rgba(0, 240, 255, 0.95), 0 0 45px rgba(0, 210, 255, 0.5);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-                text-shadow: 0 0 16px rgba(0, 210, 255, 0.8), 0 0 30px rgba(0, 210, 255, 0.4);
-            }
-        }
-
-        @@keyframes pulse-dot {
-            0%, 100% { opacity: 0.5; transform: scale(0.9); }
-            50% { opacity: 1; transform: scale(1.2); }
-        /* Responsive Scaling */
+        /* ======================================================== */
+        /* 7. RESPONSIVE MEDIA QUERIES (1920x1080 OPTIMIZED)        */
+        /* ======================================================== */
         @@media (max-width: 1400px) {
-            .hero-stage-container { height: 380px; max-width: 860px; }
-            .vehicle-title { font-size: 1.9rem; }
+            .vehicle-hero-wrap { height: 350px; max-width: 780px; }
+            .vehicle-hero-img { max-width: 720px; max-height: 320px; }
+            .vertical-neon-bar { top: 32%; bottom: 36%; }
         }
 
-        @@media (max-height: 800px) {
-            .hero-stage-container { height: 320px; max-width: 780px; }
-            .vehicle-title { font-size: 1.6rem; }
-            .loading-workstation { gap: 10px; }
+        @@media (max-height: 820px) {
+            .vehicle-hero-wrap { height: 300px; max-width: 680px; }
+            .vehicle-hero-img { max-width: 620px; max-height: 270px; }
+            .loading-title { font-size: 1.15rem; margin-bottom: 6px; }
+            .loading-meta-subtitle { margin-bottom: 14px; font-size: 0.82rem; }
+            .center-racing-logo { width: 30px; height: 20px; margin-bottom: 10px; }
+            .progress-vehicle-icon { margin-bottom: 6px; }
+            .bottom-hud-card { bottom: 22px; left: 32px; }
+            .bottom-quote-wrap { bottom: 22px; right: 32px; }
         }
     </style>
 </head>
 <body>
-    <div class="loading-workstation">
 
-        <!-- 1. HEADER HUD IDENTITY -->
-        <div class="hud-status-badge">
-            <span class="hud-status-dot"></span> RACING TELEMETRY ANALYZER
+    <!-- 1. CINEMATIC MOTORSPORT BACKGROUND -->
+    <div class="cinematic-bg"></div>
+    <div class="cinematic-overlay"></div>
+
+    <!-- 2. SIGNATURE RED VERTICAL NEON BARS -->
+    <div class="vertical-neon-bar neon-left"></div>
+    <div class="vertical-neon-bar neon-right"></div>
+
+    <!-- 3. TOP TECHNICAL HEADER NAVIGATION -->
+    <header class="rta-header">
+        <!-- Brand Left -->
+        <div class="brand-cluster">
+            <div class="brand-logo-r">
+                <svg width="28" height="20" viewBox="0 0 32 24" fill="none">
+                    <path d="M4 22L12 4H22C26.5 4 29 6.5 29 10C29 13.5 26.5 16 22 16H10L8 22H4Z" stroke="#ff1f38" stroke-width="2.5" stroke-linejoin="round" />
+                    <path d="M18 16L24 22" stroke="#ff1f38" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+            </div>
+            <span class="brand-title">Racing Telemetry Analyzer</span>
         </div>
 
-        <div class="vehicle-title">@vehicleName</div>
-        <div class="session-subtitle">
-            <span>@(isBike ? "MOTOGP RACING MOTORCYCLE" : "GT3 RACING CAR")</span>
-            <span class="divider">/</span>
-            <span class="track-tag">@trackName</span>
-        </div>
 
-        <!-- 2. HERO VEHICLE SHOWCASE STAGE (LARGE & CENTERED) -->
-        <div class="hero-stage-container" id="heroStage">
-            <!-- Corner Framing Brackets -->
-            <div class="corner-bracket bracket-tl"></div>
-            <div class="corner-bracket bracket-tr"></div>
-            <div class="corner-bracket bracket-bl"></div>
-            <div class="corner-bracket bracket-br"></div>
-
-            <!-- Vehicle Viewport & Dual-Layer In-DOM SVG Stack -->
-            <div class="vehicle-viewport">
-                <!-- PHASE 1: DORMANT WIREFRAME LAYER (12% Opacity, visible from t=0.0s) -->
-                <div class="layer-dormant">
-                    @Html.Raw(dormantSvg)
-                </div>
-
-                <!-- PHASE 2: ACTIVE RECONSTRUCTION (Progressively revealed by CSS sweepReveal) -->
-                <div class="layer-active" id="activeLayer">
-                    @Html.Raw(activeSvg)
-                </div>
-
-                <!-- HIGH-VISIBILITY LASER SCAN BEAM (Sweeps left-to-right 0.6s - 2.0s) -->
-                <div class="scan-laser-beam" id="scanBeam">
-                    <div class="laser-trail"></div>
-                </div>
+        <!-- Right Quick Selectors -->
+        <div class="selectors-cluster">
+            <div class="selector-pill">
+                @if (isBike)
+                {
+                    <svg class="selector-icon" viewBox="0 0 24 24"><path d="M5 20.5A3.5 3.5 0 0 1 1.5 17 3.5 3.5 0 0 1 5 13.5 3.5 3.5 0 0 1 8.5 17 3.5 3.5 0 0 1 5 20.5M5 12a5 5 0 1 0 5 5 5 5 0 0 0-5-5m14 8.5a3.5 3.5 0 0 1-3.5-3.5 3.5 3.5 0 0 1 3.5-3.5 3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m0-8.5a5 5 0 1 0 5 5 5 5 0 0 0-5-5M15 6.5A1.5 1.5 0 1 1 13.5 5 1.5 1.5 0 0 1 15 6.5M7.8 11.2l2.4-3.7 2.8 1.8V12h2V8.5L12.7 7l-1.9-1.2A3 3 0 0 0 6 7l-2 3.1 1.6 1.1z"/></svg>
+                }
+                else
+                {
+                    <svg class="selector-icon" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+                }
+                <span>@vehicleName</span>
+                <svg class="selector-caret" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </div>
+            <div class="selector-pill">
+                <svg class="selector-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span>@trackName</span>
+                <svg class="selector-caret" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
             </div>
         </div>
+    </header>
 
-        <!-- 3. DIAGNOSTICS TERMINAL -->
-        <div class="diagnostics-terminal">
-            <div class="diag-line" id="diag-0">
-                <span class="diag-label">VEHICLE SYSTEM</span>
-                <span class="diag-dots">...........................</span>
-                <span class="diag-status" id="status-0">--</span>
-            </div>
-            <div class="diag-line" id="diag-1">
-                <span class="diag-label">TELEMETRY</span>
-                <span class="diag-dots">...........................</span>
-                <span class="diag-status" id="status-1">--</span>
-            </div>
-            <div class="diag-line" id="diag-2">
-                <span class="diag-label">TRACK</span>
-                <span class="diag-dots">...........................</span>
-                <span class="diag-status" id="status-2">--</span>
-            </div>
-            <div class="diag-line" id="diag-3">
-                <span class="diag-label">SESSION</span>
-                <span class="diag-dots">...........................</span>
-                <span class="diag-status" id="status-3">--</span>
-            </div>
+    <!-- 4. MAIN CENTRAL WORKSTATION STAGE -->
+    <main class="stage-container">
+
+        <!-- DYNAMIC VEHICLE SHOWCASE -->
+        <div class="vehicle-hero-wrap">
+            <img id="vehicleHero"
+                 src="@imagePath"
+                 alt="@vehicleName"
+                 class="vehicle-hero-img"
+                 onerror="handleVehicleImageError(this, @(isBike ? "true" : "false"))" />
+            
+            <img id="vehicleHeroReflection"
+                 src="@imagePath"
+                 alt=""
+                 class="vehicle-floor-reflect-img"
+                 aria-hidden="true"
+                 onerror="handleVehicleImageError(this, @(isBike ? "true" : "false"))" />
+            
         </div>
 
-        <!-- 4. SYSTEM READY BANNER -->
-        <div class="system-ready-banner" id="readyBanner">
-            <span>[ SYSTEM READY ]</span>
+        <!-- CENTER LOADING HUD OVERLAY -->
+        <div class="loading-hud-cluster">
+            
+            <!-- Stylized Red Racing Logo -->
+            <div class="center-racing-logo">
+                <svg width="36" height="24" viewBox="0 0 32 24" fill="none">
+                    <path d="M4 22L12 4H22C26.5 4 29 6.5 29 10C29 13.5 26.5 16 22 16H10L8 22H4Z" stroke="#ff1f38" stroke-width="2.6" stroke-linejoin="round" />
+                    <path d="M18 16L24 22" stroke="#ff1f38" stroke-width="2.6" stroke-linecap="round" />
+                </svg>
+            </div>
+
+            <!-- Title -->
+            <h1 class="loading-title">Loading Telemetry...</h1>
+
+            <!-- Vehicle & Track Metadata Subtitle -->
+            <div class="loading-meta-subtitle">
+                <span>@vehicleName</span>
+                <span class="meta-pipe">|</span>
+                <span>@trackName</span>
+            </div>
+
+            <!-- Wireframe Silhouette Contour Directly Above Progress Bar -->
+            <div class="progress-vehicle-icon">
+                @if (isBike)
+                {
+                    <!-- Racing Motorcycle Minimal Vector Contour -->
+                    <svg width="74" height="24" viewBox="0 0 100 36" fill="none">
+                        <circle cx="18" cy="25" r="9" stroke="#687082" stroke-width="1.8" />
+                        <circle cx="82" cy="25" r="9" stroke="#687082" stroke-width="1.8" />
+                        <circle cx="18" cy="25" r="4" stroke="#ff1f38" stroke-width="1.4" />
+                        <circle cx="82" cy="25" r="4" stroke="#ff1f38" stroke-width="1.4" />
+                        <path d="M18 25L32 18L44 8L55 12L68 6L76 14L82 25" stroke="#ff1f38" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M32 18H58L68 18" stroke="#8d95a5" stroke-width="1.4" stroke-linecap="round"/>
+                        <path d="M44 8C48 4 56 4 60 7" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
+                }
+                else
+                {
+                    <!-- GT3 / Racing Sports Car Minimal Vector Contour -->
+                    <svg width="86" height="24" viewBox="0 0 120 32" fill="none">
+                        <!-- Rear Wing -->
+                        <path d="M12 11H26M18 11V18" stroke="#ff1f38" stroke-width="1.8" stroke-linecap="round" />
+                        <!-- Car Body Profile Contour -->
+                        <path d="M18 19C24 18 28 17 38 12C46 8 62 7 74 11C84 15 95 18 106 19C110 19.5 114 21 114 23C114 24.5 110 25 106 25H16C12 25 10 23.5 10 22C10 20.5 14 19.5 18 19Z" 
+                              stroke="#687082" stroke-width="1.6" stroke-linejoin="round" />
+                        <!-- Cockpit Glass & Roof -->
+                        <path d="M42 12C50 7.5 62 7 72 10.5L80 16H36L42 12Z" stroke="#ff1f38" stroke-width="1.6" stroke-linejoin="round" />
+                        <!-- Wheels -->
+                        <circle cx="28" cy="24" r="5.5" stroke="#ff1f38" stroke-width="1.8" />
+                        <circle cx="92" cy="24" r="5.5" stroke="#ff1f38" stroke-width="1.8" />
+                        <!-- Splitter Line -->
+                        <path d="M102 25H116" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                }
+            </div>
+
+            <!-- Red Progress Bar -->
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+
+            <!-- Dynamic Subtitle Status -->
+            <div class="loading-step-status" id="stepStatus">Telemetry ready</div>
+
         </div>
 
+    </main>
+
+    <!-- 5. BOTTOM HUD STATUS CARD (LEFT) -->
+    <div class="bottom-hud-card">
+        <div class="spinner-ring"></div>
+        <div class="hud-text-stack">
+            <span class="hud-text-primary" id="hudPrimaryText">Session verified</span>
+            <span class="hud-text-secondary" id="hudSecondaryText">Opening telemetry workstation</span>
+        </div>
+    </div>
+
+    <!-- 6. BOTTOM MOTORSPORT QUOTE (RIGHT) -->
+    <div class="bottom-quote-wrap">
+        <span class="quote-phrase">“Speed is nothing without data.”</span>
+        <span class="quote-author">— Ayrton Senna</span>
     </div>
 
     <!-- ======================================================== -->
-    <!-- LIGHTWEIGHT TIMELINE ORCHESTRATION SCRIPT                -->
-    <!-- No RAF loops — pure CSS controls the visual rendering   -->
+    <!-- INITIALIZATION TIMELINE & REDIRECTION SCRIPT            -->
     <!-- ======================================================== -->
     <script>
         const vehicleId = '@vehicleId';
         const trackId = '@trackId';
-        const readyBanner = document.getElementById('readyBanner');
+        const sessionId = '@(sessionId.HasValue ? sessionId.Value.ToString() : "")';
 
-        // Robust animation guarantee: if OS reduced-motion collapsed CSS duration to <100ms, run via WAAPI
-        const beamEl = document.getElementById('scanBeam');
-        const activeEl = document.getElementById('activeLayer');
-        const beamAnims = beamEl?.getAnimations();
-        if (beamAnims && beamAnims.length > 0 && (beamAnims[0].effect?.getTiming()?.duration || 0) < 100) {
-            beamEl.animate([
-                { left: '0%', opacity: 0 },
-                { opacity: 1, offset: 0.01 },
-                { opacity: 1, offset: 0.99 },
-                { left: '100%', opacity: 0 }
-            ], { duration: 1400, delay: 600, fill: 'both', easing: 'linear' });
-
-            activeEl?.animate([
-                { clipPath: 'inset(0% 100% 0% 0%)' },
-                { clipPath: 'inset(0% 0% 0% 0%)' }
-            ], { duration: 1400, delay: 600, fill: 'both', easing: 'linear' });
+        // Robust image fallback handler
+        function handleVehicleImageError(img, isBike) {
+            console.warn("Vehicle image failed to load:", img.src);
+            if (isBike) {
+                if (!img.src.includes('MotoGPStudio.jpg')) {
+                    img.src = '/images/bikes/MotoGPStudio.jpg';
+                } else if (!img.src.includes('placeholder_bike.png')) {
+                    img.src = '/images/placeholder_bike.png';
+                }
+            } else {
+                if (!img.src.includes('CadillacVSeriesR.jpg')) {
+                    img.src = '/images/cars/CadillacVSeriesR.jpg';
+                } else if (!img.src.includes('AudiR8LMS.jpg')) {
+                    img.src = '/images/cars/AudiR8LMS.jpg';
+                } else {
+                    img.src = '/images/placeholder_car.png';
+                }
+            }
         }
 
-        // PHASE 4: DIAGNOSTICS SEQUENTIAL REVEAL (2.4s - 3.2s)
-        const diagSchedule = [
-            { id: 'diag-0', statusId: 'status-0', at: 2400 },
-            { id: 'diag-1', statusId: 'status-1', at: 2650 },
-            { id: 'diag-2', statusId: 'status-2', at: 2900 },
-            { id: 'diag-3', statusId: 'status-3', at: 3150 }
-        ];
+        // Intentional 2-second cinematic display paired with parallel initialization
+        (function() {
+            if (window.location.search.includes('preview=1')) {
+                return;
+            }
 
-        diagSchedule.forEach(item => {
-            setTimeout(() => {
-                const row = document.getElementById(item.id);
-                const status = document.getElementById(item.statusId);
-                if (row) row.classList.add('revealed');
-                if (status) status.textContent = 'OK';
-            }, item.at);
-        });
+            const minimumDisplayTime = 2000; // 2 seconds preferred
 
-        // PHASE 5: SYSTEM READY (3.25s)
-        setTimeout(() => {
-            if (readyBanner) readyBanner.classList.add('visible');
-        }, 3250);
+            let targetUrl = '/Telemetry?vehicleId=' + vehicleId + '&trackId=' + trackId;
+            if (sessionId && sessionId.length > 0 && sessionId !== '0') {
+                targetUrl += '&sessionId=' + sessionId;
+            }
 
-        // PHASE 6: SEAMLESS TRANSITION TO WORKSTATION (3.75s)
-        setTimeout(() => {
-            window.location.href = '/Telemetry?vehicleId=' + vehicleId + '&trackId=' + trackId;
-        }, 3750);
+            // 1. Minimum display duration timer (approx 2s)
+            const displayTimer = new Promise(resolve => {
+                setTimeout(resolve, minimumDisplayTime);
+            });
+
+            // 2. Perform genuinely required initialization in parallel (warm up target Telemetry endpoint)
+            const requiredInit = fetch(targetUrl, { method: 'GET', credentials: 'same-origin' })
+                .catch(err => {
+                    console.debug('Telemetry initialization ready:', err);
+                });
+
+            // 3. Navigate only when BOTH are true:
+            //    A) required initialization is complete
+            //    B) minimum display time (about 2 seconds) has elapsed
+            Promise.all([requiredInit, displayTimer]).then(() => {
+                window.location.replace(targetUrl);
+            });
+        })();
     </script>
 </body>
 </html>

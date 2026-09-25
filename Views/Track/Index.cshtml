@@ -1,79 +1,151 @@
 @model IEnumerable<RacingTelemetryAnalyzer.Models.Track>
 @{
     ViewData["Title"] = "Track Selection";
-    int vehicleId = ViewBag.VehicleId ?? 0;
+    var assignedVehicle = ViewBag.Vehicle as RacingTelemetryAnalyzer.Models.Vehicle;
+    int vehicleId = (ViewBag.VehicleId != null && (int)ViewBag.VehicleId > 0) ? (int)ViewBag.VehicleId : (assignedVehicle?.VehicleId ?? 1);
 }
 
-<div class="track-selection-container">
-    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h1 class="page-title">TRACK <span class="text-orange">SELECTION</span></h1>
-        <a href="/Track/AddTrack?vehicleId=@vehicleId" class="btn-add-track">+ ADD TRACK</a>
+<!-- CINEMATIC MOTORSPORT BACKGROUND ENVIRONMENT & REFLECTION SYSTEM -->
+<div class="cinematic-track-bg"></div>
+<div class="cinematic-track-overlay"></div>
+
+<div class="track-workstation-container">
+    <!-- TOP HEADER / CONTROL STRIP -->
+    <div class="track-header-bar">
+        <div class="track-title-block">
+            <div class="track-micro-tag">// CIRCUIT WORKSTATION</div>
+            <h1 class="track-page-title">TRACK <span class="text-red">SELECTION</span></h1>
+            <p class="track-page-desc">SELECT TARGET CIRCUIT FOR TELEMETRIC DATA ANALYSIS & PERFORMANCE ACQUISITION</p>
+        </div>
+
+        <div class="track-header-actions">
+            @if (assignedVehicle != null)
+            {
+                <div class="assigned-vehicle-badge">
+                    <span class="micro-indicator-dot"></span>
+                    <span class="badge-lbl">ASSIGNED MACHINE:</span>
+                    <span class="badge-val">@assignedVehicle.Name</span>
+                    <span class="badge-tag">@(assignedVehicle.Class ?? (assignedVehicle.VehicleType == RacingTelemetryAnalyzer.Models.VehicleType.Car ? "RACE" : "BIKE"))</span>
+                </div>
+            }
+
+            <button type="button" class="btn-add-track-nav" data-bs-toggle="modal" data-bs-target="#addTrackModal">
+                <span class="plus-sign">+</span>
+                <span>ADD TRACK</span>
+            </button>
+        </div>
     </div>
 
-    <div class="track-grid" id="trackGrid">
-        @foreach (var track in Model)
-        {
-            // Simple mapping for flags based on country
-            string flagEmoji = track.Country.ToUpper() switch {
-                "ITALY" => "🇮🇹",
-                "UNITED KINGDOM" => "🇬🇧",
-                "UK" => "🇬🇧",
-                "FRANCE" => "🇫🇷",
-                "BELGIUM" => "🇧🇪",
-                "JAPAN" => "🇯🇵",
-                "GERMANY" => "🇩🇪",
-                "BRAZIL" => "🇧🇷",
-                "USA" => "🇺🇸",
-                "UNITED STATES" => "🇺🇸",
-                "AMERICA" => "🇺🇸",
-                "AUSTRALIA" => "🇦🇺",
-                "SPAIN" => "🇪🇸",
-                "NETHERLANDS" => "🇳🇱",
-                "AUSTRIA" => "🇦🇹",
-                "CANADA" => "🇨🇦",
-                _ => "🏁"
-            };
+    <!-- MAIN CIRCUITS GRID VIEWPORT -->
+    <div class="track-grid-viewport">
+        <div class="track-grid" id="trackGrid">
+            @foreach (var track in Model)
+            {
+                string flagEmoji = track.Country.ToUpper() switch {
+                    "ITALY" => "🇮🇹",
+                    "UNITED KINGDOM" or "UK" => "🇬🇧",
+                    "FRANCE" => "🇫🇷",
+                    "BELGIUM" => "🇧🇪",
+                    "JAPAN" => "🇯🇵",
+                    "GERMANY" => "🇩🇪",
+                    "BRAZIL" => "🇧🇷",
+                    "USA" or "UNITED STATES" or "AMERICA" => "🇺🇸",
+                    "AUSTRALIA" => "🇦🇺",
+                    "SPAIN" => "🇪🇸",
+                    "NETHERLANDS" => "🇳🇱",
+                    "AUSTRIA" => "🇦🇹",
+                    "CANADA" => "🇨🇦",
+                    _ => "🏁"
+                };
 
-            <div class="track-card" id="track-@track.TrackId" 
-                 data-id="@track.TrackId"
-                 data-name="@track.Name"
-                 data-country="@track.Country"
-                 data-length="@track.Length"
-                 data-turns="@track.NumberOfTurns"
-                 data-img="@track.ImagePath"
-                 onclick="selectTrack(@track.TrackId)">
-                <div class="track-img-wrapper">
-                    <!-- Selected badges -->
-                    <div class="selected-badge">SELECTED</div>
-                    <div class="selected-check">✔</div>
+                <div class="track-card" id="track-@track.TrackId" 
+                     data-id="@track.TrackId"
+                     data-name="@track.Name"
+                     data-country="@track.Country"
+                     data-length="@track.Length"
+                     data-turns="@track.NumberOfTurns"
+                     data-img="@track.ImagePath"
+                     onclick="selectTrack(@track.TrackId)">
                     
-                    <img src="@track.ImagePath" alt="@track.Name" class="track-card-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                    <div class="track-fallback" style="display: none;">
-                        <svg viewBox="0 0 100 50" class="fallback-svg">
-                            <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="var(--rta-cyan)" stroke-width="1.5" stroke-dasharray="2 2" />
-                        </svg>
-                        <span class="fallback-text">TRACK PREVIEW NOT FOUND</span>
+                    <!-- CARD HEADER: ACTIVE BADGE & LOCATION -->
+                    <div class="track-card-header">
+                        <div class="active-indicator-pill">
+                            <span class="active-dot-pulse"></span>
+                            <span>ACTIVE</span>
+                        </div>
+                        <div class="track-flag-country">
+                            <span class="track-flag-icon">@flagEmoji</span>
+                            <span class="track-country-name">@track.Country.ToUpper()</span>
+                        </div>
                     </div>
-                    <!-- Flag overlay -->
-                    <div class="track-flag-overlay">@flagEmoji</div>
-                </div>
-                <div class="track-info">
-                    <h2 class="track-card-name">@track.Name</h2>
-                    <p class="track-location">
-                        <span class="track-flag-text">@flagEmoji</span> 
-                        <span class="track-country-text">@track.Country</span>
-                    </p>
-                    <div class="track-stats">
-                        <div class="stat"><span class="label">LENGTH</span><span class="value track-stat-length">@track.Length km</span></div>
-                        <div class="stat"><span class="label">TURNS</span><span class="value track-stat-turns">@track.NumberOfTurns</span></div>
+
+                    <!-- CIRCUIT NAME -->
+                    <div class="track-card-title-wrap">
+                        <h2 class="track-card-name">@track.Name</h2>
+                        <span class="track-card-index">// TRK-@track.TrackId.ToString("D2")</span>
                     </div>
+
+                    <!-- CIRCUIT SCHEMATIC VIEWPORT -->
+                    <div class="track-map-viewport">
+                        <!-- HUD CORNER RETICLES -->
+                        <div class="hud-reticle hud-tl">+</div>
+                        <div class="hud-reticle hud-tr">+</div>
+                        <div class="hud-reticle hud-bl">+</div>
+                        <div class="hud-reticle hud-br">+</div>
+
+                        <img src="@track.ImagePath" alt="@track.Name Circuit Schematic" class="track-circuit-img" onerror="handleTrackImgError(this)" />
+                        
+                        <div class="track-fallback-schematic d-none">
+                            <svg viewBox="0 0 100 50" class="fallback-circuit-svg">
+                                <path d="M 15,25 C 25,5 45,5 50,25 C 55,45 75,45 85,25 C 75,5 55,5 50,25 C 45,45 25,45 15,25 Z" fill="none" stroke="#ff1f38" stroke-width="1.6" stroke-dasharray="3 3" />
+                            </svg>
+                            <span class="fallback-circuit-text">CIRCUIT SCHEMATIC STANDBY</span>
+                        </div>
+
+                        <!-- AMBIENT CIRCUIT UNDERGLOW -->
+                        <div class="circuit-ambient-glow"></div>
+                    </div>
+
+                    <!-- CIRCUIT SPECIFICATIONS -->
+                    <div class="track-card-specs">
+                        <div class="spec-col">
+                            <span class="spec-label">LENGTH</span>
+                            <span class="spec-value text-cyan track-stat-length">@track.Length.ToString("F3") KM</span>
+                        </div>
+                        <div class="spec-divider"></div>
+                        <div class="spec-col">
+                            <span class="spec-label">TURNS</span>
+                            <span class="spec-value text-white track-stat-turns">@track.NumberOfTurns</span>
+                        </div>
+                        <div class="spec-divider"></div>
+                        <div class="spec-col">
+                            <span class="spec-label">DIRECTION</span>
+                            <span class="spec-value text-muted">CLOCKWISE</span>
+                        </div>
+                    </div>
+
+                    <!-- CARD BOTTOM RED ACCENT STRIP -->
+                    <div class="card-bottom-accent"></div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
-    
-    <div class="d-flex justify-content-center mt-4 pb-5">
-        <a href="#" id="btn-continue" class="btn-continue disabled">🏁 CONTINUE TO ANALYSIS</a>
+
+    <!-- BOTTOM ACTION BAR: SELECTED READOUT & PROCEED BUTTON -->
+    <div class="track-bottom-bar">
+        <div class="bottom-selected-summary">
+            <span class="status-dot-green"></span>
+            <span class="summary-prefix">TARGET CIRCUIT:</span>
+            <span class="summary-track-name" id="barTrackName">SELECT CIRCUIT</span>
+            <span class="summary-track-meta" id="barTrackMeta">// AWAITING OPERATOR INPUT</span>
+        </div>
+
+        <div class="bottom-action-container">
+            <a href="#" id="btnContinueTelemetry" class="btn-proceed-telemetry disabled">
+                <span class="btn-caption">PROCEED TO TELEMETRY</span>
+                <span class="btn-arrow">➔</span>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -99,6 +171,81 @@
 </div>
 
 <!-- ========================================================================== -->
+<!-- MODAL: ADD NEW TRACK                                                       -->
+<!-- ========================================================================== -->
+<div class="modal fade" id="addTrackModal" tabindex="-1" aria-labelledby="addTrackModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-motorsport">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="addTrackModalLabel">
+                    <span class="text-red">🏁</span> REGISTER NEW CIRCUIT SPECIFICATION
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addTrackForm" onsubmit="submitAddTrack(event)">
+                <div class="modal-body p-4">
+                    <div id="addTrackAlertError" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
+
+                    <!-- SECTION 1: IDENTITY -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 01 CIRCUIT IDENTITY</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">CIRCUIT NAME</label>
+                                <input type="text" id="addTrackName" name="Name" class="form-control form-control-dark" required placeholder="e.g. MONZA CIRCUIT">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">COUNTRY / LOCATION</label>
+                                <input type="text" id="addTrackCountry" name="Country" class="form-control form-control-dark" required placeholder="e.g. Italy">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: SPECIFICATIONS -->
+                    <div class="modal-section-box mb-4">
+                        <div class="modal-section-title">// 02 CIRCUIT METRICS</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">CIRCUIT LENGTH (KM)</label>
+                                <input type="number" id="addTrackLength" name="Length" class="form-control form-control-dark" step="0.001" min="0.1" max="100" required placeholder="5.793">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label micro-label">NUMBER OF TURNS</label>
+                                <input type="number" id="addTrackTurns" name="NumberOfTurns" class="form-control form-control-dark" min="1" max="200" required placeholder="11">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: CIRCUIT MAP IMAGE -->
+                    <div class="modal-section-box">
+                        <div class="modal-section-title">// 03 CIRCUIT MAP SCHEMATIC</div>
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <div class="edit-img-preview-box">
+                                    <img id="addTrackImagePreview" src="/images/tracks/default-track.jpg" alt="Track Preview" />
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="form-label micro-label">UPLOAD CIRCUIT SCHEMATIC</label>
+                                <input type="file" id="addTrackImageFile" name="ImageFile" accept="image/*" class="form-control form-control-dark" onchange="previewAddTrackImage(this)">
+                                <small class="text-muted d-block mt-1">High-contrast white or line schematic on transparent or dark background recommended.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-motorsport-primary px-4" id="btnAddTrackSubmit">
+                        <span id="btnAddTrackText">SAVE CIRCUIT</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================== -->
 <!-- MODAL: EDIT TRACK DETAILS                                                  -->
 <!-- ========================================================================== -->
 <div class="modal fade" id="editTrackModal" tabindex="-1" aria-labelledby="editTrackModalLabel" aria-hidden="true" data-bs-backdrop="static">
@@ -106,7 +253,7 @@
         <div class="modal-content modal-motorsport">
             <div class="modal-header">
                 <h5 class="modal-title d-flex align-items-center gap-2" id="editTrackModalLabel">
-                    <span class="text-orange">✏️</span> EDIT TRACK SPECIFICATIONS
+                    <span class="text-red">✏️</span> EDIT CIRCUIT SPECIFICATIONS
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -115,12 +262,12 @@
                 <div class="modal-body p-4">
                     <div id="editTrackAlertError" class="alert alert-danger d-none py-2 px-3 small mb-3"></div>
 
-                    <!-- SECTION 1: TRACK IDENTITY -->
+                    <!-- SECTION 1: IDENTITY -->
                     <div class="modal-section-box mb-4">
-                        <div class="modal-section-title">// 01 TRACK IDENTITY</div>
+                        <div class="modal-section-title">// 01 CIRCUIT IDENTITY</div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label micro-label">TRACK NAME</label>
+                                <label class="form-label micro-label">CIRCUIT NAME</label>
                                 <input type="text" id="editTrackName" name="Name" class="form-control form-control-dark" required placeholder="e.g. MONZA">
                             </div>
                             <div class="col-md-6">
@@ -130,12 +277,12 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 2: TRACK SPECIFICATIONS -->
+                    <!-- SECTION 2: SPECIFICATIONS -->
                     <div class="modal-section-box mb-4">
-                        <div class="modal-section-title">// 02 TRACK SPECIFICATIONS</div>
+                        <div class="modal-section-title">// 02 CIRCUIT METRICS</div>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label micro-label">LENGTH (KM)</label>
+                                <label class="form-label micro-label">CIRCUIT LENGTH (KM)</label>
                                 <input type="number" id="editTrackLength" name="Length" class="form-control form-control-dark" step="0.001" min="0.1" max="100" required placeholder="5.793">
                             </div>
                             <div class="col-md-6">
@@ -145,9 +292,9 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 3: TRACK IMAGE / MAP -->
+                    <!-- SECTION 3: CIRCUIT MAP IMAGE -->
                     <div class="modal-section-box">
-                        <div class="modal-section-title">// 03 TRACK IMAGE / MAP</div>
+                        <div class="modal-section-title">// 03 CIRCUIT MAP SCHEMATIC</div>
                         <div class="row g-3 align-items-center">
                             <div class="col-auto">
                                 <div class="edit-img-preview-box">
@@ -155,9 +302,9 @@
                                 </div>
                             </div>
                             <div class="col">
-                                <label class="form-label micro-label">CHANGE / UPLOAD TRACK MAP</label>
+                                <label class="form-label micro-label">UPDATE CIRCUIT SCHEMATIC</label>
                                 <input type="file" id="editTrackImageFile" name="ImageFile" accept="image/*" class="form-control form-control-dark" onchange="previewTrackEditImage(this)">
-                                <small class="text-muted d-block mt-1">Leave empty to keep current image. Supports JPG, PNG, WEBP, SVG.</small>
+                                <small class="text-muted d-block mt-1">Leave empty to keep current schematic. Supports JPG, PNG, WEBP, SVG.</small>
                             </div>
                         </div>
                     </div>
@@ -165,7 +312,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
-                    <button type="submit" class="btn btn-orange-primary px-4" id="btnSaveTrack">
+                    <button type="submit" class="btn btn-motorsport-primary px-4" id="btnSaveTrack">
                         <span id="btnSaveTrackText">SAVE CHANGES</span>
                     </button>
                 </div>
@@ -182,21 +329,21 @@
         <div class="modal-content modal-motorsport border-danger">
             <div class="modal-header border-danger-subtle">
                 <h5 class="modal-title d-flex align-items-center gap-2 text-danger" id="deleteTrackModalLabel">
-                    <span>⚠️</span> DELETE TRACK?
+                    <span>⚠️</span> DELETE CIRCUIT SPECIFICATION?
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 text-center">
-                <p class="mb-2 text-secondary">Are you sure you want to delete:</p>
-                <h4 class="text-white fw-bold mb-3" id="deleteTrackName">TRACK NAME</h4>
-                <div class="alert alert-warning py-2 px-3 small border-0" style="background: rgba(234, 179, 8, 0.15); color: #facc15;">
-                    This action cannot be undone. All telemetry sessions and laps for this track will also be removed.
+                <p class="mb-2 text-secondary">Are you sure you want to permanently remove:</p>
+                <h4 class="text-white fw-bold mb-3" id="deleteTrackName">CIRCUIT NAME</h4>
+                <div class="alert alert-danger py-2 px-3 small border-0" style="background: rgba(255, 31, 56, 0.15); color: #ff8595;">
+                    This action cannot be undone. All telemetry sessions and laps registered for this circuit will be isolated or deleted.
                 </div>
             </div>
             <div class="modal-footer justify-content-center gap-3">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
                 <button type="button" class="btn btn-danger px-4 fw-bold" id="btnConfirmDeleteTrack" onclick="confirmDeleteTrack()">
-                    <span id="btnDeleteTrackText">DELETE TRACK</span>
+                    <span id="btnDeleteTrackText">DELETE CIRCUIT</span>
                 </button>
             </div>
         </div>
@@ -204,327 +351,708 @@
 </div>
 
 <style>
-    :root {
-        --c-orange: var(--rta-orange);
-        --c-orange-glow: var(--rta-orange-glow);
-        --c-cyan: var(--rta-cyan);
-        --c-cyan-glow: var(--rta-cyan-glow);
-        --c-muted: var(--rta-text-secondary);
-        --font-mono: var(--rta-font-mono);
+    /* --------------------------------------------------------------------------
+       1. CINEMATIC MOTORSPORT ENVIRONMENT
+       -------------------------------------------------------------------------- */
+    .cinematic-track-bg {
+        position: fixed;
+        inset: 0;
+        background-color: #06080c;
+        background-image: 
+            radial-gradient(circle at 50% 15%, rgba(255, 31, 56, 0.08) 0%, transparent 60%),
+            radial-gradient(circle at 10% 85%, rgba(14, 20, 32, 0.6) 0%, transparent 50%),
+            radial-gradient(circle at 90% 85%, rgba(14, 20, 32, 0.6) 0%, transparent 50%),
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+        z-index: 1;
+        pointer-events: none;
     }
 
-    body { background-color: var(--rta-bg-canvas); color: #fff; }
-    .page-title { font-weight: 800; letter-spacing: 3px; font-size: 2rem; margin: 0; }
-    .text-orange { color: var(--rta-orange); }
-    
-    .btn-add-track {
-        background: transparent;
-        border: 2px solid var(--rta-cyan);
-        color: var(--rta-cyan);
-        padding: 10px 24px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        border-radius: 4px;
-        transition: all 0.3s;
-        text-decoration: none;
+    .cinematic-track-overlay {
+        position: fixed;
+        inset: 0;
+        background: 
+            radial-gradient(ellipse at 50% 50%, rgba(6, 8, 12, 0.35) 0%, rgba(6, 8, 12, 0.88) 70%, rgba(6, 8, 12, 0.98) 100%),
+            linear-gradient(to bottom, rgba(6, 8, 12, 0.85) 0%, transparent 15%, transparent 75%, rgba(6, 8, 12, 0.95) 100%);
+        z-index: 2;
+        pointer-events: none;
     }
-    .btn-add-track:hover {
-        background: rgba(0, 210, 255, 0.1);
-        color: var(--rta-cyan);
-        box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+
+    /* --------------------------------------------------------------------------
+       2. WORKSTATION MAIN CONTAINER
+       -------------------------------------------------------------------------- */
+    .track-workstation-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 52px);
+        position: relative;
+        z-index: 10;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    /* --------------------------------------------------------------------------
+       3. TOP HEADER / CONTROL STRIP
+       -------------------------------------------------------------------------- */
+    .track-header-bar {
+        height: 72px;
+        flex: 0 0 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: rgba(9, 12, 18, 0.85);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        z-index: 12;
+    }
+
+    .track-title-block {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .track-micro-tag {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        font-weight: 800;
+        color: var(--rta-red);
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+    }
+
+    .track-page-title {
+        font-size: 1.55rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.1;
+        text-transform: uppercase;
+    }
+
+    .track-page-desc {
+        font-size: 0.72rem;
+        font-family: var(--font-mono);
+        color: var(--rta-text-muted);
+        letter-spacing: 1.2px;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .text-red {
+        color: var(--rta-red);
+    }
+
+    .track-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .assigned-vehicle-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(18, 22, 32, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-family: var(--font-mono);
+    }
+
+    .micro-indicator-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: var(--rta-red);
+        box-shadow: 0 0 8px var(--rta-red);
+        display: inline-block;
+    }
+
+    .badge-lbl {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--rta-text-muted);
+        letter-spacing: 1px;
+    }
+
+    .badge-val {
+        font-size: 0.8rem;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 1px;
+    }
+
+    .badge-tag {
+        font-size: 0.66rem;
+        font-weight: 800;
+        background: rgba(255, 31, 56, 0.16);
+        color: var(--rta-red);
+        border: 1px solid rgba(255, 31, 56, 0.4);
+        padding: 1px 6px;
+        border-radius: 4px;
+        letter-spacing: 0.8px;
+    }
+
+    .btn-add-track-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 31, 56, 0.10);
+        border: 1.5px dashed var(--rta-red);
+        color: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 1.8px;
+        padding: 7px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+    }
+
+    .btn-add-track-nav:hover {
+        background: var(--rta-red);
+        box-shadow: 0 0 20px var(--rta-red-glow);
+        border-style: solid;
+        color: #ffffff;
+    }
+
+    .btn-add-track-nav .plus-sign {
+        font-size: 1.1rem;
+        font-weight: 900;
+        line-height: 1;
+        color: var(--rta-red);
+        transition: color 0.2s ease;
+    }
+
+    .btn-add-track-nav:hover .plus-sign {
+        color: #ffffff;
+    }
+
+    /* --------------------------------------------------------------------------
+       4. MAIN CIRCUITS GRID VIEWPORT
+       -------------------------------------------------------------------------- */
+    .track-grid-viewport {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 24px 32px 32px 32px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 31, 56, 0.4) rgba(10, 14, 22, 0.6);
+    }
+
+    .track-grid-viewport::-webkit-scrollbar {
+        width: 6px;
+    }
+    .track-grid-viewport::-webkit-scrollbar-track {
+        background: rgba(10, 14, 22, 0.6);
+    }
+    .track-grid-viewport::-webkit-scrollbar-thumb {
+        background: rgba(255, 31, 56, 0.4);
+        border-radius: 3px;
+    }
+    .track-grid-viewport::-webkit-scrollbar-thumb:hover {
+        background: var(--rta-red);
     }
 
     .track-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        max-width: 1840px;
+        margin: 0 auto;
     }
 
+    @@media (max-width: 1680px) {
+        .track-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .track-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .track-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* --------------------------------------------------------------------------
+       5. TRACK CARD DESIGN
+       -------------------------------------------------------------------------- */
     .track-card {
-        background: var(--rta-bg-surface-1);
-        border: 1px solid var(--rta-border-subtle);
-        border-radius: 12px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        background: rgba(11, 14, 20, 0.82);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
         display: flex;
         flex-direction: column;
-        user-select: none;
-        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.4);
-    }
-    .track-card:hover {
-        transform: translateY(-4px);
-        border-color: var(--rta-cyan);
-        box-shadow: 0 10px 24px rgba(0, 210, 255, 0.18);
-    }
-    .track-card.active {
-        border-color: var(--rta-cyan);
-        box-shadow: 0 0 0 1px var(--rta-cyan), 0 0 20px rgba(0, 210, 255, 0.35);
+        cursor: pointer;
+        transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        position: relative;
+        overflow: hidden;
     }
 
-    .track-img-wrapper {
+    .track-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 31, 56, 0.45);
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.85), 0 0 16px rgba(255, 31, 56, 0.2);
+    }
+
+    .track-card.active {
+        border-color: var(--rta-red) !important;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 31, 56, 0.4), inset 0 0 15px rgba(255, 31, 56, 0.12) !important;
+    }
+
+    /* CARD HEADER */
+    .track-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px 6px 14px;
+    }
+
+    .active-indicator-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 31, 56, 0.2);
+        color: #ffffff;
+        border: 1px solid var(--rta-red);
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        opacity: 0;
+        transform: scale(0.9);
+        transition: all 0.2s ease;
+    }
+
+    .track-card.active .active-indicator-pill {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .active-dot-pulse {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: var(--rta-red);
+        box-shadow: 0 0 6px var(--rta-red);
+    }
+
+    .track-flag-country {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--rta-text-muted);
+        letter-spacing: 1px;
+    }
+
+    .track-flag-icon {
+        font-size: 1.05rem;
+        line-height: 1;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    /* CARD TITLE */
+    .track-card-title-wrap {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 0 14px 8px 14px;
+    }
+
+    .track-card-name {
+        font-size: 1.15rem;
+        font-weight: 900;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color 0.2s ease;
+    }
+
+    .track-card.active .track-card-name {
+        color: #ffffff;
+        text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    }
+
+    .track-card-index {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.25);
+        letter-spacing: 1px;
+    }
+
+    .track-card.active .track-card-index {
+        color: var(--rta-red);
+    }
+
+    /* CIRCUIT MAP VIEWPORT */
+    .track-map-viewport {
         height: 200px;
-        width: 100%;
-        background-color: var(--rta-bg-canvas);
-        background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        background-size: 30px 30px;
+        margin: 0 12px;
+        background: 
+            radial-gradient(circle at center, rgba(22, 28, 42, 0.45) 0%, rgba(8, 10, 15, 0.95) 100%),
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 20px 20px, 20px 20px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 6px;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-bottom: 1px solid var(--rta-border-subtle);
-    }
-    
-    .selected-badge {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        background: var(--rta-cyan);
-        color: #000;
-        font-size: 0.7rem;
-        font-weight: 800;
-        padding: 4px 10px;
-        border-radius: 4px;
-        letter-spacing: 1px;
-        display: none;
-        z-index: 2;
-    }
-    .selected-check {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: var(--rta-cyan);
-        color: #000;
-        font-size: 0.9rem;
-        width: 24px;
-        height: 24px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        font-weight: bold;
-        z-index: 2;
-    }
-    .track-card.active .selected-badge,
-    .track-card.active .selected-check {
-        display: flex;
-    }
-    .track-flag-overlay {
-        position: absolute;
-        bottom: 10px;
-        right: 15px;
-        font-size: 1.4rem;
-        z-index: 2;
-        opacity: 0.9;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        overflow: hidden;
+        transition: border-color 0.2s ease;
     }
 
-    .track-img-wrapper img {
+    .track-card:hover .track-map-viewport {
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .track-card.active .track-map-viewport {
+        border-color: rgba(255, 31, 56, 0.4);
+    }
+
+    .hud-reticle {
+        position: absolute;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.18);
+        line-height: 1;
+        pointer-events: none;
+        transition: color 0.2s ease;
+    }
+
+    .track-card.active .hud-reticle {
+        color: rgba(255, 31, 56, 0.6);
+    }
+
+    .hud-tl { top: 6px; left: 8px; }
+    .hud-tr { top: 6px; right: 8px; }
+    .hud-bl { bottom: 6px; left: 8px; }
+    .hud-br { bottom: 6px; right: 8px; }
+
+    .track-circuit-img {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        opacity: 0.7;
-        transition: opacity 0.3s, filter 0.3s;
-        padding: 20px;
-        filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.3));
-    }
-    .track-card:hover .track-img-wrapper img, .track-card.active .track-img-wrapper img {
-        opacity: 1;
-        filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.6));
+        padding: 14px;
+        opacity: 0.82;
+        filter: brightness(0.95) contrast(1.15) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+        transition: opacity 0.22s ease, filter 0.22s ease, transform 0.22s ease;
+        position: relative;
+        z-index: 2;
     }
 
-    .track-fallback {
+    .track-card:hover .track-circuit-img {
+        opacity: 0.95;
+        transform: scale(1.02);
+    }
+
+    .track-card.active .track-circuit-img {
+        opacity: 1;
+        transform: scale(1.03);
+        filter: brightness(1.1) contrast(1.25) drop-shadow(0 0 14px rgba(255, 31, 56, 0.65));
+    }
+
+    .circuit-ambient-glow {
+        position: absolute;
+        width: 80%;
+        height: 70%;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(255, 31, 56, 0.16) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .track-card.active .circuit-ambient-glow {
+        opacity: 1;
+    }
+
+    .track-fallback-schematic {
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle at center, var(--rta-bg-surface-2) 0%, var(--rta-bg-canvas) 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        opacity: 0.5;
-        transition: opacity 0.3s;
+        gap: 8px;
+        opacity: 0.6;
+        position: relative;
+        z-index: 2;
     }
-    .track-card:hover .track-fallback, .track-card.active .track-fallback {
-        opacity: 0.8;
-    }
-    .fallback-svg {
+
+    .fallback-circuit-svg {
         width: 80px;
         height: 40px;
-        margin-bottom: 10px;
-        filter: drop-shadow(0 0 5px var(--rta-cyan));
-    }
-    .fallback-text {
-        color: var(--rta-cyan);
-        font-size: 0.65rem;
-        letter-spacing: 2px;
-        font-family: monospace;
+        filter: drop-shadow(0 0 6px var(--rta-red));
     }
 
-    .track-info {
-        padding: 15px 20px 20px 20px;
-        background: transparent;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .track-info h2 {
-        font-size: 1.25rem;
-        font-weight: 800;
-        margin: 0;
+    .fallback-circuit-text {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        color: var(--rta-red);
         letter-spacing: 1.5px;
-        text-transform: uppercase;
-        color: #fff;
     }
-    .track-card.active .track-info h2 {
-        color: var(--rta-cyan);
-    }
-    
-    .track-location {
-        color: var(--rta-text-secondary);
-        font-size: 0.8rem;
-        margin-top: 4px;
-        margin-bottom: auto;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
+
+    /* CARD SPECS */
+    .track-card-specs {
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: space-between;
+        padding: 12px 14px;
+        margin-top: 4px;
     }
 
-    .track-stats {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 15px;
-        border-top: 1px solid var(--rta-border-subtle);
-        padding-top: 15px;
-    }
-    .track-stats .stat {
+    .spec-col {
         display: flex;
         flex-direction: column;
     }
-    .track-stats .label {
-        font-size: 0.65rem;
-        color: var(--rta-text-secondary);
+
+    .spec-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: var(--rta-text-muted);
         letter-spacing: 1px;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-    }
-    .track-stats .value {
-        font-size: 1.1rem;
-        color: var(--rta-cyan);
         font-weight: 700;
-        letter-spacing: 1px;
+        margin-bottom: 2px;
     }
 
-    .btn-continue {
-        background: linear-gradient(135deg, var(--rta-orange), #e03e00);
-        color: #fff;
-        padding: 12px 60px;
-        font-size: 1.1rem;
+    .spec-value {
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
         font-weight: 800;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        text-decoration: none;
-        transition: all 0.3s;
-        border: 1px solid var(--rta-orange);
-        border-radius: 4px;
-        display: inline-block;
-        box-shadow: 0 4px 12px rgba(255, 90, 31, 0.2);
+        letter-spacing: 0.8px;
     }
-    .btn-continue:hover:not(.disabled) {
-        background: linear-gradient(135deg, #ff7138, #ff5a1f);
-        box-shadow: 0 0 20px rgba(255, 90, 31, 0.4);
-        color: #fff;
+
+    .spec-divider {
+        width: 1px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.08);
     }
-    .btn-continue:active:not(.disabled) {
-        box-shadow: 0 0 25px rgba(255, 90, 31, 0.5);
+
+    .card-bottom-accent {
+        height: 3px;
+        width: 100%;
+        background: transparent;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .btn-continue.disabled {
-        background: #111;
-        border-color: #333;
-        color: #555;
-        pointer-events: none;
-        box-shadow: none;
+
+    .track-card.active .card-bottom-accent {
+        background: var(--rta-red);
+        box-shadow: 0 0 10px var(--rta-red);
     }
 
     /* --------------------------------------------------------------------------
-       MODAL & CONTEXT MENU STYLING (MATCHING GARAGE)
+       6. BOTTOM ACTION BAR
+       -------------------------------------------------------------------------- */
+    .track-bottom-bar {
+        height: 64px;
+        flex: 0 0 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: rgba(8, 10, 15, 0.92);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+        z-index: 12;
+    }
+
+    .bottom-selected-summary {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+    }
+
+    .status-dot-green {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #00e676;
+        box-shadow: 0 0 10px #00e676;
+    }
+
+    .summary-prefix {
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: var(--rta-text-muted);
+        letter-spacing: 1.5px;
+    }
+
+    .summary-track-name {
+        font-size: 0.95rem;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .summary-track-meta {
+        font-size: 0.76rem;
+        color: var(--rta-text-muted);
+        letter-spacing: 1px;
+    }
+
+    .bottom-action-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-proceed-telemetry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 32px;
+        background: linear-gradient(135deg, #ff1f38 0%, #b8051a 100%);
+        color: #ffffff !important;
+        font-weight: 900;
+        font-size: 0.92rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-radius: 6px;
+        text-decoration: none;
+        border: none;
+        box-shadow: 0 6px 24px rgba(255, 31, 56, 0.45);
+        transition: all 0.22s ease;
+    }
+
+    .btn-proceed-telemetry:hover:not(.disabled) {
+        background: linear-gradient(135deg, #ff3b50 0%, #d60822 100%);
+        box-shadow: 0 8px 30px rgba(255, 31, 56, 0.7);
+        transform: translateY(-2px);
+    }
+
+    .btn-proceed-telemetry.disabled {
+        background: rgba(255, 255, 255, 0.05);
+        color: #64748b !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+
+    .btn-arrow {
+        font-size: 1.05rem;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-proceed-telemetry:hover:not(.disabled) .btn-arrow {
+        transform: translateX(4px);
+    }
+
+    /* --------------------------------------------------------------------------
+       7. MODALS & CONTEXT MENU
        -------------------------------------------------------------------------- */
     .modal-motorsport {
-        background: var(--rta-bg-surface-1);
-        border: 1px solid var(--rta-border-subtle);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--rta-orange-glow);
+        background: rgba(11, 14, 20, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 31, 56, 0.4);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 31, 56, 0.25);
         color: #ffffff;
     }
 
     .modal-motorsport .modal-header {
-        border-bottom: 1px solid var(--rta-border-subtle);
-        padding: 14px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 16px 24px;
     }
 
     .modal-motorsport .modal-footer {
-        border-top: 1px solid var(--rta-border-subtle);
-        padding: 12px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px 24px;
     }
 
     .micro-label {
         font-size: 0.72rem;
         font-family: var(--font-mono);
-        color: var(--c-muted);
+        color: var(--rta-text-muted);
         letter-spacing: 1.2px;
         margin-bottom: 4px;
+        font-weight: 700;
     }
 
     .form-control-dark {
-        background: var(--rta-bg-canvas);
-        border: 1px solid var(--rta-border-subtle);
+        background: rgba(5, 7, 10, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: #ffffff;
         font-size: 0.88rem;
         border-radius: 4px;
+        padding: 8px 12px;
     }
 
     .form-control-dark:focus {
-        background: var(--rta-bg-surface-2);
-        border-color: var(--c-cyan);
-        box-shadow: 0 0 10px var(--c-cyan-glow);
-        color: #ffffff;
-    }
-
-    .btn-orange-primary {
-        background: var(--c-orange);
-        border: none;
-        color: #ffffff;
-        font-weight: 800;
-        letter-spacing: 1.5px;
-    }
-
-    .btn-orange-primary:hover {
-        background: #ff7138;
-        box-shadow: 0 0 15px var(--c-orange-glow);
+        background: rgba(8, 11, 16, 0.95);
+        border-color: var(--rta-red);
+        box-shadow: 0 0 12px rgba(255, 31, 56, 0.35);
         color: #ffffff;
     }
 
     .modal-section-box {
-        background: var(--rta-bg-canvas);
-        border: 1px solid var(--rta-border-subtle);
+        background: rgba(5, 7, 10, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: 6px;
-        padding: 14px 16px;
+        padding: 16px 18px;
     }
 
     .modal-section-title {
-        font-size: 0.68rem;
+        font-size: 0.7rem;
         font-family: var(--font-mono);
-        color: var(--c-orange);
-        letter-spacing: 1px;
-        font-weight: 700;
+        color: var(--rta-red);
+        letter-spacing: 1.4px;
+        font-weight: 800;
         margin-bottom: 12px;
+    }
+
+    .btn-motorsport-primary {
+        background: linear-gradient(135deg, #ff1f38 0%, #b8051a 100%);
+        border: none;
+        color: #ffffff;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        box-shadow: 0 4px 16px rgba(255, 31, 56, 0.4);
+        transition: all 0.2s ease;
+    }
+
+    .btn-motorsport-primary:hover {
+        background: linear-gradient(135deg, #ff3b50 0%, #d60822 100%);
+        box-shadow: 0 6px 20px rgba(255, 31, 56, 0.6);
+        color: #ffffff;
     }
 
     .edit-img-preview-box {
         width: 120px;
         height: 75px;
-        background: var(--rta-bg-canvas);
-        border: 1px solid var(--rta-border-subtle);
+        background: rgba(5, 7, 10, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 4px;
         overflow: hidden;
         display: flex;
@@ -539,22 +1067,23 @@
         padding: 4px;
     }
 
-    /* CUSTOM TRACK CONTEXT MENU */
+    /* RIGHT-CLICK CONTEXT MENU */
     .track-context-menu {
         position: fixed;
         z-index: 1060;
-        min-width: 215px;
-        background: rgba(14, 17, 26, 0.85);
+        min-width: 220px;
+        background: rgba(14, 17, 26, 0.95);
         backdrop-filter: blur(16px);
-        border: 1px solid var(--c-orange);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 31, 56, 0.45);
         border-radius: 6px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px var(--c-orange-glow);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px rgba(255, 31, 56, 0.25);
         padding: 6px;
         user-select: none;
-        animation: ctxMenuFadeIn 0.12s ease-out;
+        animation: ctxFade 0.12s ease-out;
     }
 
-    @@keyframes ctxMenuFadeIn {
+    @@keyframes ctxFade {
         from { opacity: 0; transform: scale(0.96); }
         to { opacity: 1; transform: scale(1); }
     }
@@ -564,7 +1093,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 6px 10px 8px;
-        border-bottom: 1px solid var(--rta-border-subtle);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         margin-bottom: 4px;
     }
 
@@ -572,8 +1101,8 @@
         font-size: 0.74rem;
         font-weight: 800;
         letter-spacing: 0.8px;
-        color: #fff;
-        max-width: 125px;
+        color: #ffffff;
+        max-width: 130px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -582,7 +1111,7 @@
     .context-pill {
         font-size: 0.6rem;
         font-family: var(--font-mono);
-        color: var(--c-orange);
+        color: var(--rta-red);
         letter-spacing: 0.8px;
     }
 
@@ -601,7 +1130,7 @@
         background: transparent;
         border: 1px solid transparent;
         border-radius: 4px;
-        color: #d1d5db;
+        color: #cbd5e1;
         font-size: 0.82rem;
         font-weight: 600;
         text-align: left;
@@ -614,21 +1143,21 @@
     }
 
     .context-menu-item:hover {
-        background: rgba(255, 90, 31, 0.15);
-        border-color: rgba(255, 90, 31, 0.4);
-        color: #fff;
+        background: rgba(255, 31, 56, 0.15);
+        border-color: rgba(255, 31, 56, 0.4);
+        color: #ffffff;
         transform: translateX(2px);
     }
 
     .context-menu-item.item-danger:hover {
         background: rgba(239, 68, 68, 0.15);
         border-color: rgba(239, 68, 68, 0.4);
-        color: #ef4444;
+        color: #ff4d4d;
     }
 
     .context-menu-divider {
         height: 1px;
-        background: var(--rta-border-subtle);
+        background: rgba(255, 255, 255, 0.08);
         margin: 2px 0;
     }
 </style>
@@ -673,26 +1202,46 @@
 
     function selectTrack(trackId) {
         selectedTrackId = trackId;
+        const track = tracksData.find(t => t.id === trackId);
+        
+        // 1. Highlight Active Card
         document.querySelectorAll('.track-card').forEach(card => card.classList.remove('active'));
         const activeCard = document.getElementById('track-' + trackId);
         if (activeCard) activeCard.classList.add('active');
-        
-        const btnContinue = document.getElementById('btn-continue');
+
+        // 2. Update Bottom Bar Information
+        const nameEl = document.getElementById('barTrackName');
+        const metaEl = document.getElementById('barTrackMeta');
+        const btnContinue = document.getElementById('btnContinueTelemetry');
+
+        if (track) {
+            if (nameEl) nameEl.innerText = track.name;
+            if (metaEl) metaEl.innerText = `// ${track.country.toUpperCase()} — ${track.length.toFixed(3)} KM, ${track.numberOfTurns} TURNS`;
+        }
+
+        // 3. Enable and point "PROCEED TO TELEMETRY"
         if (btnContinue) {
             btnContinue.classList.remove('disabled');
             btnContinue.href = '/Telemetry/Loading?vehicleId=' + vehicleId + '&trackId=' + trackId;
         }
     }
 
+    function handleTrackImgError(img) {
+        if (!img) return;
+        img.onerror = null;
+        img.style.display = 'none';
+        const fallback = img.nextElementSibling;
+        if (fallback) fallback.classList.remove('d-none');
+    }
+
     // ==========================================================================
-    // TRACK MANAGEMENT: RIGHT-CLICK CONTEXT MENU, EDIT & DELETE
+    // TRACK MANAGEMENT: RIGHT-CLICK CONTEXT MENU, ADD, EDIT & DELETE
     // ==========================================================================
     let contextTrackId = null;
 
     function initTrackContextMenu() {
         const menu = document.getElementById('trackContextMenu');
 
-        // Prevent native context menu on track cards and show custom motorsport menu
         document.addEventListener('contextmenu', (e) => {
             const card = e.target.closest('.track-card');
             if (card) {
@@ -705,12 +1254,10 @@
                 const titleEl = document.getElementById('ctxTrackTitle');
                 if (titleEl) titleEl.innerText = track.name;
 
-                // Show menu to measure dimensions
                 menu.classList.remove('d-none');
-                const menuWidth = menu.offsetWidth || 215;
+                const menuWidth = menu.offsetWidth || 220;
                 const menuHeight = menu.offsetHeight || 110;
 
-                // Position near cursor and guarantee viewport bounds
                 let left = e.clientX + 4;
                 let top = e.clientY + 4;
 
@@ -728,21 +1275,18 @@
             }
         });
 
-        // Close when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#trackContextMenu')) {
                 hideTrackContextMenu();
             }
         });
 
-        // Close on Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 hideTrackContextMenu();
             }
         });
 
-        // Close on resize or scroll
         window.addEventListener('resize', hideTrackContextMenu);
         window.addEventListener('scroll', hideTrackContextMenu, true);
     }
@@ -750,6 +1294,86 @@
     function hideTrackContextMenu() {
         const menu = document.getElementById('trackContextMenu');
         if (menu) menu.classList.add('d-none');
+    }
+
+    // --- ADD TRACK MODAL ---
+    function previewAddTrackImage(input) {
+        if (input.files && input.files[0]) {
+            const previewImg = document.getElementById('addTrackImagePreview');
+            if (previewImg) {
+                previewImg.src = URL.createObjectURL(input.files[0]);
+            }
+        }
+    }
+
+    async function submitAddTrack(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        const form = document.getElementById('addTrackForm');
+        const btnSave = document.getElementById('btnAddTrackSubmit');
+        const btnText = document.getElementById('btnAddTrackText');
+        const alertError = document.getElementById('addTrackAlertError');
+
+        if (alertError) {
+            alertError.classList.add('d-none');
+            alertError.innerText = '';
+        }
+
+        const tName = document.getElementById('addTrackName').value.trim();
+        const tCountry = document.getElementById('addTrackCountry').value.trim();
+        const tLength = parseFloat(document.getElementById('addTrackLength').value);
+        const tTurns = parseInt(document.getElementById('addTrackTurns').value);
+
+        if (!tName || !tCountry || isNaN(tLength) || tLength <= 0 || isNaN(tTurns) || tTurns <= 0) {
+            if (alertError) {
+                alertError.innerText = 'Please provide all required circuit metrics (Name, Country, Length > 0, Turns > 0).';
+                alertError.classList.remove('d-none');
+            }
+            return;
+        }
+
+        if (btnSave) btnSave.disabled = true;
+        if (btnText) btnText.innerText = 'SAVING...';
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/Track/AddTrack?vehicleId=' + vehicleId, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Server error (HTTP ${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch (_) {}
+                throw new Error(errorMsg);
+            }
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to add circuit.');
+            }
+
+            // Reload to render complete Razor markup seamlessly or select newly created
+            window.location.href = '/Track?vehicleId=' + vehicleId;
+        } catch (err) {
+            if (alertError) {
+                alertError.innerText = 'Registration failed: ' + err.message;
+                alertError.classList.remove('d-none');
+            }
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (btnText) btnText.innerText = 'SAVE CIRCUIT';
+        }
     }
 
     // --- EDIT TRACK MODAL ---
@@ -785,40 +1409,27 @@
         }
 
         const targetId = contextTrackId;
-
-        // 1. Immediately pre-fill from cached data
         const cached = tracksData.find(t => t.id === targetId);
         if (cached) {
             populateEditTrackForm(cached);
         }
 
-        // 2. Open modal smoothly
-        const editModalEl = document.getElementById('editTrackModal');
-        const editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
+        const editModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editTrackModal'));
         editModal.show();
 
-        // 3. Authoritative fetch from database API
         try {
             const response = await fetch(`/Track/GetTrack?id=${targetId}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.track) {
                     populateEditTrackForm(data.track);
-                    // Update in-memory cache
                     const idx = tracksData.findIndex(t => t.id === data.track.id);
                     if (idx !== -1) {
                         tracksData[idx] = data.track;
                     }
                 }
-            } else if (!cached) {
-                throw new Error(`Server returned HTTP ${response.status}`);
             }
-        } catch (err) {
-            if (!cached && alertError) {
-                alertError.innerText = 'Unable to load track details: ' + err.message;
-                alertError.classList.remove('d-none');
-            }
-        }
+        } catch (_) {}
     }
 
     function previewTrackEditImage(input) {
@@ -846,31 +1457,14 @@
             alertError.innerText = '';
         }
 
-        // Validation
         const tName = document.getElementById('editTrackName').value.trim();
         const tCountry = document.getElementById('editTrackCountry').value.trim();
         const tLength = parseFloat(document.getElementById('editTrackLength').value);
         const tTurns = parseInt(document.getElementById('editTrackTurns').value);
 
-        if (!tName || !tCountry) {
+        if (!tName || !tCountry || isNaN(tLength) || tLength <= 0 || isNaN(tTurns) || tTurns <= 0) {
             if (alertError) {
-                alertError.innerText = 'Track Name and Country / Location are required.';
-                alertError.classList.remove('d-none');
-            }
-            return;
-        }
-
-        if (isNaN(tLength) || tLength <= 0 || tLength > 100) {
-            if (alertError) {
-                alertError.innerText = 'Track Length must be a positive number between 0.1 and 100 km.';
-                alertError.classList.remove('d-none');
-            }
-            return;
-        }
-
-        if (isNaN(tTurns) || tTurns <= 0 || tTurns > 200) {
-            if (alertError) {
-                alertError.innerText = 'Number of Turns must be an integer between 1 and 200.';
+                alertError.innerText = 'Please provide valid values for all fields.';
                 alertError.classList.remove('d-none');
             }
             return;
@@ -901,7 +1495,6 @@
                 throw new Error(result.message || 'Failed to update track.');
             }
 
-            // 1. Update In-Memory tracksData
             const updated = result.track;
             const idx = tracksData.findIndex(t => t.id === updated.id);
             if (idx !== -1) {
@@ -910,7 +1503,7 @@
                 tracksData.push(updated);
             }
 
-            // 2. Update the DOM Card
+            // Update DOM Card
             const card = document.querySelector(`.track-card[data-id="${updated.id}"]`);
             if (card) {
                 card.setAttribute('data-name', updated.name);
@@ -923,43 +1516,37 @@
                 if (nameEl) nameEl.innerText = updated.name;
 
                 const flagEmoji = getCountryFlag(updated.country);
-                const flagOverlay = card.querySelector('.track-flag-overlay');
-                if (flagOverlay) flagOverlay.innerText = flagEmoji;
+                const flagIcon = card.querySelector('.track-flag-icon');
+                if (flagIcon) flagIcon.innerText = flagEmoji;
 
-                const flagText = card.querySelector('.track-flag-text');
-                if (flagText) flagText.innerText = flagEmoji;
-
-                const countryText = card.querySelector('.track-country-text');
-                if (countryText) countryText.innerText = updated.country;
+                const countryName = card.querySelector('.track-country-name');
+                if (countryName) countryName.innerText = updated.country.toUpperCase();
 
                 const lengthEl = card.querySelector('.track-stat-length');
-                if (lengthEl) lengthEl.innerText = updated.length + ' km';
+                if (lengthEl) lengthEl.innerText = updated.length.toFixed(3) + ' KM';
 
                 const turnsEl = card.querySelector('.track-stat-turns');
                 if (turnsEl) turnsEl.innerText = updated.numberOfTurns;
 
-                const imgEl = card.querySelector('.track-card-img');
+                const imgEl = card.querySelector('.track-circuit-img');
                 if (imgEl && updated.imagePath) {
                     imgEl.src = updated.imagePath;
                     imgEl.style.display = 'block';
-                    const fallbackEl = card.querySelector('.track-fallback');
-                    if (fallbackEl) fallbackEl.style.display = 'none';
+                    const fallbackEl = card.querySelector('.track-fallback-schematic');
+                    if (fallbackEl) fallbackEl.classList.add('d-none');
                 }
             }
 
-            // 3. Close Modal
+            // Update bottom bar if this track is currently active
+            if (selectedTrackId === updated.id) {
+                selectTrack(updated.id);
+            }
+
             const modalEl = document.getElementById('editTrackModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
             if (modalInstance) modalInstance.hide();
 
-            // 4. Reset form state cleanly
             form.reset();
-            const fileInput = document.getElementById('editTrackImageFile');
-            if (fileInput) fileInput.value = '';
-            if (alertError) {
-                alertError.classList.add('d-none');
-                alertError.innerText = '';
-            }
         } catch (err) {
             if (alertError) {
                 alertError.innerText = 'Save failed: ' + err.message;
@@ -1017,22 +1604,18 @@
 
             const deletedId = contextTrackId;
 
-            // 1. Remove from in-memory tracksData
             const idx = tracksData.findIndex(t => t.id === deletedId);
             if (idx !== -1) {
                 tracksData.splice(idx, 1);
             }
 
-            // 2. Remove card from DOM
             const card = document.querySelector(`.track-card[data-id="${deletedId}"]`);
             if (card) card.remove();
 
-            // 3. Close Modal
             const modalEl = document.getElementById('deleteTrackModal');
             const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
             if (modalInstance) modalInstance.hide();
 
-            // 4. If deleted track was selected, reselect or disable continue
             if (selectedTrackId === deletedId) {
                 const remainingCards = Array.from(document.querySelectorAll('.track-card'));
                 if (remainingCards.length > 0) {
@@ -1040,18 +1623,22 @@
                     selectTrack(newId);
                 } else {
                     selectedTrackId = null;
-                    const btnContinue = document.getElementById('btn-continue');
+                    const btnContinue = document.getElementById('btnContinueTelemetry');
                     if (btnContinue) {
                         btnContinue.classList.add('disabled');
                         btnContinue.href = '#';
                     }
+                    const nameEl = document.getElementById('barTrackName');
+                    if (nameEl) nameEl.innerText = 'NO TRACKS IN SYSTEM';
+                    const metaEl = document.getElementById('barTrackMeta');
+                    if (metaEl) metaEl.innerText = '// USE "+ ADD TRACK" TO REGISTER CIRCUITS';
                 }
             }
         } catch (err) {
             alert('Failed to delete track: ' + err.message);
         } finally {
             if (btnDelete) btnDelete.disabled = false;
-            if (textDelete) textDelete.innerText = 'DELETE TRACK';
+            if (textDelete) textDelete.innerText = 'DELETE CIRCUIT';
             contextTrackId = null;
         }
     }
@@ -1065,10 +1652,6 @@
                 alertError.classList.add('d-none');
                 alertError.innerText = '';
             }
-            const btnSave = document.getElementById('btnSaveTrack');
-            const btnSaveText = document.getElementById('btnSaveTrackText');
-            if (btnSave) btnSave.disabled = false;
-            if (btnSaveText) btnSaveText.innerText = 'SAVE CHANGES';
             const form = document.getElementById('editTrackForm');
             if (form) form.reset();
             const fileInput = document.getElementById('editTrackImageFile');
@@ -1076,10 +1659,37 @@
         });
     }
 
-    // Initialize on Load
+    const addTrackModalEl = document.getElementById('addTrackModal');
+    if (addTrackModalEl) {
+        addTrackModalEl.addEventListener('hidden.bs.modal', function () {
+            const alertError = document.getElementById('addTrackAlertError');
+            if (alertError) {
+                alertError.classList.add('d-none');
+                alertError.innerText = '';
+            }
+            const form = document.getElementById('addTrackForm');
+            if (form) form.reset();
+            const fileInput = document.getElementById('addTrackImageFile');
+            if (fileInput) fileInput.value = '';
+            const preview = document.getElementById('addTrackImagePreview');
+            if (preview) preview.src = '/images/tracks/default-track.jpg';
+        });
+    }
+
+    // Initialize on Load: Auto-select initial track
     window.addEventListener('DOMContentLoaded', () => {
         initTrackContextMenu();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const reqTrackId = parseInt(urlParams.get('trackId'));
+
+        if (reqTrackId && tracksData.some(t => t.id === reqTrackId)) {
+            selectTrack(reqTrackId);
+        } else if (tracksData.length > 0) {
+            const preferredTrack = tracksData.find(t => t.name.toUpperCase().includes('MONZA')) 
+                                || tracksData.find(t => t.name.toUpperCase().includes('LAGUNA'))
+                                || tracksData[0];
+            selectTrack(preferredTrack.id);
+        }
     });
 </script>
-
-

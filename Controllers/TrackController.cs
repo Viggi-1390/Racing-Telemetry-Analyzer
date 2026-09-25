@@ -24,31 +24,54 @@ namespace RacingTelemetryAnalyzer.Controllers
         {
             var tracks = _context.Tracks.ToList();
             
-            if (tracks.Count < 6)
+            var defaultTracks = new List<Track>
             {
-                var defaultTracks = new List<Track>
+                new Track { Name = "MONZA", Country = "Italy", Length = 5.793, NumberOfTurns = 11, ImagePath = "/images/tracks/Monza.jpg" },
+                new Track { Name = "SILVERSTONE", Country = "UK", Length = 5.891, NumberOfTurns = 18, ImagePath = "/images/tracks/Silverstone.jpg" },
+                new Track { Name = "SPA-FRANCORCHAMPS", Country = "Belgium", Length = 7.004, NumberOfTurns = 19, ImagePath = "/images/tracks/Spa%20Francochamps.jpg" },
+                new Track { Name = "NURBURGRING", Country = "Germany", Length = 20.832, NumberOfTurns = 73, ImagePath = "/images/tracks/Nurburging.jpg" },
+                new Track { Name = "LAGUNA SECA", Country = "USA", Length = 3.602, NumberOfTurns = 11, ImagePath = "/images/tracks/LagunaSeca.jpg" },
+                new Track { Name = "SUZUKA", Country = "Japan", Length = 5.807, NumberOfTurns = 18, ImagePath = "/images/tracks/Suzuka.jpg" },
+                new Track { Name = "LE MANS", Country = "France", Length = 13.626, NumberOfTurns = 38, ImagePath = "/images/tracks/LeMans.jpg" }
+            };
+            
+            bool needsSave = false;
+            foreach (var dt in defaultTracks)
+            {
+                if (!tracks.Any(t => t.Name.ToUpper() == dt.Name.ToUpper()))
                 {
-                    new Track { Name = "LE MANS", Country = "France", Length = 13.626, NumberOfTurns = 38, ImagePath = "/images/tracks/LeMans.jpg" },
-                    new Track { Name = "SPA-FRANCORCHAMPS", Country = "Belgium", Length = 7.004, NumberOfTurns = 19, ImagePath = "/images/tracks/Spa%20Francochamps.jpg" },
-                    new Track { Name = "MONZA", Country = "Italy", Length = 5.793, NumberOfTurns = 11, ImagePath = "/images/tracks/Monza.jpg" },
-                    new Track { Name = "SUZUKA", Country = "Japan", Length = 5.807, NumberOfTurns = 18, ImagePath = "/images/tracks/Suzuka.jpg" },
-                    new Track { Name = "NURBURGRING", Country = "Germany", Length = 20.832, NumberOfTurns = 73, ImagePath = "/images/tracks/Nurburging.jpg" },
-                    new Track { Name = "SILVERSTONE", Country = "UK", Length = 5.891, NumberOfTurns = 18, ImagePath = "/images/tracks/Silverstone.jpg" }
-                };
-                
-                foreach (var dt in defaultTracks)
-                {
-                    if (!tracks.Any(t => t.Name == dt.Name))
-                    {
-                        _context.Tracks.Add(dt);
-                        tracks.Add(dt);
-                    }
+                    _context.Tracks.Add(dt);
+                    tracks.Add(dt);
+                    needsSave = true;
                 }
+            }
+
+            // Deduplicate tracks by Name so each circuit has exactly one entry
+            var distinctTracks = new List<Track>();
+            var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var duplicateTracks = new List<Track>();
+
+            foreach (var t in tracks)
+            {
+                if (seenNames.Add(t.Name.Trim()))
+                {
+                    distinctTracks.Add(t);
+                }
+                else
+                {
+                    duplicateTracks.Add(t);
+                }
+            }
+
+            if (duplicateTracks.Any())
+            {
+                _context.Tracks.RemoveRange(duplicateTracks);
                 _context.SaveChanges();
+                tracks = distinctTracks;
             }
 
             // Force update all paths to correct filenames
-            bool needsSave = false;
+            needsSave = false;
             foreach (var t in tracks)
             {
                 if (t.Name.ToUpper() == "LE MANS" && t.ImagePath != "/images/tracks/LeMans.jpg") { t.ImagePath = "/images/tracks/LeMans.jpg"; needsSave = true; }
@@ -57,10 +80,26 @@ namespace RacingTelemetryAnalyzer.Controllers
                 if (t.Name.ToUpper() == "SUZUKA" && t.ImagePath != "/images/tracks/Suzuka.jpg") { t.ImagePath = "/images/tracks/Suzuka.jpg"; needsSave = true; }
                 if (t.Name.ToUpper() == "NURBURGRING" && t.ImagePath != "/images/tracks/Nurburging.jpg") { t.ImagePath = "/images/tracks/Nurburging.jpg"; needsSave = true; }
                 if (t.Name.ToUpper() == "SILVERSTONE" && t.ImagePath != "/images/tracks/Silverstone.jpg") { t.ImagePath = "/images/tracks/Silverstone.jpg"; needsSave = true; }
+                if (t.Name.ToUpper() == "LAGUNA SECA" && (string.IsNullOrEmpty(t.ImagePath) || t.ImagePath.Contains("default"))) { t.ImagePath = "/images/tracks/LagunaSeca.jpg"; needsSave = true; }
             }
             if (needsSave) _context.SaveChanges();
 
-            ViewBag.VehicleId = vehicleId;
+            // Order tracks logically
+            tracks = tracks.OrderBy(t => t.TrackId).ToList();
+
+            Vehicle? vehicle = null;
+            if (vehicleId > 0)
+            {
+                vehicle = _context.Vehicles.AsNoTracking().FirstOrDefault(v => v.VehicleId == vehicleId);
+            }
+            if (vehicle == null)
+            {
+                vehicle = _context.Vehicles.AsNoTracking().FirstOrDefault(v => v.Name.Contains("CADILLAC"))
+                       ?? _context.Vehicles.AsNoTracking().FirstOrDefault();
+            }
+
+            ViewBag.Vehicle = vehicle;
+            ViewBag.VehicleId = vehicle?.VehicleId ?? vehicleId;
             return View(tracks);
         }
 
@@ -71,14 +110,24 @@ namespace RacingTelemetryAnalyzer.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddTrack(Track track, IFormFile ImageFile, [FromQuery] int vehicleId = 0)
+        public async Task<IActionResult> AddTrack(Track track, IFormFile? ImageFile, [FromQuery] int vehicleId = 0)
         {
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.HasJsonContentType();
+
             if (string.IsNullOrWhiteSpace(track.Name) || string.IsNullOrWhiteSpace(track.Country) || track.Length <= 0 || track.NumberOfTurns <= 0)
             {
+                if (isAjax)
+                {
+                    return BadRequest(new { success = false, message = "Please provide all required fields correctly (Name, Country, Length > 0, Turns > 0)." });
+                }
                 ModelState.AddModelError("", "Please provide all required fields correctly.");
                 ViewBag.VehicleId = vehicleId;
                 return View(track);
             }
+
+            track.Name = track.Name.Trim().ToUpper();
+            track.Country = track.Country.Trim();
+            track.Length = Math.Round(track.Length, 3);
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
@@ -103,6 +152,23 @@ namespace RacingTelemetryAnalyzer.Controllers
 
             _context.Tracks.Add(track);
             await _context.SaveChangesAsync();
+
+            if (isAjax)
+            {
+                return Json(new
+                {
+                    success = true,
+                    track = new
+                    {
+                        id = track.TrackId,
+                        name = track.Name,
+                        country = track.Country,
+                        length = track.Length,
+                        numberOfTurns = track.NumberOfTurns,
+                        imagePath = track.ImagePath
+                    }
+                });
+            }
 
             return RedirectToAction("Index", new { vehicleId = vehicleId });
         }

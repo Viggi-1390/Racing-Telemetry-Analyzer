@@ -21,8 +21,9 @@ public class HomeController : Controller
         _context = context;
     }
 
-    public IActionResult Index()
+    public IActionResult Index(int? vehicleId = null)
     {
+        ViewBag.SelectedVehicleId = vehicleId;
         var vehicles = _context.Vehicles.ToList();
         bool needsSave = false;
         
@@ -76,6 +77,27 @@ public class HomeController : Controller
             needsSave = true;
         }
 
+        // Add Audi R8 LMS GT3 if missing
+        if (!vehicles.Any(v => v.Name.Contains("AUDI") || v.Name.Contains("R8")))
+        {
+            var audi = new Vehicle 
+            { 
+                Engine = "5.2L Naturally Aspirated V10", 
+                Name = "AUDI R8 LMS GT3", 
+                Manufacturer = "Audi", 
+                VehicleType = VehicleType.Car, 
+                VehicleCategory = VehicleCategory.Race, 
+                Class = "GT3", 
+                Power = 585, 
+                Weight = 1225, 
+                TopSpeed = 305, 
+                ImagePath = "/images/cars/AudiR8LMS.jpg" 
+            };
+            _context.Vehicles.Add(audi);
+            vehicles.Add(audi);
+            needsSave = true;
+        }
+
         // Add Cadillac V-Series.R as primary showcase vehicle if missing
         if (!vehicles.Any(v => v.Name.Contains("CADILLAC") || v.Name.Contains("V-SERIES")))
         {
@@ -120,7 +142,8 @@ public class HomeController : Controller
         foreach (var v in vehicles)
         {
             if (v.Name == "CADILLAC V-SERIES.R" && v.ImagePath != "/images/cars/CadillacVSeriesR.jpg") { v.ImagePath = "/images/cars/CadillacVSeriesR.jpg"; needsSave = true; }
-            if (v.Name == "PORSCHE 963" && v.ImagePath != "/images/cars/Porsche963.jpg") { v.ImagePath = "/images/cars/Porsche963.jpg"; needsSave = true; }
+            if (v.Name == "AUDI R8 LMS GT3" && v.ImagePath != "/images/cars/AudiR8LMS.jpg") { v.ImagePath = "/images/cars/AudiR8LMS.jpg"; needsSave = true; }
+            if (v.Name == "PORSCHE 963" && v.ImagePath != "/images/cars/Porsche963Studio.jpg") { v.ImagePath = "/images/cars/Porsche963Studio.jpg"; needsSave = true; }
             if (v.Name == "FERRARI 296 GTB" && v.ImagePath != "/images/cars/Ferrari 296 GTB.jpg") { v.ImagePath = "/images/cars/Ferrari 296 GTB.jpg"; needsSave = true; }
             if (v.Name == "LAMBORGHINI HURACAN STO" && v.ImagePath != "/images/cars/Lamborghini Huracan STO.jpg") { v.ImagePath = "/images/cars/Lamborghini Huracan STO.jpg"; needsSave = true; }
             if (v.Name == "BMW M4 CSL" && v.ImagePath != "/images/cars/BMW M4 csl.jpg") { v.ImagePath = "/images/cars/BMW M4 csl.jpg"; needsSave = true; }
@@ -128,7 +151,8 @@ public class HomeController : Controller
             if (v.Name == "BMW M 1000 RR" && v.ImagePath != "/images/bikes/BmwM1000RR.jpg") { v.ImagePath = "/images/bikes/BmwM1000RR.jpg"; needsSave = true; }
             if (v.Name == "KAWASAKI NINJA ZX-10R" && v.ImagePath != "/images/bikes/Kawasaki ZX10R.jpg") { v.ImagePath = "/images/bikes/Kawasaki ZX10R.jpg"; needsSave = true; }
             if (v.Name == "HONDA CBR1000RR-R" && v.ImagePath != "/images/bikes/2020 Honda CBR1000RR-R.jpg") { v.ImagePath = "/images/bikes/2020 Honda CBR1000RR-R.jpg"; needsSave = true; }
-            if (v.Name == "FERRARI F1" && v.ImagePath != "/images/cars/9dd3c356-295c-4ef9-93bf-a24f413130e6_F1ferrari.jpg") { v.ImagePath = "/images/cars/9dd3c356-295c-4ef9-93bf-a24f413130e6_F1ferrari.jpg"; needsSave = true; }
+            if (v.Name == "FERRARI F1" && v.ImagePath != "/images/cars/FerrariF1Studio.jpg") { v.ImagePath = "/images/cars/FerrariF1Studio.jpg"; needsSave = true; }
+            if (v.Name.Contains("DESMOSEDICI") && v.ImagePath != "/images/bikes/MotoGPStudio.jpg") { v.ImagePath = "/images/bikes/MotoGPStudio.jpg"; needsSave = true; }
         }
 
         if (needsSave)
@@ -151,9 +175,13 @@ public class HomeController : Controller
         return View();
     }
 
-        [HttpPost]
-    public async Task<IActionResult> AddVehicle(Vehicle vehicle, IFormFile ImageFile)
+    [HttpPost]
+    public async Task<IActionResult> AddVehicle([FromForm] Vehicle? vehicle, IFormFile? ImageFile = null)
     {
+        if (vehicle == null)
+        {
+            return BadRequest(new { success = false, message = "Vehicle data is required." });
+        }
         vehicle.Engine = vehicle.Engine ?? "Unknown"; 
         vehicle.Class = vehicle.Class ?? "Unclassified";
 

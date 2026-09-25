@@ -24,26 +24,26 @@
 
     @if (ViewBag.NoData == true)
     {
-        <div class="no-data-panel text-center my-5 p-5 mx-auto" style="max-width: 860px; background: rgba(16, 18, 27, 0.95); border: 1px solid #2a2d3d; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);">
-            <!-- Vehicle Header & Quick Select -->
-            <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom border-secondary" style="border-color: rgba(255,255,255,0.08) !important;">
-                <div class="text-start">
-                    <span class="badge px-3 py-1 mb-2" style="background:#ff5a1f; font-weight:800; letter-spacing:1px; font-size:0.75rem;">
+        <div class="no-data-panel text-center">
+            <!-- Vehicle Header & Quick Selectors -->
+            <div class="no-data-header">
+                <div class="no-data-vehicle-info">
+                    <span class="no-data-type-badge px-3 py-1 mb-2">
                         @(isBike ? "RACE BIKE" : "RACE CAR")
                     </span>
-                    <h2 class="text-white mb-0" style="letter-spacing: 2px; font-weight: 800; font-size: 1.8rem;">
+                    <h2 class="no-data-vehicle-title">
                         @(vehicle?.Name?.ToUpper() ?? "UNKNOWN VEHICLE")
                     </h2>
-                    <span class="text-muted small text-uppercase" style="letter-spacing: 1px;">
+                    <span class="no-data-vehicle-meta">
                         @(vehicle?.Manufacturer?.ToUpper()) &bull; @(vehicle?.Class?.ToUpper() ?? "UNCLASSIFIED") &bull; @(vehicle?.Power) HP
                     </span>
                 </div>
-                <div class="d-flex align-items-center gap-3">
+                <div class="no-data-selectors-wrap">
                     @if (allVehicles != null && allVehicles.Any())
                     {
-                        <div class="d-flex flex-column align-items-end gap-1">
-                            <label class="text-muted small" style="font-size: 0.72rem; letter-spacing: 0.5px;">SWITCH VEHICLE</label>
-                            <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 180px;"
+                        <div class="selector-unit">
+                            <label class="selector-unit-label">SWITCH VEHICLE</label>
+                            <select class="form-select form-select-sm no-data-select"
                                     onchange="if(this.value) window.location.href='/Telemetry?vehicleId=' + this.value + '&trackId=@(track?.TrackId)';">
                                 @foreach (var v in allVehicles)
                                 {
@@ -61,9 +61,9 @@
                     }
                     @if (ViewBag.AllTracks is IEnumerable<RacingTelemetryAnalyzer.Models.Track> noDataTracks && noDataTracks.Any())
                     {
-                        <div class="d-flex flex-column align-items-end gap-1">
-                            <label class="text-muted small" style="font-size: 0.72rem; letter-spacing: 0.5px;">SWITCH TRACK</label>
-                            <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 160px;"
+                        <div class="selector-unit">
+                            <label class="selector-unit-label">SWITCH TRACK</label>
+                            <select class="form-select form-select-sm no-data-select"
                                     onchange="if(this.value) window.location.href='/Telemetry?vehicleId=@(vehicle?.VehicleId)&trackId=' + this.value;">
                                 @foreach (var t in noDataTracks)
                                 {
@@ -82,27 +82,26 @@
                 </div>
             </div>
 
-            <!-- Empty State Notice -->
-            <div class="my-4 py-2">
-                <div class="display-6 text-orange mb-2" style="font-weight: 800; letter-spacing: 2px;">
+            <!-- Empty State Notice Headline -->
+            <div class="no-data-notice-section">
+                <div class="no-data-headline">
                     NO TELEMETRY DATA AVAILABLE
                 </div>
-                <div class="text-cyan small fw-bold font-monospace text-uppercase mb-3" style="letter-spacing: 1.5px;">
+                <div class="no-data-circuit-tag">
                     // @(vehicle?.Name?.ToUpper()) &bull; @(track?.Name?.ToUpper())
                 </div>
-                <p class="text-muted mx-auto" style="max-width: 580px; font-size: 0.95rem; line-height: 1.6;">
+                <p class="no-data-description">
                     No telemetry sessions exist for this vehicle at @(track?.Name ?? "this track"). Telemetry is strictly isolated by vehicle, track, and session. Upload a CSV log or generate demonstration telemetry below to begin analysis.
                 </p>
             </div>
 
-            <!-- Session Type Selector -->
-            <div class="mt-3 mb-2 mx-auto" style="max-width: 420px;">
-                <div class="p-3 rounded" style="background: rgba(255, 90, 31, 0.06); border: 1px solid rgba(255, 90, 31, 0.3);">
-                    <label class="d-block text-uppercase fw-bold mb-2" style="font-size: 0.72rem; letter-spacing: 1.5px; color: #ff5a1f;">
+            <!-- Session Type Selector Bar -->
+            <div class="no-data-session-type-bar">
+                <div class="session-type-box">
+                    <label class="session-type-label">
                         🏁 SESSION TYPE
                     </label>
-                    <select id="noDataSessionTypeSelect" class="form-select form-select-sm bg-dark text-light border-secondary fw-bold font-monospace"
-                            style="letter-spacing: 1px; font-size: 0.85rem; border-color: rgba(255,90,31,0.4) !important;"
+                    <select id="noDataSessionTypeSelect" class="form-select form-select-sm session-type-dropdown"
                             onchange="syncSessionType(this.value)">
                         <option value="PRACTICE 1" selected>PRACTICE 1</option>
                         <option value="PRACTICE 2">PRACTICE 2</option>
@@ -115,62 +114,64 @@
                 </div>
             </div>
 
-            <!-- Action Options -->
-            <div class="row g-4 mt-2 justify-content-center">
+            <!-- Action Options: Wide Two-Column Grid -->
+            <div class="no-data-actions-grid">
                 <!-- Option 1: Import CSV -->
-                <div class="col-md-6">
-                    <div class="p-4 h-100 rounded text-start" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 229, 255, 0.25);">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span style="color:#00e5ff; font-size:1.2rem;">📁</span>
-                            <h5 class="text-white mb-0" style="letter-spacing: 1px; font-weight: 700;">IMPORT TELEMETRY CSV</h5>
+                <div class="action-card import-action-card">
+                    <div>
+                        <div class="action-card-header">
+                            <span class="action-icon" style="color:#00e5ff;">📁</span>
+                            <h5 class="action-title">IMPORT TELEMETRY CSV</h5>
                         </div>
-                        <p class="text-muted small mb-3">Upload raw session telemetry CSV file from your sim or telemetry logger.</p>
-                        <form id="noDataImportForm" class="d-flex flex-column gap-3">
-                            <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
-                            <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
-                            <input type="hidden" name="sessionType" id="noDataImportSessionType" value="PRACTICE 1" />
-                            <input type="file" id="noDataCsvFile" name="csvFile" accept=".csv" class="form-control form-control-sm bg-dark text-light border-secondary" required />
-                            <button type="button" id="btnNoDataImport" onclick="startCsvUpload('noDataImportForm', 'noDataCsvFile', 'noDataProgressContainer', 'noDataProgressBar', 'noDataProgressStatus', 'noDataProgressDetail')" class="btn btn-outline-info w-100 py-2" style="font-weight:700; letter-spacing:1px; border-color:#00e5ff; color:#00e5ff;">
-                                ⬆ UPLOAD & PARSE CSV
-                            </button>
-                        </form>
-                        <!-- Live Streaming Progress Bar -->
-                        <div id="noDataProgressContainer" class="d-none mt-3 p-3 rounded" style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.3);">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span id="noDataProgressStatus" class="small fw-bold text-cyan font-monospace">UPLOADING...</span>
-                                <span id="noDataProgressDetail" class="small text-muted font-monospace">0%</span>
-                            </div>
-                            <div class="progress" style="height: 10px; background: #141420;">
-                                <div id="noDataProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 0%;"></div>
-                            </div>
+                        <p class="action-desc">Upload raw session telemetry CSV file from your sim or telemetry logger.</p>
+                    </div>
+                    <form id="noDataImportForm" class="action-form">
+                        <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
+                        <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
+                        <input type="hidden" name="sessionType" id="noDataImportSessionType" value="PRACTICE 1" />
+                        <input type="file" id="noDataCsvFile" name="csvFile" accept=".csv" class="form-control form-control-sm action-file-input" required />
+                        <button type="button" id="btnNoDataImport" onclick="startCsvUpload('noDataImportForm', 'noDataCsvFile', 'noDataProgressContainer', 'noDataProgressBar', 'noDataProgressStatus', 'noDataProgressDetail')" class="btn-action-upload">
+                            ⬆ UPLOAD & PARSE CSV
+                        </button>
+                    </form>
+                    <!-- Live Streaming Progress Bar -->
+                    <div id="noDataProgressContainer" class="d-none action-progress-wrap">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span id="noDataProgressStatus" class="small fw-bold text-cyan font-monospace">UPLOADING...</span>
+                            <span id="noDataProgressDetail" class="small text-muted font-monospace">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px; background: #141420;">
+                            <div id="noDataProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 0%;"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Option 2: Generate Demo Data -->
-                <div class="col-md-6">
-                    <div class="p-4 h-100 rounded text-start" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 90, 31, 0.25);">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span style="color:#ff5a1f; font-size:1.2rem;">⚡</span>
-                            <h5 class="text-white mb-0" style="letter-spacing: 1px; font-weight: 700;">GENERATE DEMO TELEMETRY</h5>
+                <div class="action-card generate-action-card">
+                    <div>
+                        <div class="action-card-header">
+                            <span class="action-icon" style="color:#ff5a1f;">⚡</span>
+                            <h5 class="action-title">GENERATE DEMO TELEMETRY</h5>
                         </div>
-                        <p class="text-muted small mb-3">Generate a realistic 3-lap synthetic telemetry session for testing and visualization.</p>
-                        <form method="post" action="/Telemetry/GenerateData" class="d-flex flex-column gap-3">
-                            <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
-                            <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
-                            <input type="hidden" name="sessionType" id="noDataGenerateSessionType" value="PRACTICE 1" />
-                            <div class="text-muted small py-1">Target Track: <strong class="text-light">@(track?.Name?.ToUpper() ?? "SELECTED TRACK")</strong></div>
-                            <button type="submit" class="btn btn-orange-primary w-100 py-2" style="background:#ff5a1f; color:#fff; font-weight:700; letter-spacing:1px; border:none;">
-                                ⚡ GENERATE DEMO SESSION
-                            </button>
-                        </form>
+                        <p class="action-desc">Generate a realistic 3-lap synthetic telemetry session for testing and visualization.</p>
                     </div>
+                    <form method="post" action="/Telemetry/GenerateData" class="action-form">
+                        <input type="hidden" name="vehicleId" value="@(vehicle?.VehicleId)" />
+                        <input type="hidden" name="trackId" value="@(track?.TrackId == 0 ? 1 : track?.TrackId)" />
+                        <input type="hidden" name="sessionType" id="noDataGenerateSessionType" value="PRACTICE 1" />
+                        <div class="target-track-notice">
+                            Target Track: <strong class="text-light">@(track?.Name?.ToUpper() ?? "SELECTED TRACK")</strong>
+                        </div>
+                        <button type="submit" class="btn-action-generate">
+                            ⚡ GENERATE DEMO SESSION
+                        </button>
+                    </form>
                 </div>
             </div>
 
             <!-- Footer Return Link -->
-            <div class="mt-4 pt-3 border-top" style="border-color: rgba(255,255,255,0.06) !important;">
-                <a href="/Home/Index" class="text-decoration-none text-muted small" style="letter-spacing: 1px;">
+            <div class="no-data-footer">
+                <a href="/Home/Index" class="no-data-back-link">
                     &larr; RETURN TO GARAGE
                 </a>
             </div>
@@ -967,17 +968,19 @@
     }
 
     .telemetry-workstation {
-        max-width: 1820px;
+        width: 100%;
+        max-width: min(97vw, 2560px);
         margin: 0 auto;
-        padding: 10px 18px 24px 18px;
+        padding: 8px 16px 20px 16px;
+        box-sizing: border-box;
     }
 
     /* THREE-COLUMN GRID */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: 260px 1fr 270px;
-        gap: 10px;
-        min-height: 580px;
+        grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(230px, 275px);
+        gap: 12px;
+        margin-bottom: 12px;
     }
 
     .dash-card {
@@ -1107,14 +1110,15 @@
     .btn-mode-toggle.active { background: #ff5a1f; color: #fff; box-shadow: 0 0 8px rgba(255, 90, 31, 0.4); }
 
     .graph-viewport-wrapper {
-        min-height: 350px;
-        height: 350px;
+        min-height: 420px;
+        height: clamp(420px, 50vh, 620px);
         cursor: crosshair;
         user-select: none;
         background: #08080d;
         border-radius: 4px;
         overflow: hidden;
         border: 1px solid #161622;
+        position: relative;
     }
 
     .live-scrubber-hud {
@@ -1464,7 +1468,11 @@
     .w-val { color: #f3f4f6; font-family: monospace; font-weight: 700; text-align: right; }
 
     /* BOTTOM GRID */
-    .bottom-analysis-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1.2fr; gap: 10px; }
+    .bottom-analysis-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr 1.25fr;
+        gap: 12px;
+    }
 
     /* BRAKING & THROTTLE METRICS CARD ALIGNMENT */
     .braking-throttle-card {
@@ -1540,6 +1548,361 @@
     .text-green { color: #00ff41 !important; }
     .text-red { color: #ff0000 !important; }
     .text-magenta { color: #ff00ff !important; }
+
+    /* =================================================== */
+    /* NO TELEMETRY DATA AVAILABLE PAGE STYLING           */
+    /* =================================================== */
+    .no-data-panel {
+        width: 100%;
+        max-width: min(88vw, 1520px);
+        margin: 24px auto 40px auto;
+        padding: 28px 36px;
+        background: #0c0d12;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        box-sizing: border-box;
+    }
+
+    .no-data-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 24px;
+        text-align: left;
+    }
+
+    .no-data-vehicle-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .no-data-type-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        color: #ff3344;
+        background: rgba(255, 51, 68, 0.12);
+        border: 1px solid rgba(255, 51, 68, 0.3);
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .no-data-vehicle-title {
+        font-size: 1.45rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #ffffff;
+        margin: 2px 0 4px 0;
+        line-height: 1.2;
+    }
+
+    .no-data-vehicle-meta {
+        font-size: 0.76rem;
+        color: #9ca3af;
+        letter-spacing: 0.8px;
+        font-weight: 600;
+    }
+
+    .no-data-selectors-wrap {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .selector-unit {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .selector-unit-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #9ca3af;
+        letter-spacing: 1px;
+    }
+
+    .no-data-select {
+        background: #14151e !important;
+        border: 1px solid #2a2c3d !important;
+        color: #f3f4f6 !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        min-width: 210px;
+        padding: 6px 12px !important;
+        border-radius: 6px !important;
+        outline: none;
+        transition: border-color 0.15s ease;
+    }
+
+    .no-data-select:focus {
+        border-color: #ff3344 !important;
+        box-shadow: 0 0 0 2px rgba(255, 51, 68, 0.25) !important;
+    }
+
+    .no-data-notice-section {
+        padding: 10px 16px 24px 16px;
+    }
+
+    .no-data-headline {
+        font-size: 1.55rem;
+        font-weight: 900;
+        letter-spacing: 1.8px;
+        color: #ff3344;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        text-shadow: 0 0 20px rgba(255, 51, 68, 0.25);
+    }
+
+    .no-data-circuit-tag {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #e5e7eb;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+    }
+
+    .no-data-description {
+        font-size: 0.88rem;
+        color: #9ca3af;
+        max-width: 720px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    .no-data-session-type-bar {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 28px;
+    }
+
+    .session-type-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #12131b;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 8px 18px;
+    }
+
+    .session-type-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #9ca3af;
+        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    .session-type-dropdown {
+        background: #1a1c27 !important;
+        border: 1px solid #303348 !important;
+        color: #f9fafb !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.8px;
+        padding: 5px 12px !important;
+        border-radius: 5px !important;
+        width: auto !important;
+    }
+
+    .no-data-actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 28px;
+        text-align: left;
+    }
+
+    .action-card {
+        background: #111219;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 230px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        transition: border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .action-card:hover {
+        border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .import-action-card:hover {
+        border-color: rgba(0, 229, 255, 0.35);
+    }
+
+    .generate-action-card:hover {
+        border-color: rgba(255, 90, 31, 0.35);
+    }
+
+    .action-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .action-icon {
+        font-size: 1.25rem;
+    }
+
+    .action-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    .action-desc {
+        font-size: 0.8rem;
+        color: #8b92a5;
+        line-height: 1.45;
+        margin-bottom: 18px;
+    }
+
+    .action-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .action-file-input {
+        background: #171822 !important;
+        border: 1px dashed #323548 !important;
+        color: #d1d5db !important;
+        font-size: 0.78rem !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        cursor: pointer;
+    }
+
+    .btn-action-upload {
+        width: 100%;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(0, 180, 216, 0.35);
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-upload:hover {
+        background: linear-gradient(135deg, #00d2ff 0%, #0096c7 100%);
+        box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+    }
+
+    .action-progress-wrap {
+        margin-top: 10px;
+    }
+
+    .target-track-notice {
+        font-size: 0.78rem;
+        color: #9ca3af;
+        padding: 9px 12px;
+        background: #171822;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+    }
+
+    .btn-action-generate {
+        width: 100%;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #ff5a1f 0%, #d84315 100%);
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(255, 90, 31, 0.35);
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-generate:hover {
+        background: linear-gradient(135deg, #ff7043 0%, #f4511e 100%);
+        box-shadow: 0 6px 20px rgba(255, 90, 31, 0.5);
+    }
+
+    .no-data-footer {
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        text-align: left;
+    }
+
+    .no-data-back-link {
+        color: #9ca3af;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.8px;
+        transition: color 0.15s ease;
+    }
+
+    .no-data-back-link:hover {
+        color: #ff3344;
+    }
+
+    /* RESPONSIVE MEDIA QUERIES */
+    @@media (max-width: 1400px) {
+        .dashboard-grid {
+            grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(210px, 250px);
+        }
+        .bottom-analysis-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 1080px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        .bottom-analysis-grid {
+            grid-template-columns: 1fr;
+        }
+        .no-data-actions-grid {
+            grid-template-columns: 1fr;
+        }
+        .no-data-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .no-data-selectors-wrap {
+            width: 100%;
+        }
+        .selector-unit {
+            width: 100%;
+        }
+        .no-data-select {
+            width: 100% !important;
+        }
+    }
 </style>
 
 @section Scripts {
@@ -1633,8 +1996,8 @@
         }
         computeCumulativeMetrics();
 
-        // Background fetch for complete session dataset (strictly validated by vehicleId & trackId)
-        if (currentSessionId > 0) {
+        // Background fetch for complete session dataset if not already preloaded (strictly validated by vehicleId & trackId)
+        if (currentSessionId > 0 && (!telemetryData || telemetryData.length === 0)) {
             const apiUrl = '/api/telemetry/session/' + currentSessionId + '?vehicleId=' + currentVehicleId + '&trackId=' + currentTrackId;
             fetch(apiUrl)
                 .then(r => {
@@ -1772,6 +2135,7 @@
         function resizeCanvas() {
             if (!canvas) return;
             const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
             canvas.width = rect.width * window.devicePixelRatio;
             canvas.height = rect.height * window.devicePixelRatio;
             if (ctx) ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -1779,6 +2143,12 @@
         }
 
         window.addEventListener('resize', resizeCanvas);
+        const teleWrapperEl = document.getElementById('telemetry-wrapper');
+        if (teleWrapperEl && window.ResizeObserver) {
+            new ResizeObserver(() => {
+                resizeCanvas();
+            }).observe(teleWrapperEl);
+        }
 
         function binarySearchLower(dataset, targetDist) {
             let low = 0, high = dataset.length - 1, ans = 0;
