@@ -27,114 +27,28 @@ public class HomeController : Controller
         var vehicles = _context.Vehicles.ToList();
         bool needsSave = false;
         
-        // Seed default vehicles if none exist in the database yet
+        // Seed default vehicles ONLY if the database has zero vehicles (e.g. brand-new database)
         if (!vehicles.Any())
         {
             vehicles = new List<Vehicle>
             {
-              new Vehicle { Engine = "Hybrid V8", Name = "PORSCHE 963", Manufacturer = "Porsche", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 680, Weight = 1030, TopSpeed = 330, ImagePath = "/images/cars/Porsche963.jpg" },
-              new Vehicle { Engine = "Hybrid V6", Name = "FERRARI 499P", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Hypercar", Power = 670, Weight = 1030, TopSpeed = 340, ImagePath = "/images/cars/Ferrari499p.jpg" },
-              new Vehicle { Engine = "Hybrid V8", Name = "BMW M HYBRID V8", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 640, Weight = 1030, TopSpeed = 325, ImagePath = "/images/cars/Bmwmhybrid.jpg" },
-              new Vehicle { Engine = "V4", Name = "DUCATI PANIGALE V4 R", Manufacturer = "Ducati", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 237, Weight = 167, TopSpeed = 315, ImagePath = "/images/bikes/DucatiV4r.jpg" },
-              new Vehicle { Engine = "Inline 4", Name = "YAMAHA R1", Manufacturer = "Yamaha", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 200, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/YamahaR1.jpg" }
-            };
-            _context.Vehicles.AddRange(vehicles);
-            needsSave = true;
-        }
-
-        // Remove any obsolete or duplicate entries if present
-        var duplicateFerraris = vehicles.Where(v => v.Name == "FerrariF1").ToList();
-        if (duplicateFerraris.Any())
-        {
-            _context.Vehicles.RemoveRange(duplicateFerraris);
-            vehicles.RemoveAll(v => v.Name == "FerrariF1");
-            needsSave = true;
-        }
-
-        var prodGt3rs = vehicles.Where(v => v.Name == "PORSCHE 911 GT3 RS" && v.VehicleCategory == VehicleCategory.Production).ToList();
-        if (prodGt3rs.Any())
-        {
-            _context.Vehicles.RemoveRange(prodGt3rs);
-            vehicles.RemoveAll(v => v.Name == "PORSCHE 911 GT3 RS" && v.VehicleCategory == VehicleCategory.Production);
-            needsSave = true;
-        }
-
-        // Add single official FERRARI F1 if missing
-        if (!vehicles.Any(v => v.Name == "FERRARI F1"))
-        {
-            var f1 = new Vehicle { Engine = "1.6L Turbo Hybrid V6", Name = "FERRARI F1", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Formula 1", Power = 1000, Weight = 798, TopSpeed = 360, ImagePath = "/images/cars/9dd3c356-295c-4ef9-93bf-a24f413130e6_F1ferrari.jpg" };
-            _context.Vehicles.Add(f1);
-            vehicles.Add(f1);
-            needsSave = true;
-        }
-
-        // Add Porsche 963 if missing
-        if (!vehicles.Any(v => v.Name.Contains("PORSCHE 963")))
-        {
-            var porsche = new Vehicle { Engine = "Hybrid V8", Name = "PORSCHE 963", Manufacturer = "Porsche", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 680, Weight = 1030, TopSpeed = 330, ImagePath = "/images/cars/Porsche963.jpg" };
-            _context.Vehicles.Add(porsche);
-            vehicles.Insert(0, porsche);
-            needsSave = true;
-        }
-
-        // Add Audi R8 LMS GT3 if missing
-        if (!vehicles.Any(v => v.Name.Contains("AUDI") || v.Name.Contains("R8")))
-        {
-            var audi = new Vehicle 
-            { 
-                Engine = "5.2L Naturally Aspirated V10", 
-                Name = "AUDI R8 LMS GT3", 
-                Manufacturer = "Audi", 
-                VehicleType = VehicleType.Car, 
-                VehicleCategory = VehicleCategory.Race, 
-                Class = "GT3", 
-                Power = 585, 
-                Weight = 1225, 
-                TopSpeed = 305, 
-                ImagePath = "/images/cars/AudiR8LMS.jpg" 
-            };
-            _context.Vehicles.Add(audi);
-            vehicles.Add(audi);
-            needsSave = true;
-        }
-
-        // Add Cadillac V-Series.R as primary showcase vehicle if missing
-        if (!vehicles.Any(v => v.Name.Contains("CADILLAC") || v.Name.Contains("V-SERIES")))
-        {
-            var cadillac = new Vehicle 
-            { 
-                Engine = "5.5L DOHC V8 Hybrid", 
-                Name = "CADILLAC V-SERIES.R", 
-                Manufacturer = "Cadillac", 
-                VehicleType = VehicleType.Car, 
-                VehicleCategory = VehicleCategory.Race, 
-                Class = "GTP / LMDh", 
-                Power = 670, 
-                Weight = 1030, 
-                TopSpeed = 338, 
-                ImagePath = "/images/cars/CadillacVSeriesR.jpg" 
-            };
-            _context.Vehicles.Add(cadillac);
-            vehicles.Insert(0, cadillac);
-            needsSave = true;
-        }
-
-        // Add production vehicles if missing
-        if (!vehicles.Any(v => v.Name == "FERRARI 296 GTB"))
-        {
-            var productionVehicles = new List<Vehicle>
-            {
+                new Vehicle { Engine = "5.5L DOHC V8 Hybrid", Name = "CADILLAC V-SERIES.R", Manufacturer = "Cadillac", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GTP / LMDh", Power = 670, Weight = 1030, TopSpeed = 338, ImagePath = "/images/cars/CadillacVSeriesR.jpg" },
+                new Vehicle { Engine = "1.6L Turbo Hybrid V6", Name = "FERRARI F1", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Formula 1", Power = 1000, Weight = 798, TopSpeed = 360, ImagePath = "/images/cars/FerrariF1Studio.jpg" },
+                new Vehicle { Engine = "Hybrid V8", Name = "PORSCHE 963", Manufacturer = "Porsche", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 680, Weight = 1030, TopSpeed = 330, ImagePath = "/images/cars/Porsche963Studio.jpg" },
+                new Vehicle { Engine = "5.2L Naturally Aspirated V10", Name = "AUDI R8 LMS GT3", Manufacturer = "Audi", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GT3", Power = 585, Weight = 1225, TopSpeed = 305, ImagePath = "/images/cars/AudiR8LMS.jpg" },
+                new Vehicle { Engine = "Hybrid V6", Name = "FERRARI 499P", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Hypercar", Power = 670, Weight = 1030, TopSpeed = 340, ImagePath = "/images/cars/Ferrari499p.jpg" },
+                new Vehicle { Engine = "Hybrid V8", Name = "BMW M HYBRID V8", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 640, Weight = 1030, TopSpeed = 325, ImagePath = "/images/cars/Bmwmhybrid.jpg" },
+                new Vehicle { Engine = "V4", Name = "DUCATI PANIGALE V4 R", Manufacturer = "Ducati", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 237, Weight = 167, TopSpeed = 315, ImagePath = "/images/bikes/DucatiV4r.jpg" },
+                new Vehicle { Engine = "Inline 4", Name = "YAMAHA R1", Manufacturer = "Yamaha", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 200, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/YamahaR1.jpg" },
                 new Vehicle { Engine = "Twin-Turbo V6 Hybrid", Name = "FERRARI 296 GTB", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 818, Weight = 1470, TopSpeed = 330, ImagePath = "/images/cars/Ferrari 296 GTB.jpg" },
                 new Vehicle { Engine = "Naturally Aspirated V10", Name = "LAMBORGHINI HURACAN STO", Manufacturer = "Lamborghini", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 631, Weight = 1339, TopSpeed = 310, ImagePath = "/images/cars/Lamborghini Huracan STO.jpg" },
                 new Vehicle { Engine = "Twin-Turbo Inline 6", Name = "BMW M4 CSL", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Sports Car", Power = 543, Weight = 1625, TopSpeed = 307, ImagePath = "/images/cars/BMW M4 csl.jpg" },
                 new Vehicle { Engine = "Twin-Turbo V8", Name = "MCLAREN 750S", Manufacturer = "McLaren", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 740, Weight = 1277, TopSpeed = 332, ImagePath = "/images/cars/McLaren750s.jpg" },
-
                 new Vehicle { Engine = "Inline 4", Name = "BMW M 1000 RR", Manufacturer = "BMW", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 212, Weight = 192, TopSpeed = 314, ImagePath = "/images/bikes/BmwM1000RR.jpg" },
                 new Vehicle { Engine = "Inline 4", Name = "KAWASAKI NINJA ZX-10R", Manufacturer = "Kawasaki", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 203, Weight = 207, TopSpeed = 299, ImagePath = "/images/bikes/Kawasaki ZX10R.jpg" },
                 new Vehicle { Engine = "Inline 4", Name = "HONDA CBR1000RR-R", Manufacturer = "Honda", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 214, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/2020 Honda CBR1000RR-R.jpg" }
             };
-            _context.Vehicles.AddRange(productionVehicles);
-            vehicles.AddRange(productionVehicles);
+            _context.Vehicles.AddRange(vehicles);
             needsSave = true;
         }
 
@@ -380,22 +294,122 @@ public class HomeController : Controller
             return BadRequest(new { success = false, message = "Invalid Vehicle ID." });
         }
 
-        var vehicle = await _context.Vehicles.Include(v => v.Sessions).FirstOrDefaultAsync(v => v.VehicleId == targetId);
+        var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == targetId);
         if (vehicle == null)
         {
             return NotFound(new { success = false, message = $"Vehicle ID {targetId} not found." });
         }
 
+        string vehicleName = vehicle.Name;
+        string? imagePath = vehicle.ImagePath;
+
+        _context.Database.SetCommandTimeout(180);
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            _context.Vehicles.Remove(vehicle);
-            await _context.SaveChangesAsync();
-            return Json(new { success = true, deletedId = targetId, name = vehicle.Name });
+            // 1. Identify all sessions strictly belonging to this vehicle
+            var sessionIds = await _context.Sessions
+                .Where(s => s.VehicleId == targetId)
+                .Select(s => s.SessionId)
+                .ToListAsync();
+
+            if (sessionIds.Count > 0)
+            {
+                // 2. Identify all laps belonging to these sessions
+                var lapIds = await _context.Laps
+                    .Where(l => sessionIds.Contains(l.SessionId))
+                    .Select(l => l.LapId)
+                    .ToListAsync();
+
+                if (lapIds.Count > 0)
+                {
+                    // 3. Batch delete TelemetryPoints at the database level to prevent memory exhaustion and lock escalation
+                    string lapIdsFormatted = string.Join(",", lapIds);
+                    int deletedInBatch;
+                    do
+                    {
+                        deletedInBatch = await _context.Database.ExecuteSqlRawAsync(
+                            $"DELETE TOP (10000) FROM TelemetryPoints WHERE LapId IN ({lapIdsFormatted});");
+                    } while (deletedInBatch > 0);
+
+                    // 4. Delete AnalysisResults
+                    await _context.AnalysisResults
+                        .Where(ar => lapIds.Contains(ar.LapId))
+                        .ExecuteDeleteAsync();
+
+                    // 5. Delete Laps
+                    await _context.Laps
+                        .Where(l => lapIds.Contains(l.LapId))
+                        .ExecuteDeleteAsync();
+                }
+
+                // 6. Delete Session-level dependent records
+                await _context.SessionNotes
+                    .Where(sn => sessionIds.Contains(sn.SessionId))
+                    .ExecuteDeleteAsync();
+
+                await _context.VehicleSetups
+                    .Where(vs => sessionIds.Contains(vs.SessionId))
+                    .ExecuteDeleteAsync();
+
+                await _context.SessionConditions
+                    .Where(sc => sessionIds.Contains(sc.SessionId))
+                    .ExecuteDeleteAsync();
+
+                // 7. Delete Sessions
+                await _context.Sessions
+                    .Where(s => sessionIds.Contains(s.SessionId))
+                    .ExecuteDeleteAsync();
+            }
+
+            // 8. Delete Vehicle entity
+            await _context.Vehicles
+                .Where(v => v.VehicleId == targetId)
+                .ExecuteDeleteAsync();
+
+            await transaction.CommitAsync();
+
+            // 9. Clean up uploaded vehicle image if applicable
+            if (!string.IsNullOrWhiteSpace(imagePath) && imagePath.Contains("_"))
+            {
+                try
+                {
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/', '\\'));
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        System.IO.File.Delete(fullPath);
+                    }
+                }
+                catch { /* Ignore non-fatal file cleanup errors */ }
+            }
+
+            _logger.LogInformation("Successfully deleted vehicle {VehicleName} (ID: {VehicleId}) and all associated telemetry records.", vehicleName, targetId);
+            return Json(new { success = true, deletedId = targetId, name = vehicleName });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete vehicle ID {VehicleId}", targetId);
-            return StatusCode(500, new { success = false, message = "Failed to delete vehicle: " + ex.Message });
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch
+            {
+                // Transaction may have already been aborted or completed by the database
+            }
+
+            var sb = new System.Text.StringBuilder();
+            var curr = ex;
+            int depth = 0;
+            while (curr != null)
+            {
+                sb.AppendLine($"[Level {depth}] {curr.GetType().FullName}: {curr.Message}");
+                curr = curr.InnerException;
+                depth++;
+            }
+            _logger.LogError(ex, "Failed to delete vehicle ID {VehicleId}. Detailed Exception Chain:\n{Chain}", targetId, sb.ToString());
+
+            var rootCause = ex.GetBaseException().Message;
+            return StatusCode(500, new { success = false, message = "Failed to delete vehicle: " + rootCause });
         }
     }
 
