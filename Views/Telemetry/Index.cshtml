@@ -452,10 +452,69 @@
                         <!-- High Performance 60 FPS Rolling Canvas -->
                         <canvas id="telemetryCanvas" class="w-100 h-100"></canvas>
                         
-                        <!-- Pinned Scrubber Header Live HUD -->
-                        <div id="liveScrubberHud" class="live-scrubber-hud">
-                            <span class="badge-tag">REPLAY HUD</span>
-                            <span id="hudSpeedReadout" class="hud-val text-green ms-1">0 km/h</span>
+                        <!-- Orange Pinned Replay Telemetry HUD Tooltip (Fixed to the LEFT of the orange scrubber line) -->
+                        <div id="replay-telemetry-tooltip" class="telemetry-replay-hud" style="display: none;">
+                            <!-- Header: Replay Badge, Lap, Distance, Lap Time -->
+                            <div class="rh-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rh-badge-replay">REPLAY</span>
+                                    <span class="rh-badge-lap">LAP <span id="rhLap">1</span></span>
+                                    <span class="rh-dist font-monospace" id="rhDist">0.000 km</span>
+                                </div>
+                                <div class="rh-time font-monospace" id="rhTime">00:00.000</div>
+                            </div>
+
+                            <!-- Live Replay Channels Grid -->
+                            <div class="rh-grid">
+                                <!-- Speed -->
+                                <div class="rh-item" id="rhRowSpeed">
+                                    <div class="rh-meta">
+                                        <span class="rh-dot" style="background:#00ff41;"></span>
+                                        <span class="rh-label">SPEED</span>
+                                    </div>
+                                    <span class="rh-val font-monospace" style="color:#00ff41;" id="rhSpeed">0 km/h</span>
+                                </div>
+                                <!-- RPM -->
+                                <div class="rh-item" id="rhRowRpm">
+                                    <div class="rh-meta">
+                                        <span class="rh-dot" style="background:#a200ff;"></span>
+                                        <span class="rh-label">RPM</span>
+                                    </div>
+                                    <span class="rh-val font-monospace" style="color:#c084fc;" id="rhRpm">0</span>
+                                </div>
+                                <!-- Throttle -->
+                                <div class="rh-item" id="rhRowThr">
+                                    <div class="rh-meta">
+                                        <span class="rh-dot" style="background:#00d2ff;"></span>
+                                        <span class="rh-label">THROTTLE</span>
+                                        <div class="rh-bar-track"><div class="rh-bar-fill" style="background:#00d2ff;" id="rhThrBar"></div></div>
+                                    </div>
+                                    <span class="rh-val font-monospace" style="color:#00d2ff;" id="rhThr">0%</span>
+                                </div>
+                                <!-- Brake -->
+                                <div class="rh-item" id="rhRowBrk">
+                                    <div class="rh-meta">
+                                        <span class="rh-dot" style="background:#ff0000;"></span>
+                                        <span class="rh-label">BRAKE</span>
+                                        <div class="rh-bar-track"><div class="rh-bar-fill" style="background:#ff0000;" id="rhBrkBar"></div></div>
+                                    </div>
+                                    <span class="rh-val font-monospace" style="color:#ff4444;" id="rhBrk">0%</span>
+                                </div>
+                                <!-- Steering -->
+                                <div class="rh-item" id="rhRowSteer">
+                                    <div class="rh-meta">
+                                        <span class="rh-dot" style="background:#ff00ff;"></span>
+                                        <span class="rh-label">STEERING</span>
+                                    </div>
+                                    <span class="rh-val font-monospace" style="color:#ff66ff;" id="rhSteer">0.0°</span>
+                                </div>
+                            </div>
+
+                            <!-- Scrubber Live Pin Indicator -->
+                            <div class="rh-hint">
+                                <span class="rh-pulse-dot"></span>
+                                <span>REPLAY TELEMETRY • PINNED VIEWPORT</span>
+                            </div>
                         </div>
 
                         <!-- Interactive Telemetry Hover HUD Tooltip -->
@@ -1117,24 +1176,160 @@
         border: 1px solid #161622;
     }
 
-    .live-scrubber-hud {
+    /* =================================================== */
+    /* ORANGE PINNED REPLAY TELEMETRY HUD TOOLTIP         */
+    /* =================================================== */
+    .telemetry-replay-hud {
         position: absolute;
-        top: 6px;
-        left: 80%;
-        transform: translateX(-50%);
+        top: 14px;
+        width: 330px;
+        background: rgba(10, 12, 18, 0.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 90, 31, 0.45);
+        border-top: 3px solid #ff5a1f;
+        border-radius: 10px;
+        padding: 12px 16px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 90, 31, 0.22);
+        pointer-events: none;
+        z-index: 90;
+        user-select: none;
+        will-change: transform;
+    }
+
+    .rh-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 90, 31, 0.22);
+    }
+
+    .rh-badge-replay {
         background: #ff5a1f;
         color: #fff;
-        padding: 2px 8px;
-        border-radius: 3px;
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 3px;
+        letter-spacing: 0.8px;
         font-family: monospace;
-        pointer-events: none;
-        z-index: 15;
-        box-shadow: 0 0 10px rgba(255, 90, 31, 0.6);
-        display: none;
+        box-shadow: 0 0 8px rgba(255, 90, 31, 0.4);
     }
-    .live-scrubber-hud .badge-tag { font-size: 0.65rem; opacity: 0.85; }
+
+    .rh-badge-lap {
+        background: rgba(255, 255, 255, 0.08);
+        color: #e5e7eb;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        letter-spacing: 0.5px;
+    }
+
+    .rh-dist {
+        font-size: 0.95rem;
+        color: #ff9500;
+        font-weight: 700;
+        font-family: monospace;
+    }
+
+    .rh-time {
+        font-size: 0.95rem;
+        color: #f3f4f6;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .rh-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .rh-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.90rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .rh-item.disabled-ch {
+        opacity: 0.35;
+    }
+
+    .rh-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rh-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .rh-label {
+        color: #9ca3af;
+        font-size: 0.80rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .rh-val {
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .rh-bar-track {
+        width: 52px;
+        height: 5px;
+        background: #1a1a24;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-left: 6px;
+    }
+
+    .rh-bar-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.05s linear;
+    }
+
+    .rh-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.68rem;
+        color: #ff5a1f;
+        text-align: center;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed rgba(255, 90, 31, 0.2);
+        letter-spacing: 0.6px;
+        font-family: monospace;
+        font-weight: 600;
+    }
+
+    .rh-pulse-dot {
+        width: 6px;
+        height: 6px;
+        background: #ff5a1f;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #ff5a1f;
+        display: inline-block;
+    }
 
     /* =================================================== */
     /* INTERACTIVE TELEMETRY HOVER HUD TOOLTIP            */
@@ -1681,8 +1876,7 @@
         const btnReset = document.getElementById('btnReset');
         const lapEl = document.getElementById('replayLap');
         const timeDisplayEl = document.getElementById('replayTimeDisplay');
-        const scrubberHud = document.getElementById('liveScrubberHud');
-        const hudSpeedReadout = document.getElementById('hudSpeedReadout');
+        const replayTooltip = document.getElementById('replay-telemetry-tooltip');
 
         // G-FORCE ELEMENTS
         const latGEl = document.getElementById('gforce-lat');
@@ -1697,7 +1891,7 @@
         let currentTelemetryIndex = 0;
         let playbackFractionalIndex = 0;
 
-        let isRollingActive = false; // Rolling window ONLY engages during active playback
+        let isRollingActive = true; // Rolling window active by default in rolling mode
         let isRollingModeSetting = true;
         let windowDistance = 1000.0; // 1.0 km rolling window
         const SCRUBBER_X_RATIO = 0.80; // Scrubber pinned at 80% during rolling playback
@@ -1740,7 +1934,7 @@
             const startIdx = telemetryData.findIndex(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
             currentTelemetryIndex = startIdx !== -1 ? startIdx : 0;
             playbackFractionalIndex = currentTelemetryIndex;
-            isRollingActive = false; // Full lap fit on load/selection
+            isRollingActive = isRollingModeSetting; // Rolling active in rolling mode
 
             if (slider) {
                 slider.min = 0;
@@ -1854,6 +2048,63 @@
             return (mins < 10 ? '0' : '') + mins + ':' + (remainderSec < 10 ? '0' : '') + remainderSec;
         }
 
+        // ORANGE PINNED REPLAY TELEMETRY TOOLTIP ENGINE
+        function updateReplayTooltip(pt, scrubberX) {
+            if (!replayTooltip || !pt) return;
+            replayTooltip.style.display = 'block';
+
+            // Fixed position immediately to the LEFT of the pinned orange replay line
+            // Never covers upcoming telemetry on the right side
+            const tooltipWidth = replayTooltip.offsetWidth || 330;
+            const targetLeft = Math.max(8, scrubberX - tooltipWidth - 14);
+            replayTooltip.style.left = targetLeft + 'px';
+            replayTooltip.style.top = '14px';
+
+            const rhLap = document.getElementById('rhLap');
+            const rhDist = document.getElementById('rhDist');
+            const rhTime = document.getElementById('rhTime');
+            const rhSpeed = document.getElementById('rhSpeed');
+            const rhRpm = document.getElementById('rhRpm');
+            const rhThr = document.getElementById('rhThr');
+            const rhThrBar = document.getElementById('rhThrBar');
+            const rhBrk = document.getElementById('rhBrk');
+            const rhBrkBar = document.getElementById('rhBrkBar');
+            const rhSteer = document.getElementById('rhSteer');
+
+            if (rhLap) rhLap.textContent = pt.lap || currentSelectedLap;
+            if (rhDist) {
+                const distVal = pt.lapDist !== undefined ? pt.lapDist : 0;
+                rhDist.textContent = distVal >= 1000
+                    ? (distVal / 1000.0).toFixed(3) + ' km'
+                    : Math.round(distVal) + ' m';
+            }
+            if (rhTime) {
+                const lapStartPt = activeLapPoints[0];
+                const lapElapsedSec = Math.max(0, (pt.t || 0) - (lapStartPt ? lapStartPt.t : 0));
+                rhTime.textContent = formatSeconds(lapElapsedSec);
+            }
+
+            if (rhSpeed) rhSpeed.textContent = Math.round(pt.speed || 0) + ' km/h';
+            if (rhRpm) rhRpm.textContent = Math.round(pt.rpm || 0).toLocaleString();
+            if (rhThr) rhThr.textContent = Math.round(pt.thr || 0) + '%';
+            if (rhThrBar) rhThrBar.style.width = Math.min(100, Math.max(0, pt.thr || 0)) + '%';
+            if (rhBrk) rhBrk.textContent = Math.round(pt.brk || 0) + '%';
+            if (rhBrkBar) rhBrkBar.style.width = Math.min(100, Math.max(0, pt.brk || 0)) + '%';
+            if (rhSteer) rhSteer.textContent = ((pt.steer || 0) >= 0 ? '+' : '') + Number(pt.steer || 0).toFixed(1) + '°';
+
+            const rhRowSpeed = document.getElementById('rhRowSpeed');
+            const rhRowRpm = document.getElementById('rhRowRpm');
+            const rhRowThr = document.getElementById('rhRowThr');
+            const rhRowBrk = document.getElementById('rhRowBrk');
+            const rhRowSteer = document.getElementById('rhRowSteer');
+
+            if (rhRowSpeed) rhRowSpeed.classList.toggle('disabled-ch', !channelVisibility.speed);
+            if (rhRowRpm) rhRowRpm.classList.toggle('disabled-ch', !channelVisibility.rpm);
+            if (rhRowThr) rhRowThr.classList.toggle('disabled-ch', !channelVisibility.throttle);
+            if (rhRowBrk) rhRowBrk.classList.toggle('disabled-ch', !channelVisibility.brake);
+            if (rhRowSteer) rhRowSteer.classList.toggle('disabled-ch', !channelVisibility.steering);
+        }
+
         // MAIN CANVAS RENDER FUNCTION (60 FPS HARDWARE ACCELERATED)
         function renderCanvas() {
             if (!canvas || !ctx || activeLapPoints.length === 0) return;
@@ -1921,8 +2172,8 @@
                 }
             }
 
-            // Draw Scrubber Indicator & HUD (only when playing, scrolling, or scrubbed)
-            const showScrubber = isPlaying || isRollingActive || currentTelemetryIndex > 0;
+            // Draw Scrubber Indicator & Orange Replay Tooltip (when telemetry points are present)
+            const showScrubber = telemetryData.length > 0;
             const viewSpan = Math.max(1, windowEndDist - windowStartDist);
             let scrubberX = (isRollingActive && isRollingModeSetting)
                 ? (SCRUBBER_X_RATIO * width)
@@ -1939,14 +2190,10 @@
                 ctx.stroke();
                 ctx.shadowBlur = 0;
 
-                if (scrubberHud) {
-                    scrubberHud.style.display = 'block';
-                    scrubberHud.style.left = scrubberX + 'px';
-                    if (hudSpeedReadout) hudSpeedReadout.textContent = Math.round(pt.speed) + ' km/h';
-                }
+                updateReplayTooltip(pt, scrubberX);
             } else {
-                if (scrubberHud) {
-                    scrubberHud.style.display = 'none';
+                if (replayTooltip) {
+                    replayTooltip.style.display = 'none';
                 }
             }
 
@@ -2224,7 +2471,7 @@
             jumpToLap(firstLapNum, firstLapMeta ? firstLapMeta.lapId : null, null, true);
             currentTelemetryIndex = 0;
             playbackFractionalIndex = 0;
-            isRollingActive = false; // Full lap fit view
+            isRollingActive = isRollingModeSetting; // Maintain viewport mode
             if (slider) slider.value = 0;
             if (btnReset) btnReset.classList.add('active');
             if (btnPause) btnPause.classList.remove('active');
@@ -2251,7 +2498,7 @@
                     row.classList.toggle('text-warning', row.getAttribute('data-lap-num') == currentSelectedLap);
                 });
             }
-            isRollingActive = false;
+            isRollingActive = isRollingModeSetting;
             renderCanvas();
         };
 
@@ -2272,6 +2519,7 @@
 
         window.toggleViewMode = function() {
             isRollingModeSetting = !isRollingModeSetting;
+            isRollingActive = isRollingModeSetting;
             const modeBtn = document.getElementById('btnViewMode');
             const modeText = document.getElementById('modeText');
             if (modeText) modeText.textContent = isRollingModeSetting ? 'ROLLING VIEWPORT' : 'FULL LAP';
@@ -2300,7 +2548,7 @@
             const startIdx = telemetryData.findIndex(p => p.lap === currentSelectedLap || (lapId && p.lapId === lapId));
             currentTelemetryIndex = startIdx !== -1 ? startIdx : 0;
             playbackFractionalIndex = currentTelemetryIndex;
-            if (shouldPause) isRollingActive = false;
+            if (shouldPause) isRollingActive = isRollingModeSetting;
 
             if (slider) slider.value = currentTelemetryIndex;
             if (lapEl) lapEl.textContent = currentSelectedLap;
