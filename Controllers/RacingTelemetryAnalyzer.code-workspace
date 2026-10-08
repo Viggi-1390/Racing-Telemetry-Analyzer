@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "RacingTelemetryAnalyzer.Tests",
+			"path": "../../RacingTelemetryAnalyzer.Tests"
+		}
+	],
+	"settings": {}
+}

@@ -103,7 +103,7 @@
             <!-- ANALYZE VEHICLE ACTION BUTTON -->
             <div class="analyze-btn-container">
                 <a href="/Track?vehicleId=1" class="btn-analyze-primary" id="btnAnalyzeVehicle">
-                    <span class="btn-caption">PROCEED TO TRACK</span>
+                    <span class="btn-caption">ANALYZE VEHICLE</span>
                     <span class="btn-icon">➔</span>
                 </a>
             </div>
@@ -499,13 +499,12 @@
        3. UPPER ZONE: 2 MAIN PANELS (HERO VEHICLE, STATS)
        -------------------------------------------------------------------------- */
     .workstation-upper-grid {
-        height: 64%;
-        flex: 0 0 64%;
-        min-height: 420px;
+        flex: 1 1 0;
+        min-height: 0;
         display: grid;
         grid-template-columns: 67% 33%;
         gap: 16px;
-        padding: 12px 28px 8px 28px;
+        padding: 10px 24px 6px 24px;
     }
 
     .dash-panel {
@@ -685,20 +684,25 @@
        -------------------------------------------------------------------------- */
     .panel-vehicle-stats {
         border-top: 3px solid var(--rta-red);
+        display: flex;
+        flex-direction: column;
         justify-content: space-between;
+        padding: clamp(10px, 1.4vh, 16px) clamp(12px, 1.4vw, 18px);
+        min-height: 0;
     }
 
     .vehicle-identity-header {
-        margin-bottom: 6px;
+        margin-bottom: clamp(3px, 0.5vh, 6px);
+        flex-shrink: 0;
     }
 
     .stats-name {
-        font-size: clamp(1.4rem, 2.1vh, 1.9rem);
+        font-size: clamp(1.2rem, 1.8vh, 1.7rem);
         font-weight: 900;
         letter-spacing: 1.6px;
         text-transform: uppercase;
         color: #ffffff;
-        margin: 0 0 4px 0;
+        margin: 0 0 3px 0;
         line-height: 1.1;
         white-space: nowrap;
         overflow: hidden;
@@ -716,7 +720,7 @@
         color: var(--rta-red);
         border: 1px solid rgba(255, 31, 56, 0.4);
         font-family: var(--font-mono);
-        font-size: 0.76rem;
+        font-size: clamp(0.7rem, 0.9vh, 0.76rem);
         font-weight: 800;
         padding: 2px 8px;
         border-radius: 4px;
@@ -725,7 +729,7 @@
 
     .badge-manufacturer {
         color: var(--rta-text-muted);
-        font-size: 0.82rem;
+        font-size: clamp(0.74rem, 0.95vh, 0.82rem);
         font-weight: 700;
         letter-spacing: 1.2px;
     }
@@ -733,15 +737,18 @@
     .spec-table-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin-bottom: 10px;
+        gap: clamp(3px, 0.4vh, 5px);
+        margin-bottom: clamp(4px, 0.6vh, 8px);
+        flex: 1 1 auto;
+        min-height: 0;
+        justify-content: space-evenly;
     }
 
     .spec-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 7px 10px;
+        padding: clamp(4px, 0.55vh, 6px) 10px;
         background: rgba(5, 7, 10, 0.55);
         border-radius: 4px;
         border-left: 3px solid rgba(255, 255, 255, 0.1);
@@ -751,7 +758,7 @@
     }
 
     .spec-title {
-        font-size: 0.72rem;
+        font-size: clamp(0.66rem, 0.85vh, 0.72rem);
         font-family: var(--font-mono);
         color: var(--rta-text-muted);
         letter-spacing: 1.2px;
@@ -759,15 +766,23 @@
     }
 
     .spec-num {
-        font-size: 1.0rem;
+        font-size: clamp(0.85rem, 1.15vh, 1.0rem);
         font-family: var(--font-mono);
         font-weight: 800;
         color: #f8fafc;
     }
 
+    .spec-tyre-temp {
+        font-size: clamp(0.76rem, 1.0vh, 0.88rem);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
     .analyze-btn-container {
         margin-top: auto;
-        padding-top: 4px;
+        padding-top: clamp(4px, 0.6vh, 6px);
+        flex-shrink: 0;
+        width: 100%;
     }
 
     .btn-analyze-primary {
@@ -776,11 +791,11 @@
         justify-content: center;
         gap: 12px;
         width: 100%;
-        padding: 13px 20px;
+        padding: clamp(9px, 1.2vh, 13px) 20px;
         background: linear-gradient(135deg, #ff1f38 0%, #b8051a 100%);
         color: #ffffff !important;
         font-weight: 900;
-        font-size: 0.95rem;
+        font-size: clamp(0.82rem, 1.1vh, 0.95rem);
         letter-spacing: 2.2px;
         text-transform: uppercase;
         border-radius: 6px;
@@ -788,6 +803,7 @@
         border: none;
         box-shadow: 0 6px 24px rgba(255, 31, 56, 0.45);
         transition: all 0.22s ease;
+        flex-shrink: 0;
     }
 
     .btn-analyze-primary:hover {
@@ -859,10 +875,10 @@
        4. LOWER SECTION: CATEGORY SIDEBAR + VEHICLE CAROUSEL
        -------------------------------------------------------------------------- */
     .workstation-carousel-container {
-        height: 36%;
-        flex: 0 0 36%;
+        height: clamp(170px, 24vh, 215px);
+        flex: 0 0 clamp(170px, 24vh, 215px);
         min-height: 0;
-        padding: 8px 24px 12px 24px;
+        padding: 6px 24px 10px 24px;
         display: flex;
         align-items: center;
         gap: 14px;
@@ -982,9 +998,9 @@
 
     /* FULL-HEIGHT VEHICLE CARD */
     .vehicle-card {
-        flex: 0 0 clamp(245px, 15vw, 285px);
-        width: clamp(245px, 15vw, 285px);
-        height: clamp(170px, 22vh, 215px);
+        flex: 0 0 clamp(235px, 14vw, 275px);
+        width: clamp(235px, 14vw, 275px);
+        height: clamp(145px, 19vh, 185px);
         background: rgba(12, 15, 22, 0.85);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1333,8 +1349,20 @@
     }
 
     /* --------------------------------------------------------------------------
-       RESPONSIVE COLLAPSE (TABLETS & MOBILE)
+       RESPONSIVE COLLAPSE (TABLETS, SHORT SCREENS & MOBILE)
        -------------------------------------------------------------------------- */
+    @@media (max-height: 750px) {
+        .garage-workstation-container {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: calc(100vh - 52px);
+        }
+        .workstation-upper-grid {
+            min-height: 460px !important;
+            flex: none !important;
+        }
+    }
+
     @@media (max-width: 1024px) {
         body {
             overflow: auto !important;

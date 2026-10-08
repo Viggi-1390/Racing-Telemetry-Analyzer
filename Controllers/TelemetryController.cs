@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RacingTelemetryAnalyzer.Models;
 using RacingTelemetryAnalyzer.Services;
+
+
 using RacingTelemetryAnalyzer.Data;
 using System.Linq;
 using System;
@@ -11,10 +13,10 @@ namespace RacingTelemetryAnalyzer.Controllers;
 
 public class TelemetryController : Controller
 {
+    
     private readonly DataGeneratorService _dataGenerator;
     private readonly ITelemetryAnalysisService _analysisService;
     private readonly ApplicationDbContext _context;
-
     public TelemetryController(DataGeneratorService dataGenerator, ITelemetryAnalysisService analysisService, ApplicationDbContext context)
     {
         _dataGenerator = dataGenerator;
@@ -319,31 +321,15 @@ public class TelemetryController : Controller
     }
 
 
-    public IActionResult Loading(int vehicleId = 1, int trackId = 1, int? sessionId = null)
+    public IActionResult Loading(int vehicleId = 1, int trackId = 1)
     {
-        var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId)
-                      ?? _context.Vehicles.OrderBy(v => v.VehicleId).FirstOrDefault();
-        var track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId)
-                    ?? _context.Tracks.OrderBy(t => t.TrackId).FirstOrDefault()
-                    ?? new Track { TrackId = 1, Name = "MONZA" };
+        var vehicle = _context.Vehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
+        var track = _context.Tracks.FirstOrDefault(t => t.TrackId == trackId) ?? new Track { Name = "UNKNOWN TRACK" };
 
         if (vehicle == null) return RedirectToAction("Index", "Home");
 
-        // Pre-resolve sessionId strictly for this vehicle and track if not already provided
-        if (!sessionId.HasValue)
-        {
-            sessionId = _context.Sessions
-                .Where(s => s.VehicleId == vehicle.VehicleId && s.TrackId == track.TrackId && s.Laps.Any())
-                .OrderByDescending(s => s.SessionId)
-                .Select(s => (int?)s.SessionId)
-                .FirstOrDefault();
-        }
-
         ViewBag.Vehicle = vehicle;
         ViewBag.Track = track;
-        ViewBag.SessionId = sessionId;
-        ViewBag.AllVehicles = _context.Vehicles.OrderBy(v => v.Name).ToList();
-        ViewBag.AllTracks = _context.Tracks.OrderBy(t => t.Name).ToList();
         return View();
     }
 
