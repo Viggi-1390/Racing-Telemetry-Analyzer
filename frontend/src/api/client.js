@@ -159,6 +159,71 @@ export async function getImportProgress(token) {
   return await request(`/api/telemetry/import-progress?token=${encodeURIComponent(token)}`);
 }
 
+export function uploadCsvTelemetry({ file, vehicleId, trackId, sessionType = 'PRACTICE 1', onProgress }) {
+  return new Promise((resolve, reject) => {
+    const uploadToken = 'tok_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+    const formData = new FormData();
+    formData.append('csvFile', file);
+    formData.append('vehicleId', vehicleId);
+    formData.append('trackId', trackId);
+    formData.append('sessionType', sessionType);
+    formData.append('uploadToken', uploadToken);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/telemetry/import');
+
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          onProgress({ stage: 'uploading', percent, loaded: e.loaded, total: e.total, token: uploadToken });
+        }
+      };
+    }
+
+    // Server-side parsing progress poller
+    let pollInterval = null;
+    if (onProgress) {
+      pollInterval = setInterval(async () => {
+        try {
+          const prog = await getImportProgress(uploadToken);
+          if (prog && prog.percentage !== undefined) {
+            onProgress({ stage: 'parsing', percent: prog.percentage, detail: prog, token: uploadToken });
+          }
+        } catch (_) {
+          // ignore transient poll errors
+        }
+      }, 250);
+    }
+
+    xhr.onload = () => {
+      if (pollInterval) clearInterval(pollInterval);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          resolve(res);
+        } catch (err) {
+          resolve({ success: true });
+        }
+      } else {
+        let msg = `HTTP ${xhr.status}: ${xhr.statusText}`;
+        try {
+          const errRes = JSON.parse(xhr.responseText);
+          if (errRes.message) msg = errRes.message;
+        } catch (_) {}
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => {
+      if (pollInterval) clearInterval(pollInterval);
+      reject(new Error('Network error during CSV upload.'));
+    };
+
+    xhr.send(formData);
+  });
+}
+
 export default {
   getVehicles,
   getVehicle,
@@ -175,5 +240,6 @@ export default {
   getLatestTelemetry,
   generateSyntheticTelemetry,
   getImportProgress,
+  uploadCsvTelemetry,
 };
 

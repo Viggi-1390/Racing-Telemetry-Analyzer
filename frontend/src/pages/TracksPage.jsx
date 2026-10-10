@@ -167,9 +167,7 @@ export default function TracksPage() {
   // Proceed / Start Analysis
   function handleProceedToTelemetry() {
     if (!assignedVehicle || !selectedTrackId) return;
-    // Navigate to existing telemetry loading / analysis workstation
-    const telemetryUrl = `/Telemetry/Loading?vehicleId=${assignedVehicle.id}&trackId=${selectedTrackId}`;
-    window.location.href = telemetryUrl;
+    navigate(`/telemetry?vehicleId=${assignedVehicle.id}&trackId=${selectedTrackId}`);
   }
 
   // Fallback image error handler

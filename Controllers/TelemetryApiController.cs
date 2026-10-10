@@ -33,6 +33,7 @@ namespace RacingTelemetryAnalyzer.Controllers
                 .Include(s => s.Vehicle)
                 .Include(s => s.Track)
                 .Include(s => s.Laps)
+                .Include(s => s.Condition)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
@@ -65,6 +66,7 @@ namespace RacingTelemetryAnalyzer.Controllers
                 .Include(s => s.Vehicle)
                 .Include(s => s.Track)
                 .Include(s => s.Laps)
+                .Include(s => s.Condition)
                 .AsNoTracking();
 
             if (vehicleId.HasValue)
@@ -161,13 +163,64 @@ namespace RacingTelemetryAnalyzer.Controllers
                 })
                 .ToList();
 
+            var analysisResults = await _context.AnalysisResults
+                .AsNoTracking()
+                .Where(a => lapIds.Contains(a.LapId))
+                .Select(a => new
+                {
+                    a.AnalysisResultId,
+                    a.LapId,
+                    a.EntrySpeed,
+                    a.MinimumSpeed,
+                    a.ExitSpeed,
+                    a.BrakingPercentage,
+                    a.ThrottleResponseTime,
+                    a.TimeDelta,
+                    a.Recommendation,
+                    a.RecommendationType
+                })
+                .ToListAsync();
+
+            var condition = session.Condition != null ? new
+            {
+                airTemperature = session.Condition.AirTemperature,
+                trackTemperature = session.Condition.TrackTemperature,
+                weather = session.Condition.Weather,
+                windSpeed = session.Condition.WindSpeed,
+                trackCondition = session.Condition.TrackCondition
+            } : null;
+
             return Ok(new
             {
                 success = true,
                 sessionId = session.SessionId,
                 sessionName = session.Name,
-                vehicle = new { session.Vehicle?.VehicleId, session.Vehicle?.Name, session.Vehicle?.Manufacturer, session.Vehicle?.Class, session.Vehicle?.VehicleType },
-                track = new { session.Track?.TrackId, session.Track?.Name, session.Track?.Length },
+                sessionType = session.SessionType ?? session.Name,
+                date = session.Date,
+                vehicle = new
+                {
+                    session.Vehicle?.VehicleId,
+                    session.Vehicle?.Name,
+                    session.Vehicle?.Manufacturer,
+                    session.Vehicle?.Class,
+                    session.Vehicle?.VehicleType,
+                    session.Vehicle?.Power,
+                    session.Vehicle?.TopSpeed,
+                    session.Vehicle?.Weight,
+                    session.Vehicle?.Engine,
+                    session.Vehicle?.ImagePath
+                },
+                track = new
+                {
+                    session.Track?.TrackId,
+                    session.Track?.Name,
+                    session.Track?.Length,
+                    session.Track?.Country,
+                    session.Track?.NumberOfTurns,
+                    session.Track?.ImagePath
+                },
+                condition,
+                analysisResults,
                 totalLaps = orderedLaps.Count,
                 totalPoints = telemetryData.Count,
                 laps = orderedLaps,

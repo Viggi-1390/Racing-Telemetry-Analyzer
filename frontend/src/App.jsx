@@ -16,6 +16,10 @@ export default function App() {
           <Route path="/tracks" element={<TracksPage />} />
           <Route path="/Track" element={<TracksPage />} />
           <Route path="/telemetry" element={<TelemetryPage />} />
+          <Route path="/Telemetry" element={<TelemetryPage />} />
+          <Route path="/Telemetry/Index" element={<TelemetryPage />} />
+          <Route path="/Telemetry/Loading" element={<TelemetryPage />} />
+          <Route path="/telemetry/loading" element={<TelemetryPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>
