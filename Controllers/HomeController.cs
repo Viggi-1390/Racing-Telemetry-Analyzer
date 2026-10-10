@@ -221,7 +221,7 @@ public class HomeController : Controller
     {
         Vehicle? vehicle = formVehicle;
 
-        if (Request.HasJsonContentType())
+        if (Request != null && Request.HasJsonContentType())
         {
             try
             {
@@ -326,7 +326,7 @@ public class HomeController : Controller
         Vehicle? updatedVehicle = formVehicle;
 
         // Support application/json payloads as well
-        if (Request.HasJsonContentType())
+        if (Request != null && Request.HasJsonContentType())
         {
             try
             {

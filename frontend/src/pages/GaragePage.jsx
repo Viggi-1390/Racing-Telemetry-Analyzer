@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { getVehicles } from '../api/client';
 import AddVehicleModal from '../components/AddVehicleModal';
 import EditVehicleModal from '../components/EditVehicleModal';
@@ -364,15 +364,15 @@ export default function GaragePage() {
                 </div>
 
                 <div className="analyze-btn-container">
-                  <a
-                    href={`/Track?vehicleId=${selectedVehicle.id}`}
+                  <Link
+                    to={`/tracks?vehicleId=${selectedVehicle.id}`}
                     className="btn-analyze-primary"
                     id="btnAnalyzeVehicle"
                     title={`Analyze ${selectedVehicle.name} on track`}
                   >
                     <span style={{ fontWeight: 900, letterSpacing: '2px' }}>ANALYZE VEHICLE</span>
                     <span className="btn-icon">➔</span>
-                  </a>
+                  </Link>
                 </div>
               </>
             ) : (

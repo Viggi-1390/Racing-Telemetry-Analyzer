@@ -232,7 +232,7 @@ namespace RacingTelemetryAnalyzer.Controllers
         {
             Track? track = formTrack;
 
-            if (Request.HasJsonContentType())
+            if (Request != null && Request.HasJsonContentType())
             {
                 try
                 {
@@ -311,7 +311,7 @@ namespace RacingTelemetryAnalyzer.Controllers
         {
             Track? updatedTrack = formTrack;
 
-            if (Request.HasJsonContentType())
+            if (Request != null && Request.HasJsonContentType())
             {
                 try
                 {

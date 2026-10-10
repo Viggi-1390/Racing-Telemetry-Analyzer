@@ -14,6 +14,7 @@ export default function App() {
           <Route path="/" element={<GaragePage />} />
           <Route path="/garage" element={<Navigate to="/" replace />} />
           <Route path="/tracks" element={<TracksPage />} />
+          <Route path="/Track" element={<TracksPage />} />
           <Route path="/telemetry" element={<TelemetryPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
