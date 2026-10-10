@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 using RacingTelemetryAnalyzer.Data;
 using RacingTelemetryAnalyzer.Services;
 
@@ -47,6 +49,27 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
+// Production React SPA static assets (from frontend/dist)
+var distPath = Path.Combine(app.Environment.ContentRootPath, "frontend", "dist");
+if (!Directory.Exists(distPath))
+{
+    distPath = Path.Combine(AppContext.BaseDirectory, "frontend", "dist");
+}
+
+var indexPath = Path.Combine(distPath, "index.html");
+bool forceRazor = builder.Configuration.GetValue<bool>("UseRazorFrontend", false) || args.Contains("--razor");
+bool hasReactBuild = !forceRazor && File.Exists(indexPath);
+
+if (hasReactBuild)
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(distPath),
+        RequestPath = ""
+    });
+}
+
 app.UseCors();
 app.UseRouting();
 
@@ -54,9 +77,36 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+if (hasReactBuild)
+{
+    // Specific legacy MVC route so explicit action invocations (/Home/Index, /Track/Index, /Telemetry/Index, /Home/Privacy, etc.) remain functional
+    app.MapControllerRoute(
+        name: "mvc_legacy",
+        pattern: "{controller}/{action}/{id?}");
+
+    // SPA Fallback: Serves React index.html for all client-side routes (/, /tracks, /telemetry, /garage)
+    // Strictly rejects /api/* requests so nonexistent API endpoints return HTTP 404 JSON, never index.html
+    app.MapFallback(async context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"success\":false,\"message\":\"API endpoint not found.\"}");
+            return;
+        }
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(indexPath);
+    });
+}
+else
+{
+    // Fallback to legacy default route when no React production build exists
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+}
 
 // Explicit database initialization triggered only by command-line argument (--seed) or configuration (SeedData=true)
 if (args.Contains("--seed") || builder.Configuration.GetValue<bool>("SeedData", false))
