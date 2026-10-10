@@ -26,31 +26,6 @@ public class HomeController : Controller
         ViewBag.SelectedVehicleId = vehicleId;
         var vehicles = _context.Vehicles.ToList();
         bool needsSave = false;
-        
-        // Seed default vehicles ONLY if the database has zero vehicles (e.g. brand-new database)
-        if (!vehicles.Any())
-        {
-            vehicles = new List<Vehicle>
-            {
-                new Vehicle { Engine = "5.5L DOHC V8 Hybrid", Name = "CADILLAC V-SERIES.R", Manufacturer = "Cadillac", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GTP / LMDh", Power = 670, Weight = 1030, TopSpeed = 338, ImagePath = "/images/cars/CadillacVSeriesR.jpg" },
-                new Vehicle { Engine = "1.6L Turbo Hybrid V6", Name = "FERRARI F1", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Formula 1", Power = 1000, Weight = 798, TopSpeed = 360, ImagePath = "/images/cars/FerrariF1Studio.jpg" },
-                new Vehicle { Engine = "Hybrid V8", Name = "PORSCHE 963", Manufacturer = "Porsche", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 680, Weight = 1030, TopSpeed = 330, ImagePath = "/images/cars/Porsche963Studio.jpg" },
-                new Vehicle { Engine = "5.2L Naturally Aspirated V10", Name = "AUDI R8 LMS GT3", Manufacturer = "Audi", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GT3", Power = 585, Weight = 1225, TopSpeed = 305, ImagePath = "/images/cars/AudiR8LMS.jpg" },
-                new Vehicle { Engine = "Hybrid V6", Name = "FERRARI 499P", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Hypercar", Power = 670, Weight = 1030, TopSpeed = 340, ImagePath = "/images/cars/Ferrari499p.jpg" },
-                new Vehicle { Engine = "Hybrid V8", Name = "BMW M HYBRID V8", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 640, Weight = 1030, TopSpeed = 325, ImagePath = "/images/cars/Bmwmhybrid.jpg" },
-                new Vehicle { Engine = "V4", Name = "DUCATI PANIGALE V4 R", Manufacturer = "Ducati", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 237, Weight = 167, TopSpeed = 315, ImagePath = "/images/bikes/DucatiV4r.jpg" },
-                new Vehicle { Engine = "Inline 4", Name = "YAMAHA R1", Manufacturer = "Yamaha", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 200, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/YamahaR1.jpg" },
-                new Vehicle { Engine = "Twin-Turbo V6 Hybrid", Name = "FERRARI 296 GTB", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 818, Weight = 1470, TopSpeed = 330, ImagePath = "/images/cars/Ferrari 296 GTB.jpg" },
-                new Vehicle { Engine = "Naturally Aspirated V10", Name = "LAMBORGHINI HURACAN STO", Manufacturer = "Lamborghini", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 631, Weight = 1339, TopSpeed = 310, ImagePath = "/images/cars/Lamborghini Huracan STO.jpg" },
-                new Vehicle { Engine = "Twin-Turbo Inline 6", Name = "BMW M4 CSL", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Sports Car", Power = 543, Weight = 1625, TopSpeed = 307, ImagePath = "/images/cars/BMW M4 csl.jpg" },
-                new Vehicle { Engine = "Twin-Turbo V8", Name = "MCLAREN 750S", Manufacturer = "McLaren", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 740, Weight = 1277, TopSpeed = 332, ImagePath = "/images/cars/McLaren750s.jpg" },
-                new Vehicle { Engine = "Inline 4", Name = "BMW M 1000 RR", Manufacturer = "BMW", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 212, Weight = 192, TopSpeed = 314, ImagePath = "/images/bikes/BmwM1000RR.jpg" },
-                new Vehicle { Engine = "Inline 4", Name = "KAWASAKI NINJA ZX-10R", Manufacturer = "Kawasaki", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 203, Weight = 207, TopSpeed = 299, ImagePath = "/images/bikes/Kawasaki ZX10R.jpg" },
-                new Vehicle { Engine = "Inline 4", Name = "HONDA CBR1000RR-R", Manufacturer = "Honda", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 214, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/2020 Honda CBR1000RR-R.jpg" }
-            };
-            _context.Vehicles.AddRange(vehicles);
-            needsSave = true;
-        }
 
         // Reconcile and fix any mismatched image paths on disk for known vehicles
         foreach (var v in vehicles)
@@ -156,6 +131,181 @@ public class HomeController : Controller
                 category = vehicle.VehicleCategory.ToString().ToLower(),
                 vClass = vehicle.Class ?? (vehicle.VehicleType == VehicleType.Car ? "Race Car" : "Superbike"),
                 engine = vehicle.Engine ?? "Race Engine",
+                power = vehicle.Power,
+                weight = vehicle.Weight,
+                topSpeed = vehicle.TopSpeed,
+                imagePath = vehicle.ImagePath
+            }
+        });
+    }
+
+    public static List<Vehicle> GetDefaultSeedFleet()
+    {
+        return new List<Vehicle>
+        {
+            new Vehicle { Engine = "5.5L DOHC V8 Hybrid", Name = "CADILLAC V-SERIES.R", Manufacturer = "Cadillac", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GTP / LMDh", Power = 670, Weight = 1030, TopSpeed = 338, ImagePath = "/images/cars/CadillacVSeriesR.jpg" },
+            new Vehicle { Engine = "1.6L Turbo Hybrid V6", Name = "FERRARI F1", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Formula 1", Power = 1000, Weight = 798, TopSpeed = 360, ImagePath = "/images/cars/FerrariF1Studio.jpg" },
+            new Vehicle { Engine = "Hybrid V8", Name = "PORSCHE 963", Manufacturer = "Porsche", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 680, Weight = 1030, TopSpeed = 330, ImagePath = "/images/cars/Porsche963Studio.jpg" },
+            new Vehicle { Engine = "5.2L Naturally Aspirated V10", Name = "AUDI R8 LMS GT3", Manufacturer = "Audi", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "GT3", Power = 585, Weight = 1225, TopSpeed = 305, ImagePath = "/images/cars/AudiR8LMS.jpg" },
+            new Vehicle { Engine = "Hybrid V6", Name = "FERRARI 499P", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "Hypercar", Power = 670, Weight = 1030, TopSpeed = 340, ImagePath = "/images/cars/Ferrari499p.jpg" },
+            new Vehicle { Engine = "Hybrid V8", Name = "BMW M HYBRID V8", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Race, Class = "LMDh", Power = 640, Weight = 1030, TopSpeed = 325, ImagePath = "/images/cars/Bmwmhybrid.jpg" },
+            new Vehicle { Engine = "V4", Name = "DUCATI PANIGALE V4 R", Manufacturer = "Ducati", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 237, Weight = 167, TopSpeed = 315, ImagePath = "/images/bikes/DucatiV4r.jpg" },
+            new Vehicle { Engine = "Inline 4", Name = "YAMAHA R1", Manufacturer = "Yamaha", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Race, Class = "Superbike", Power = 200, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/YamahaR1.jpg" },
+            new Vehicle { Engine = "Twin-Turbo V6 Hybrid", Name = "FERRARI 296 GTB", Manufacturer = "Ferrari", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 818, Weight = 1470, TopSpeed = 330, ImagePath = "/images/cars/Ferrari 296 GTB.jpg" },
+            new Vehicle { Engine = "Naturally Aspirated V10", Name = "LAMBORGHINI HURACAN STO", Manufacturer = "Lamborghini", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 631, Weight = 1339, TopSpeed = 310, ImagePath = "/images/cars/Lamborghini Huracan STO.jpg" },
+            new Vehicle { Engine = "Twin-Turbo Inline 6", Name = "BMW M4 CSL", Manufacturer = "BMW", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Sports Car", Power = 543, Weight = 1625, TopSpeed = 307, ImagePath = "/images/cars/BMW M4 csl.jpg" },
+            new Vehicle { Engine = "Twin-Turbo V8", Name = "MCLAREN 750S", Manufacturer = "McLaren", VehicleType = VehicleType.Car, VehicleCategory = VehicleCategory.Production, Class = "Supercar", Power = 740, Weight = 1277, TopSpeed = 332, ImagePath = "/images/cars/McLaren750s.jpg" },
+            new Vehicle { Engine = "Inline 4", Name = "BMW M 1000 RR", Manufacturer = "BMW", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 212, Weight = 192, TopSpeed = 314, ImagePath = "/images/bikes/BmwM1000RR.jpg" },
+            new Vehicle { Engine = "Inline 4", Name = "KAWASAKI NINJA ZX-10R", Manufacturer = "Kawasaki", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 203, Weight = 207, TopSpeed = 299, ImagePath = "/images/bikes/Kawasaki ZX10R.jpg" },
+            new Vehicle { Engine = "Inline 4", Name = "HONDA CBR1000RR-R", Manufacturer = "Honda", VehicleType = VehicleType.Bike, VehicleCategory = VehicleCategory.Production, Class = "Superbike", Power = 214, Weight = 201, TopSpeed = 299, ImagePath = "/images/bikes/2020 Honda CBR1000RR-R.jpg" }
+        };
+    }
+
+    [HttpPost("/api/system/seed")]
+    public async Task<IActionResult> SeedSystemApi()
+    {
+        bool seeded = await DbInitializer.SeedDefaultDataAsync(_context);
+        return Ok(new
+        {
+            success = true,
+            seeded,
+            message = seeded
+                ? "Default fleet and circuits initialized successfully."
+                : "Database already contains vehicles and tracks. No seeding performed."
+        });
+    }
+
+    [HttpPost("/api/vehicles/seed")]
+    public async Task<IActionResult> SeedVehiclesApi()
+    {
+        if (!await _context.Vehicles.AnyAsync())
+        {
+            var seedFleet = GetDefaultSeedFleet();
+            await _context.Vehicles.AddRangeAsync(seedFleet);
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, seeded = true, message = "Default fleet seeded.", count = seedFleet.Count });
+        }
+        return Ok(new { success = true, seeded = false, message = "Vehicles already exist in database.", count = await _context.Vehicles.CountAsync() });
+    }
+
+    [HttpGet("/api/vehicles")]
+    public async Task<IActionResult> GetVehiclesApi()
+    {
+        var vehicles = await _context.Vehicles.AsNoTracking().ToListAsync();
+
+        var orderedVehicles = vehicles
+            .OrderByDescending(v => (v.Name.Contains("CADILLAC") || v.Name.Contains("V-SERIES")) ? 1 : 0)
+            .ThenByDescending(v => v.VehicleCategory == VehicleCategory.Race ? 1 : 0)
+            .ThenBy(v => v.Name)
+            .Select(v => new
+            {
+                id = v.VehicleId,
+                name = v.Name,
+                manufacturer = v.Manufacturer,
+                type = v.VehicleType.ToString().ToLower(),
+                category = v.VehicleCategory.ToString().ToLower(),
+                vClass = v.Class ?? (v.VehicleType == VehicleType.Car ? "Race Car" : "Superbike"),
+                engine = v.Engine ?? "Race Engine",
+                power = v.Power,
+                weight = v.Weight,
+                topSpeed = v.TopSpeed,
+                imagePath = v.ImagePath
+            })
+            .ToList();
+
+        return Ok(new { success = true, vehicles = orderedVehicles });
+    }
+
+    [HttpPost("/api/vehicles")]
+    public async Task<IActionResult> CreateVehicleApi([FromForm] Vehicle? formVehicle, IFormFile? ImageFile)
+    {
+        Vehicle? vehicle = formVehicle;
+
+        if (Request.HasJsonContentType())
+        {
+            try
+            {
+                using var reader = new StreamReader(Request.Body);
+                var jsonBody = await reader.ReadToEndAsync();
+                var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                vehicle = System.Text.Json.JsonSerializer.Deserialize<Vehicle>(jsonBody, options);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = "Invalid JSON payload: " + ex.Message });
+            }
+        }
+
+        if (vehicle == null)
+        {
+            return BadRequest(new { success = false, message = "Vehicle data is required." });
+        }
+
+        if (string.IsNullOrWhiteSpace(vehicle.Name))
+        {
+            return BadRequest(new { success = false, message = "Vehicle Name cannot be blank." });
+        }
+        if (string.IsNullOrWhiteSpace(vehicle.Manufacturer))
+        {
+            return BadRequest(new { success = false, message = "Manufacturer cannot be blank." });
+        }
+        if (vehicle.Power <= 0 || vehicle.Power > 3000)
+        {
+            return BadRequest(new { success = false, message = "Horsepower must be a positive value between 1 and 3000 HP." });
+        }
+        if (vehicle.Weight <= 0 || vehicle.Weight > 10000)
+        {
+            return BadRequest(new { success = false, message = "Weight must be a positive value between 1 and 10000 kg." });
+        }
+        if (vehicle.TopSpeed <= 0 || vehicle.TopSpeed > 600)
+        {
+            return BadRequest(new { success = false, message = "Top speed must be a positive value between 1 and 600 km/h." });
+        }
+
+        vehicle.Name = vehicle.Name.Trim().ToUpper();
+        vehicle.Manufacturer = vehicle.Manufacturer.Trim();
+        vehicle.Class = !string.IsNullOrWhiteSpace(vehicle.Class) ? vehicle.Class.Trim() : (vehicle.VehicleType == VehicleType.Car ? "Race Car" : "Superbike");
+        vehicle.Engine = !string.IsNullOrWhiteSpace(vehicle.Engine) ? vehicle.Engine.Trim() : (vehicle.VehicleType == VehicleType.Car ? "Hybrid V8" : "Inline-4");
+
+        if (ImageFile != null && ImageFile.Length > 0)
+        {
+            var subFolder = vehicle.VehicleType == VehicleType.Bike ? "bikes" : "cars";
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", subFolder);
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(ImageFile.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await ImageFile.CopyToAsync(fileStream);
+            }
+
+            vehicle.ImagePath = $"/images/{subFolder}/{uniqueFileName}";
+        }
+
+        if (string.IsNullOrEmpty(vehicle.ImagePath))
+        {
+            vehicle.ImagePath = vehicle.VehicleType == VehicleType.Bike
+                ? "/images/bikes/default-bike.jpg"
+                : "/images/cars/default-car.jpg";
+        }
+
+        _context.Vehicles.Add(vehicle);
+        await _context.SaveChangesAsync();
+
+        return StatusCode(201, new
+        {
+            success = true,
+            vehicle = new
+            {
+                id = vehicle.VehicleId,
+                name = vehicle.Name,
+                manufacturer = vehicle.Manufacturer,
+                type = vehicle.VehicleType.ToString().ToLower(),
+                category = vehicle.VehicleCategory.ToString().ToLower(),
+                vClass = vehicle.Class,
+                engine = vehicle.Engine,
                 power = vehicle.Power,
                 weight = vehicle.Weight,
                 topSpeed = vehicle.TopSpeed,

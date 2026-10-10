@@ -58,4 +58,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Explicit database initialization triggered only by command-line argument (--seed) or configuration (SeedData=true)
+if (args.Contains("--seed") || builder.Configuration.GetValue<bool>("SeedData", false))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DbInitializer.SeedDefaultDataAsync(db);
+}
+
 app.Run();

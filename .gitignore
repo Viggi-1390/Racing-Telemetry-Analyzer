@@ -7,6 +7,9 @@ obj/
 
 # Node.js dependencies
 node_modules/
+dist/
+frontend/dist/
+frontend/node_modules/
 
 # Node package logs
 npm-debug.log*
