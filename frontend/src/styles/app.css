@@ -1,0 +1,214 @@
+/* ============================================================
+   RACING TELEMETRY ANALYZER — APP LAYOUT & COMPONENT FOUNDATION
+   ============================================================ */
+
+body {
+  background-color: var(--rta-bg-canvas);
+  color: var(--rta-text-primary);
+  font-family: var(--rta-font-ui);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* NAVBAR SLIM (MATCHING MOTORSPORT CONSOLE HEADER) */
+.navbar-slim {
+  background: rgba(8, 9, 13, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  height: 52px;
+  padding: 0 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  z-index: 1030;
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-slim::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 31, 56, 0.6), transparent);
+  opacity: 0.8;
+}
+
+.navbar-brand {
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--rta-font-ui);
+}
+
+.navbar-brand .accent-text {
+  color: #ff1f38;
+}
+
+.nav-links-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link-btn {
+  color: #8e95a5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  padding: 8px 18px;
+  border-radius: var(--rta-radius-sm);
+  transition: all var(--rta-duration-quick) ease;
+  position: relative;
+  font-family: var(--rta-font-ui);
+  text-transform: uppercase;
+}
+
+.nav-link-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-link-btn.active {
+  color: #ffffff;
+  background: rgba(255, 31, 56, 0.12);
+}
+
+.nav-link-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 2px;
+  background: #ff1f38;
+  box-shadow: 0 0 8px #ff1f38;
+  border-radius: 1px;
+}
+
+.header-telemetry-badge {
+  font-family: var(--rta-font-mono);
+  font-size: 0.72rem;
+  color: var(--rta-text-muted);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #00e676;
+  box-shadow: 0 0 8px #00e676;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.app-main-viewport {
+  min-height: calc(100vh - 52px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* CARDS & PANELS */
+.rta-card {
+  background: rgba(16, 19, 26, 0.85);
+  border: 1px solid var(--rta-border-subtle);
+  border-radius: var(--rta-radius-md);
+  padding: 1.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.rta-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rta-border-subtle);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.rta-tag-micro {
+  font-family: var(--rta-font-mono);
+  font-size: 0.72rem;
+  color: #ff1f38;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.rta-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff1f38 0%, #b8051a 100%);
+  color: #ffffff;
+  border: none;
+  font-family: var(--rta-font-ui);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: var(--rta-radius-sm);
+  cursor: pointer;
+  transition: all var(--rta-duration-quick) ease;
+  box-shadow: 0 4px 14px rgba(255, 31, 56, 0.35);
+}
+
+.rta-btn-primary:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 31, 56, 0.5);
+}
+
+.rta-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e5eb;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--rta-font-ui);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  border-radius: var(--rta-radius-sm);
+  cursor: pointer;
+  transition: all var(--rta-duration-quick) ease;
+}
+
+.rta-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+

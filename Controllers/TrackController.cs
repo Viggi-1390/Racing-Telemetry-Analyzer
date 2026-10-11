@@ -24,28 +24,6 @@ namespace RacingTelemetryAnalyzer.Controllers
         {
             var tracks = _context.Tracks.ToList();
             
-            var defaultTracks = new List<Track>
-            {
-                new Track { Name = "MONZA", Country = "Italy", Length = 5.793, NumberOfTurns = 11, ImagePath = "/images/tracks/Monza.jpg" },
-                new Track { Name = "SILVERSTONE", Country = "UK", Length = 5.891, NumberOfTurns = 18, ImagePath = "/images/tracks/Silverstone.jpg" },
-                new Track { Name = "SPA-FRANCORCHAMPS", Country = "Belgium", Length = 7.004, NumberOfTurns = 19, ImagePath = "/images/tracks/Spa%20Francochamps.jpg" },
-                new Track { Name = "NURBURGRING", Country = "Germany", Length = 20.832, NumberOfTurns = 73, ImagePath = "/images/tracks/Nurburging.jpg" },
-                new Track { Name = "LAGUNA SECA", Country = "USA", Length = 3.602, NumberOfTurns = 11, ImagePath = "/images/tracks/LagunaSeca.jpg" },
-                new Track { Name = "SUZUKA", Country = "Japan", Length = 5.807, NumberOfTurns = 18, ImagePath = "/images/tracks/Suzuka.jpg" },
-                new Track { Name = "LE MANS", Country = "France", Length = 13.626, NumberOfTurns = 38, ImagePath = "/images/tracks/LeMans.jpg" }
-            };
-            
-            bool needsSave = false;
-            foreach (var dt in defaultTracks)
-            {
-                if (!tracks.Any(t => t.Name.ToUpper() == dt.Name.ToUpper()))
-                {
-                    _context.Tracks.Add(dt);
-                    tracks.Add(dt);
-                    needsSave = true;
-                }
-            }
-
             // Deduplicate tracks by Name so each circuit has exactly one entry
             var distinctTracks = new List<Track>();
             var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -71,7 +49,7 @@ namespace RacingTelemetryAnalyzer.Controllers
             }
 
             // Force update all paths to correct filenames
-            needsSave = false;
+            bool needsSave = false;
             foreach (var t in tracks)
             {
                 if (t.Name.ToUpper() == "LE MANS" && t.ImagePath != "/images/tracks/LeMans.jpg") { t.ImagePath = "/images/tracks/LeMans.jpg"; needsSave = true; }
@@ -203,6 +181,125 @@ namespace RacingTelemetryAnalyzer.Controllers
             });
         }
 
+        public static List<Track> GetDefaultTracks()
+        {
+            return new List<Track>
+            {
+                new Track { Name = "MONZA", Country = "Italy", Length = 5.793, NumberOfTurns = 11, ImagePath = "/images/tracks/Monza.jpg" },
+                new Track { Name = "SILVERSTONE", Country = "UK", Length = 5.891, NumberOfTurns = 18, ImagePath = "/images/tracks/Silverstone.jpg" },
+                new Track { Name = "SPA-FRANCORCHAMPS", Country = "Belgium", Length = 7.004, NumberOfTurns = 19, ImagePath = "/images/tracks/Spa%20Francochamps.jpg" },
+                new Track { Name = "NURBURGRING", Country = "Germany", Length = 20.832, NumberOfTurns = 73, ImagePath = "/images/tracks/Nurburging.jpg" },
+                new Track { Name = "LAGUNA SECA", Country = "USA", Length = 3.602, NumberOfTurns = 11, ImagePath = "/images/tracks/LagunaSeca.jpg" },
+                new Track { Name = "SUZUKA", Country = "Japan", Length = 5.807, NumberOfTurns = 18, ImagePath = "/images/tracks/Suzuka.jpg" },
+                new Track { Name = "LE MANS", Country = "France", Length = 13.626, NumberOfTurns = 38, ImagePath = "/images/tracks/LeMans.jpg" }
+            };
+        }
+
+        [HttpPost("/api/tracks/seed")]
+        public async Task<IActionResult> SeedTracksApi()
+        {
+            if (!await _context.Tracks.AnyAsync())
+            {
+                var defaultTracks = GetDefaultTracks();
+                await _context.Tracks.AddRangeAsync(defaultTracks);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, seeded = true, message = "Default tracks seeded.", count = defaultTracks.Count });
+            }
+            return Ok(new { success = true, seeded = false, message = "Tracks already exist in database.", count = await _context.Tracks.CountAsync() });
+        }
+
+        [HttpGet("/api/tracks")]
+        public async Task<IActionResult> GetTracksApi()
+        {
+            var tracks = await _context.Tracks.AsNoTracking().OrderBy(t => t.TrackId).ToListAsync();
+            return Ok(new
+            {
+                success = true,
+                tracks = tracks.Select(t => new
+                {
+                    id = t.TrackId,
+                    name = t.Name,
+                    country = t.Country,
+                    length = t.Length,
+                    numberOfTurns = t.NumberOfTurns,
+                    imagePath = t.ImagePath
+                }).ToList()
+            });
+        }
+
+        [HttpPost("/api/tracks")]
+        public async Task<IActionResult> CreateTrackApi([FromForm] Track? formTrack, IFormFile? ImageFile)
+        {
+            Track? track = formTrack;
+
+            if (Request != null && Request.HasJsonContentType())
+            {
+                try
+                {
+                    using var reader = new StreamReader(Request.Body);
+                    var jsonBody = await reader.ReadToEndAsync();
+                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    track = System.Text.Json.JsonSerializer.Deserialize<Track>(jsonBody, options);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { success = false, message = "Invalid JSON payload: " + ex.Message });
+                }
+            }
+
+            if (track == null)
+            {
+                return BadRequest(new { success = false, message = "Track data is required." });
+            }
+
+            if (string.IsNullOrWhiteSpace(track.Name) || string.IsNullOrWhiteSpace(track.Country) || track.Length <= 0 || track.NumberOfTurns <= 0)
+            {
+                return BadRequest(new { success = false, message = "Please provide all required fields correctly (Name, Country, Length > 0, Turns > 0)." });
+            }
+
+            track.Name = track.Name.Trim().ToUpper();
+            track.Country = track.Country.Trim();
+            track.Length = Math.Round(track.Length, 3);
+
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "tracks");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(ImageFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await ImageFile.CopyToAsync(fileStream);
+                }
+
+                track.ImagePath = $"/images/tracks/{uniqueFileName}";
+            }
+
+            if (string.IsNullOrEmpty(track.ImagePath))
+            {
+                track.ImagePath = "/images/tracks/default-track.jpg";
+            }
+
+            _context.Tracks.Add(track);
+            await _context.SaveChangesAsync();
+
+            return StatusCode(201, new
+            {
+                success = true,
+                track = new
+                {
+                    id = track.TrackId,
+                    name = track.Name,
+                    country = track.Country,
+                    length = track.Length,
+                    numberOfTurns = track.NumberOfTurns,
+                    imagePath = track.ImagePath
+                }
+            });
+        }
+
         [HttpGet("/api/tracks/{id:int}")]
         public async Task<IActionResult> GetTrackApi(int id)
         {
@@ -214,7 +311,7 @@ namespace RacingTelemetryAnalyzer.Controllers
         {
             Track? updatedTrack = formTrack;
 
-            if (Request.HasJsonContentType())
+            if (Request != null && Request.HasJsonContentType())
             {
                 try
                 {
